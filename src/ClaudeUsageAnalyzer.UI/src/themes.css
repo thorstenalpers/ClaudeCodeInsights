@@ -1,0 +1,12 @@
+/* Color presets, switchable at runtime.
+ *
+ * Each preset is a class on <html> that overrides the token values declared in
+ * app.css. Only the tokens a preset actually changes are listed — everything
+ * else falls through to the neutral base, so a preset stays small and no
+ * component needs to know a preset exists.
+ *
+ * `.dark` combinations are written as `.dark.theme-x` because both classes sit
+ * on the same element (<html>), not nested.
+ *
+ * Values taken from tweakcn (https://tweakcn.com), retrieved 2026-07-31.
+ */
