@@ -1,4 +1,7 @@
 <Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/src/">
     <Project Path="src/ClaudeUsageAnalyzer.App/ClaudeUsageAnalyzer.App.csproj" />
     <Project Path="src/ClaudeUsageAnalyzer.Core/ClaudeUsageAnalyzer.Core.csproj" />

@@ -6,7 +6,6 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>ClaudeUsageAnalyzer</RootNamespace>
     <AssemblyName>ClaudeUsageAnalyzer</AssemblyName>
-    <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
