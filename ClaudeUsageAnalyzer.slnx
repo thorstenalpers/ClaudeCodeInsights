@@ -1,12 +1,23 @@
 <Solution>
+  <!-- Every project is x64 (WinUI + win-x64 RID). "Any CPU" stays in the list
+       because it is Visual Studio's default active platform and is remembered in
+       .vs; the per-project mapping below folds it onto x64 so no selectable
+       solution platform can ask a project for a configuration it does not have. -->
   <Configurations>
+    <Platform Name="Any CPU" />
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/ClaudeUsageAnalyzer.App/ClaudeUsageAnalyzer.App.csproj" />
-    <Project Path="src/ClaudeUsageAnalyzer.Core/ClaudeUsageAnalyzer.Core.csproj" />
+    <Project Path="src/ClaudeUsageAnalyzer.App/ClaudeUsageAnalyzer.App.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="src/ClaudeUsageAnalyzer.Core/ClaudeUsageAnalyzer.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/src/Tests/">
-    <Project Path="src/Tests/ClaudeUsageAnalyzer.Tests.csproj" />
+    <Project Path="src/Tests/ClaudeUsageAnalyzer.Tests.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
 </Solution>
