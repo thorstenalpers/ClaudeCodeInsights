@@ -1,47 +1,58 @@
-# Svelte + TS + Vite
+# ClaudeAdmin
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+A desktop app for the data Claude Code leaves on your machine. It reads the
+transcripts under `~/.claude/`, works out where your tokens and money went, lets
+you replay any past conversation, and manages the projects registered in Claude
+Code's settings.
 
-## Recommended IDE Setup
+**Everything stays local.** The app reads `~/.claude/` and writes only to
+`%LocalAppData%\ClaudeAdmin`. Nothing is uploaded, and there is no telemetry.
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## What it does
 
-## Need an official Svelte framework?
+- **Overview** — sessions, turns, tokens by class, active days. Cache reads
+  usually dwarf everything else, so they get their own figure rather than being
+  folded into a total.
+- **Sessions** — every conversation in a sortable, searchable table, with the
+  activity it was mostly spent on derived from its tool calls.
+- **Transcript replay** — click a session for the full conversation: messages,
+  thinking blocks, and tool calls paired with their results.
+- **Projects** _(in progress)_ — analyse, tidy and remove the projects Claude
+  Code has registered.
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+## Requirements
 
-## Technical considerations
+- Windows 10 1809 or newer
+- WebView2 runtime (preinstalled on Windows 11; the installer fetches it
+  otherwise)
+- Claude Code, used at least once, so `~/.claude/` exists
 
-**Why use this over SvelteKit?**
+## Build from source
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+Needs Node 24+, Rust with the MSVC toolchain, and the Windows SDK.
+`scripts/verify-dev-machine.ps1 -Probe` checks all of it and proves the linker
+works by compiling a throwaway binary — a green checklist alone does not.
+`scripts/setup-dev-machine.ps1` installs what is missing.
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store';
-export default writable(0);
+```bash
+npm install
+npm run app          # the real window, with hot reload
+npm run app:build    # installer
 ```
+
+## A note on cost
+
+Costs are **estimates** from published API prices. They are wrong for Pro and
+Max subscribers, who pay a subscription rather than per token. A model with no
+price entry shows `n/a`, never `$0.00` — an unknown cost is not a zero one.
+
+## Contributing
+
+Architecture and conventions are in [AGENTS.md](AGENTS.md) and
+[.claude/docs/](.claude/docs/). [03-decisions.md](.claude/docs/03-decisions.md)
+records why things are as they are; worth reading before changing something that
+looks odd.
+
+## License
+
+MIT.
