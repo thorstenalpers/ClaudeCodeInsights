@@ -1,0 +1,31 @@
+[package]
+name = "claude-usage-analyzer"
+version = "0.1.0"
+description = "Analyses local Claude Code usage transcripts"
+authors = ["thor"]
+license = "MIT"
+edition = "2024"
+rust-version = "1.85"
+
+[lib]
+name = "claude_usage_analyzer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+
+[profile.release]
+# The publish artifact competed against a 224 MB .NET folder; keeping it small
+# is a large part of why this project is Rust at all.
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
