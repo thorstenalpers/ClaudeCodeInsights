@@ -114,6 +114,7 @@ pub fn run() {
             commands::get_overview,
             commands::list_sessions,
             commands::get_session_facets,
+            commands::get_transcript,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -15,6 +15,7 @@
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { compact, exact } from '$lib/format';
   import { isHosted } from '$lib/ipc.svelte';
+  import { nav } from '$lib/nav.svelte';
   import { scan } from '$lib/scan.svelte';
 
   type Column = {
@@ -239,7 +240,10 @@
 
           <Table.Body>
             {#each result.rows as row (row.sessionId)}
-              <Table.Row>
+              <Table.Row
+                class="cursor-pointer"
+                onclick={() => nav.openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
+              >
                 <Table.Cell class="max-w-[22rem]">
                   <div class="flex items-center gap-2">
                     <span class="truncate font-medium">

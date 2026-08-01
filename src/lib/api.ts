@@ -79,8 +79,35 @@ export type SessionFacets = {
   tags: string[];
 };
 
+export type ToolCall = {
+  name: string;
+  input: string;
+  inputTruncated: boolean;
+  result: string | null;
+  resultTruncated: boolean;
+  isError: boolean;
+};
+
+export type TranscriptTurn = {
+  index: number;
+  role: 'user' | 'assistant';
+  timestamp: string | null;
+  text: string | null;
+  thinking: string | null;
+  toolCalls: ToolCall[];
+};
+
+export type TranscriptPage = {
+  turns: TranscriptTurn[];
+  total: number;
+  offset: number;
+  path: string | null;
+};
+
 export const api = {
   getOverview: () => invoke<Overview>('get_overview'),
+  getTranscript: (sessionId: string, offset: number, limit: number) =>
+    invoke<TranscriptPage>('get_transcript', { sessionId, offset, limit }),
   getScanState: () => invoke<ScanState>('get_scan_state'),
   startScan: () => invoke<boolean>('start_scan'),
   listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),

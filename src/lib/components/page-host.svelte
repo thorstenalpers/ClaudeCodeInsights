@@ -1,6 +1,7 @@
 <script lang="ts">
   import { nav } from '$lib/nav.svelte';
   import { ALL_PAGES } from '$lib/pages';
+  import SessionDetail from '../../views/session-detail.svelte';
 </script>
 
 <!--
@@ -18,9 +19,19 @@
     <div
       class="absolute inset-0 overflow-auto"
       data-page={page.key}
-      hidden={nav.active !== page.key}
+      hidden={nav.active !== page.key || nav.detailSessionId !== null}
     >
       <page.component />
     </div>
   {/if}
 {/each}
+
+<!-- Detail covers the page instead of replacing it, so going back returns to a
+     table that never lost its scroll position or its filters. -->
+{#if nav.detailSessionId}
+  <div class="bg-background absolute inset-0" data-page="session-detail">
+    {#key nav.detailSessionId}
+      <SessionDetail sessionId={nav.detailSessionId} />
+    {/key}
+  </div>
+{/if}

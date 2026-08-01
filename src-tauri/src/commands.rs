@@ -1,5 +1,6 @@
 use crate::analysis::categories::CategoryMap;
 use crate::analysis::sessions::{SessionFacets, SessionPage, SessionQuery};
+use crate::analysis::transcript::{self, TranscriptPage};
 use crate::analysis::{activity, sessions};
 use crate::ingest::scanner::{self, ScanProgress, ScanStats};
 use crate::{paths, storage};
@@ -111,6 +112,22 @@ pub fn list_sessions(query: SessionQuery) -> Result<SessionPage, String> {
 pub fn get_session_facets() -> Result<SessionFacets, String> {
     let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
     sessions::facets(&conn).map_err(|e| format!("{e:#}"))
+}
+
+/// The conversation itself, read from the transcript rather than the database.
+///
+/// The database holds figures; the transcript stays the source for what was
+/// said. That keeps the database small and the replay always current, at the
+/// cost of re-reading the file — which is why it is paged.
+#[tauri::command]
+pub fn get_transcript(
+    session_id: String,
+    offset: usize,
+    limit: usize,
+) -> Result<TranscriptPage, String> {
+    let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
+    transcript::load(&conn, &session_id, offset, limit.clamp(1, 500))
+        .map_err(|e| format!("{e:#}"))
 }
 
 /// Starts a scan if the database holds nothing yet.

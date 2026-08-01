@@ -2,7 +2,7 @@
 name = "claude-usage-analyzer"
 version = "0.1.0"
 description = "Analyses local Claude Code usage transcripts"
-authors = ["thor"]
+authors = ["thorsten"]
 license = "MIT"
 edition = "2024"
 rust-version = "1.85"
