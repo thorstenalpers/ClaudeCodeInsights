@@ -194,7 +194,11 @@ fn content_blocks(record: &Value) -> Vec<&Value> {
 }
 
 fn join_blocks(blocks: &[&Value], kind: &str) -> Option<String> {
-    let field = if kind == "thinking" { "thinking" } else { "text" };
+    let field = if kind == "thinking" {
+        "thinking"
+    } else {
+        "text"
+    };
     let joined: Vec<&str> = blocks
         .iter()
         .filter(|b| b.get("type").and_then(Value::as_str) == Some(kind))
@@ -304,7 +308,10 @@ mod tests {
         let turns = read_turns(&path, "s1").unwrap();
         assert_eq!(turns.len(), 2, "the tool-result-only user turn is absorbed");
         assert_eq!(turns[0].tool_calls.len(), 1);
-        assert_eq!(turns[0].tool_calls[0].result.as_deref(), Some("file contents"));
+        assert_eq!(
+            turns[0].tool_calls[0].result.as_deref(),
+            Some("file contents")
+        );
     }
 
     #[test]

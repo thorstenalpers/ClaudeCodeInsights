@@ -34,9 +34,14 @@ enum FileWork {
     /// Never seen; read every line.
     Fresh,
     /// Grew since last time; read only the tail.
-    Appended { skip_lines: u64, id: i64 },
+    Appended {
+        skip_lines: u64,
+        id: i64,
+    },
     /// Shrank or was rewritten; drop what came from it and read it again.
-    Rewritten { id: i64 },
+    Rewritten {
+        id: i64,
+    },
     Unchanged,
 }
 
@@ -301,11 +306,9 @@ fn write_parse(
         stats.turns_inserted += changed;
 
         let turn_id: i64 = match &turn.message_id {
-            Some(id) => tx.query_row(
-                "SELECT id FROM turns WHERE message_id = ?1",
-                [id],
-                |r| r.get(0),
-            )?,
+            Some(id) => tx.query_row("SELECT id FROM turns WHERE message_id = ?1", [id], |r| {
+                r.get(0)
+            })?,
             None => tx.last_insert_rowid(),
         };
 
@@ -493,11 +496,23 @@ mod tests {
     #[test]
     fn appending_reads_only_the_tail() {
         let mut fixture = Fixture::new("append");
-        let mut lines = vec![turn_line("m1", "u1", 10, "2026-01-01T10:00:00Z", "claude-opus-4-8")];
+        let mut lines = vec![turn_line(
+            "m1",
+            "u1",
+            10,
+            "2026-01-01T10:00:00Z",
+            "claude-opus-4-8",
+        )];
         fixture.write("a.jsonl", &lines);
         fixture.scan();
 
-        lines.push(turn_line("m2", "u2", 20, "2026-01-01T10:01:00Z", "claude-opus-4-8"));
+        lines.push(turn_line(
+            "m2",
+            "u2",
+            20,
+            "2026-01-01T10:01:00Z",
+            "claude-opus-4-8",
+        ));
         fixture.write("a.jsonl", &lines);
 
         let second = fixture.scan();
@@ -523,7 +538,13 @@ mod tests {
         // that came from it can no longer be trusted.
         fixture.write(
             "a.jsonl",
-            &[turn_line("m9", "u9", 99, "2026-01-01T11:00:00Z", "claude-opus-4-8")],
+            &[turn_line(
+                "m9",
+                "u9",
+                99,
+                "2026-01-01T11:00:00Z",
+                "claude-opus-4-8",
+            )],
         );
         fixture.scan();
 
@@ -634,7 +655,10 @@ mod tests {
 
         eprintln!("--- real scan ---");
         eprintln!("  elapsed        {elapsed:?}");
-        eprintln!("  files          {} read, {} skipped, {} failed", stats.files_read, stats.files_skipped, stats.files_failed);
+        eprintln!(
+            "  files          {} read, {} skipped, {} failed",
+            stats.files_read, stats.files_skipped, stats.files_failed
+        );
         eprintln!("  malformed      {}", stats.malformed_lines);
         eprintln!("  sessions       {}", stats.sessions_seen);
         eprintln!("  turns          {turns}");

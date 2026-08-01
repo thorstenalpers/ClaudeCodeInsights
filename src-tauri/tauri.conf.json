@@ -1,59 +1,59 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "ClaudeUsageAnalyzer",
-  "version": "0.1.0",
-  "identifier": "dev.thor.claudeusageanalyzer",
-  "build": {
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
-  },
-  "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "ClaudeUsageAnalyzer",
-        "width": 1280,
-        "height": 840,
-        "minWidth": 900,
-        "minHeight": 600,
-        "resizable": true,
-        "center": true,
-        "visible": false
-      },
-      {
-        "label": "splashscreen",
-        "url": "splashscreen.html",
-        "width": 360,
-        "height": 260,
-        "resizable": false,
-        "center": true,
-        "decorations": false,
-        "shadow": true,
-        "alwaysOnTop": false,
-        "transparent": true
-      }
-    ],
-    "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": ["nsis"],
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "windows": {
-      "webviewInstallMode": {
-        "type": "downloadBootstrapper",
-        "silent": true
-      }
-    }
-  }
+	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+	"productName": "ClaudeUsageAnalyzer",
+	"version": "0.1.0",
+	"identifier": "dev.thor.claudeusageanalyzer",
+	"build": {
+		"frontendDist": "../dist",
+		"devUrl": "http://localhost:5173",
+		"beforeDevCommand": "npm run dev",
+		"beforeBuildCommand": "npm run build"
+	},
+	"app": {
+		"windows": [
+			{
+				"label": "main",
+				"title": "ClaudeUsageAnalyzer",
+				"width": 1280,
+				"height": 840,
+				"minWidth": 900,
+				"minHeight": 600,
+				"resizable": true,
+				"center": true,
+				"visible": false
+			},
+			{
+				"label": "splashscreen",
+				"url": "splashscreen.html",
+				"width": 360,
+				"height": 260,
+				"resizable": false,
+				"center": true,
+				"decorations": false,
+				"shadow": true,
+				"alwaysOnTop": false,
+				"transparent": true
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": ["nsis"],
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		],
+		"windows": {
+			"webviewInstallMode": {
+				"type": "downloadBootstrapper",
+				"silent": true
+			}
+		}
+	}
 }

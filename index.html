@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!--
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<!--
       No CSP meta tag here on purpose. Tauri injects the policy from
       src-tauri/tauri.conf.json, which is the single source of truth; a second
       copy here silently diverges, and its connect-src blocked Vite's HMR socket
       in dev.
     -->
-    <title>ClaudeUsageAnalyzer</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+		<title>ClaudeUsageAnalyzer</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script type="module" src="/src/main.ts"></script>
+	</body>
 </html>

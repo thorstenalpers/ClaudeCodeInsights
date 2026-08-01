@@ -118,7 +118,10 @@ impl AgentDispatch {
                 .get("agentType")
                 .and_then(Value::as_str)
                 .map(str::to_owned),
-            status: value.get("status").and_then(Value::as_str).map(str::to_owned),
+            status: value
+                .get("status")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
             total_tokens: value.get("totalTokens").and_then(Value::as_i64),
             total_duration_ms: value.get("totalDurationMs").and_then(Value::as_i64),
             tool_use_count: value.get("totalToolUseCount").and_then(Value::as_i64),

@@ -116,7 +116,10 @@ pub fn recompute(conn: &Connection, map: &CategoryMap) -> Result<usize> {
         })?;
         for row in rows {
             let (session_id, tool, calls) = row?;
-            per_session.entry(session_id).or_default().push((tool, calls));
+            per_session
+                .entry(session_id)
+                .or_default()
+                .push((tool, calls));
         }
     }
 
@@ -196,8 +199,10 @@ mod tests {
 
     #[test]
     fn running_things_without_editing_is_ops() {
-        let profile =
-            profile_from_counts(&counts(&[("Bash", 9), ("Read", 1)]), &CategoryMap::default());
+        let profile = profile_from_counts(
+            &counts(&[("Bash", 9), ("Read", 1)]),
+            &CategoryMap::default(),
+        );
         assert_eq!(classify(&profile), Activity::Ops);
     }
 

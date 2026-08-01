@@ -126,12 +126,18 @@ mod tests {
         let custom = r#"{"type":"custom-title","sessionId":"s1","customTitle":"Written"}"#;
 
         let after_ai_then_custom = parse_file(&transcript("t1", None, &[ai, custom]), 0).unwrap();
-        assert_eq!(after_ai_then_custom.sessions["s1"].topic.as_deref(), Some("Written"));
+        assert_eq!(
+            after_ai_then_custom.sessions["s1"].topic.as_deref(),
+            Some("Written")
+        );
 
         // And the other way round: an inferred title must not overwrite one the
         // user wrote, whatever the order in the file.
         let after_custom_then_ai = parse_file(&transcript("t2", None, &[custom, ai]), 0).unwrap();
-        assert_eq!(after_custom_then_ai.sessions["s1"].topic.as_deref(), Some("Written"));
+        assert_eq!(
+            after_custom_then_ai.sessions["s1"].topic.as_deref(),
+            Some("Written")
+        );
     }
 
     #[test]
@@ -193,7 +199,10 @@ mod tests {
         );
 
         let parsed = parse_file(&path, 2).unwrap();
-        assert_eq!(parsed.line_count, 3, "the count still covers the whole file");
+        assert_eq!(
+            parsed.line_count, 3,
+            "the count still covers the whole file"
+        );
         assert_eq!(parsed.turns.len(), 1);
         assert_eq!(parsed.turns[0].message_id.as_deref(), Some("m3"));
     }

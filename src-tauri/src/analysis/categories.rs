@@ -24,10 +24,20 @@ impl Default for CategoryMap {
                 "exploration",
                 &["Read", "Glob", "Grep", "NotebookRead", "ToolSearch"],
             ),
-            ("code_change", &["Edit", "MultiEdit", "Write", "NotebookEdit"]),
+            (
+                "code_change",
+                &["Edit", "MultiEdit", "Write", "NotebookEdit"],
+            ),
             (
                 "execution",
-                &["Bash", "PowerShell", "BashOutput", "KillShell", "Task", "Agent"],
+                &[
+                    "Bash",
+                    "PowerShell",
+                    "BashOutput",
+                    "KillShell",
+                    "Task",
+                    "Agent",
+                ],
             ),
             ("delegation", &["Task", "Agent", "SendMessage"]),
             ("research", &["WebFetch", "WebSearch"]),
@@ -49,7 +59,10 @@ impl Default for CategoryMap {
             entries
                 .iter()
                 .map(|(name, tools)| {
-                    ((*name).to_owned(), tools.iter().map(|t| (*t).to_owned()).collect())
+                    (
+                        (*name).to_owned(),
+                        tools.iter().map(|t| (*t).to_owned()).collect(),
+                    )
                 })
                 .collect(),
         )

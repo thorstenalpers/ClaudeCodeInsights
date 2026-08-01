@@ -38,6 +38,7 @@ under the active X / YouTube nav item while the sidebar is expanded. Each action
 **idle** and **running**.
 
 **Idle state**
+
 - One "Show" button (list icon) → `site.navigate`, opens the correct page in the SiteWebView.
 - One "Delete" button (trash icon) → `site.runAction`.
 - Both are disabled until `loginStore.loggedIn[platform]` is true (a `siteLogin` push) and
@@ -48,6 +49,7 @@ under the active X / YouTube nav item while the sidebar is expanded. Each action
   restores the site.
 
 **Running state**
+
 - Progress counter (items deleted so far), sourced from `progress` push events.
 - "Stop" is not available mid-run (the content script runs to completion or error).
 - After `done`/`error`, the result count or error message is shown inline.

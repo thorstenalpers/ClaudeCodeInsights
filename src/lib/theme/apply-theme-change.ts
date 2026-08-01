@@ -13,14 +13,14 @@
  * no business animating anyway.
  */
 export function applyThemeChange(mutate: () => void): void {
-  const style = document.createElement('style');
-  style.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
-  document.head.appendChild(style);
+	const style = document.createElement('style');
+	style.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+	document.head.appendChild(style);
 
-  mutate();
+	mutate();
 
-  // Force the new values to be computed while transitions are still suppressed.
-  void document.body.offsetHeight;
+	// Force the new values to be computed while transitions are still suppressed.
+	void document.body.offsetHeight;
 
-  requestAnimationFrame(() => requestAnimationFrame(() => style.remove()));
+	requestAnimationFrame(() => requestAnimationFrame(() => style.remove()));
 }

@@ -9,18 +9,17 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 
 /** False under `npm run dev` in a browser tab, true inside the app window. */
-export const isHosted: boolean =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+export const isHosted: boolean = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  if (!isHosted) {
-    throw new Error(`No host attached; '${command}' cannot be invoked.`);
-  }
-  return tauriInvoke<T>(command, args);
+	if (!isHosted) {
+		throw new Error(`No host attached; '${command}' cannot be invoked.`);
+	}
+	return tauriInvoke<T>(command, args);
 }
 
 /** Tells the host that this half of the startup is done. */
 export async function reportReady(task: 'frontend' | 'backend'): Promise<void> {
-  if (!isHosted) return;
-  await invoke('set_complete', { task });
+	if (!isHosted) return;
+	await invoke('set_complete', { task });
 }

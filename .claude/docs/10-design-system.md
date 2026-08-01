@@ -33,13 +33,13 @@ If you need `dark:` for a color, you are using the wrong token.
 One family: the system UI font. No web fonts — the app runs offline and should feel like a
 Windows tool, not a website.
 
-| Role | Class |
-|---|---|
-| Page title | `text-2xl font-semibold tracking-tight` |
-| Section | `text-lg font-medium` |
-| Body | `text-sm` |
-| Secondary | `text-sm text-muted-foreground` |
-| Numbers, IDs, paths | `font-mono text-xs tabular-nums` |
+| Role                | Class                                   |
+| ------------------- | --------------------------------------- |
+| Page title          | `text-2xl font-semibold tracking-tight` |
+| Section             | `text-lg font-medium`                   |
+| Body                | `text-sm`                               |
+| Secondary           | `text-sm text-muted-foreground`         |
+| Numbers, IDs, paths | `font-mono text-xs tabular-nums`        |
 
 `tabular-nums` is mandatory on anything that changes live — progress counters that jump as
 they climb look broken.

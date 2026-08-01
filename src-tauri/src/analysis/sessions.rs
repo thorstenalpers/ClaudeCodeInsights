@@ -117,10 +117,14 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
     let mut where_parts: Vec<String> = vec!["s.turn_count > 0".to_owned()];
     let mut params: Vec<Box<dyn ToSql>> = Vec::new();
 
-    if let Some(search) = request.search.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        where_parts.push(
-            "(s.topic LIKE ?  OR s.project_name LIKE ? OR s.git_branch LIKE ?)".to_owned(),
-        );
+    if let Some(search) = request
+        .search
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        where_parts
+            .push("(s.topic LIKE ?  OR s.project_name LIKE ? OR s.git_branch LIKE ?)".to_owned());
         let pattern = format!("%{search}%");
         params.push(Box::new(pattern.clone()));
         params.push(Box::new(pattern.clone()));
@@ -252,19 +256,13 @@ fn attach_tags(conn: &Connection, rows: &mut [SessionRow]) -> Result<()> {
         "SELECT session_id, tag FROM session_tags WHERE session_id IN ({}) ORDER BY tag",
         placeholders(rows.len())
     );
-    let ids: Vec<&dyn ToSql> = rows
-        .iter()
-        .map(|r| &r.session_id as &dyn ToSql)
-        .collect();
+    let ids: Vec<&dyn ToSql> = rows.iter().map(|r| &r.session_id as &dyn ToSql).collect();
 
     let mut by_session: HashMap<String, Vec<String>> = HashMap::new();
     let mut stmt = conn.prepare(&sql)?;
     let mut result = stmt.query(ids.as_slice())?;
     while let Some(row) = result.next()? {
-        by_session
-            .entry(row.get(0)?)
-            .or_default()
-            .push(row.get(1)?);
+        by_session.entry(row.get(0)?).or_default().push(row.get(1)?);
     }
 
     for row in rows.iter_mut() {
@@ -278,7 +276,9 @@ fn attach_tags(conn: &Connection, rows: &mut [SessionRow]) -> Result<()> {
 /// `?,?,?` for a variable-length IN clause. The count comes from the number of
 /// bound values, never from caller text.
 fn placeholders(count: usize) -> String {
-    std::iter::repeat_n("?", count).collect::<Vec<_>>().join(",")
+    std::iter::repeat_n("?", count)
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// The distinct values the filter controls offer, so the UI never invents one.

@@ -126,8 +126,7 @@ pub fn get_transcript(
     limit: usize,
 ) -> Result<TranscriptPage, String> {
     let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
-    transcript::load(&conn, &session_id, offset, limit.clamp(1, 500))
-        .map_err(|e| format!("{e:#}"))
+    transcript::load(&conn, &session_id, offset, limit.clamp(1, 500)).map_err(|e| format!("{e:#}"))
 }
 
 /// Starts a scan if the database holds nothing yet.

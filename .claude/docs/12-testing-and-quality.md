@@ -2,13 +2,13 @@
 
 ## Where each test belongs
 
-| Level               | Tool                               | Covers                                                    |
-|---------------------|------------------------------------|-----------------------------------------------------------|
-| Engine modules      | Vitest + happy-dom + fixtures      | selectors, click loops, retry conditions, stop detection  |
-| Stores, bridge client | Vitest                           | state transitions, error paths, `requestId` correlation   |
-| Components, views   | Vitest + Testing Library           | idle/running/done/error states, confirmation dialog       |
-| Bridge contract     | Vitest **and** xUnit               | TS and C# sides know exactly the same methods             |
-| Host services       | xUnit                              | orchestrator retry logic, URL building, login detection   |
+| Level                 | Tool                          | Covers                                                   |
+| --------------------- | ----------------------------- | -------------------------------------------------------- |
+| Engine modules        | Vitest + happy-dom + fixtures | selectors, click loops, retry conditions, stop detection |
+| Stores, bridge client | Vitest                        | state transitions, error paths, `requestId` correlation  |
+| Components, views     | Vitest + Testing Library      | idle/running/done/error states, confirmation dialog      |
+| Bridge contract       | Vitest **and** xUnit          | TS and C# sides know exactly the same methods            |
+| Host services         | xUnit                         | orchestrator retry logic, URL building, login detection  |
 
 ## The tests this project actually needs
 

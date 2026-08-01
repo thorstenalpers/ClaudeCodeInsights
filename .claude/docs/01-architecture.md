@@ -5,15 +5,15 @@
 The C# host owns the process, the windows, and the WebView2 lifecycle. Everything visible
 and every platform interaction is TypeScript.
 
-| Responsibility                        | C# host | TypeScript |
-|---------------------------------------|---------|------------|
-| Windows, WebView2 lifecycle           | ✓       |            |
-| URL construction, retry loop          | ✓       |            |
-| Navigation of the site WebView        | ✓       |            |
-| Progress relay to the chrome UI       | ✓       |            |
-| App UI                                |         | ✓          |
-| DOM interaction on the platform site  |         | ✓          |
-| Deletion click/confirm/retry          |         | ✓          |
+| Responsibility                       | C# host | TypeScript |
+| ------------------------------------ | ------- | ---------- |
+| Windows, WebView2 lifecycle          | ✓       |            |
+| URL construction, retry loop         | ✓       |            |
+| Navigation of the site WebView       | ✓       |            |
+| Progress relay to the chrome UI      | ✓       |            |
+| App UI                               |         | ✓          |
+| DOM interaction on the platform site |         | ✓          |
+| Deletion click/confirm/retry         |         | ✓          |
 
 The host never touches a platform API and never parses the DOM itself. It only navigates,
 calls `window.__cmp.run()`, and relays what comes back.

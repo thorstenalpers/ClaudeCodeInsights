@@ -10,14 +10,14 @@ The schema is flat; no migrations are needed unless a key is renamed or removed.
 
 ```ts
 type AppSettings = {
-  theme: 'Default' | 'Light' | 'Dark';
-  showLogs: boolean;
-  confirmDeletion: boolean;
-  timeouts: {
-    waitAfterDelete: number;              // ms — pause between individual delete actions
-    waitBetweenRetryDeleteAttempts: number;
-    waitAfterDocumentLoad: number;        // ms — pause after a page reload
-  };
+	theme: 'Default' | 'Light' | 'Dark';
+	showLogs: boolean;
+	confirmDeletion: boolean;
+	timeouts: {
+		waitAfterDelete: number; // ms — pause between individual delete actions
+		waitBetweenRetryDeleteAttempts: number;
+		waitAfterDocumentLoad: number; // ms — pause after a page reload
+	};
 };
 ```
 
@@ -33,8 +33,8 @@ The defaults are conservative by design. Raising them further is always safe; lo
 them risks triggering platform automation detection. The defaults should be documented
 in the UI tooltip for each slider.
 
-| Setting                          | Default  | Notes                                      |
-|----------------------------------|----------|--------------------------------------------|
-| `waitAfterDelete`                | 1 000 ms | Pause after each individual deletion       |
-| `waitBetweenRetryDeleteAttempts` | 1 000 ms | Pause between retries within a page load   |
-| `waitAfterDocumentLoad`          | 2 000 ms | Pause after a page reload before running   |
+| Setting                          | Default  | Notes                                    |
+| -------------------------------- | -------- | ---------------------------------------- |
+| `waitAfterDelete`                | 1 000 ms | Pause after each individual deletion     |
+| `waitBetweenRetryDeleteAttempts` | 1 000 ms | Pause between retries within a page load |
+| `waitAfterDocumentLoad`          | 2 000 ms | Pause after a page reload before running |

@@ -1,22 +1,22 @@
 const COMPACT = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
+	notation: 'compact',
+	maximumFractionDigits: 1
 });
 
 const EXACT = new Intl.NumberFormat('en-US');
 
 /** Short form for headline figures: 1.1B, 4.2K. */
 export function compact(value: number): string {
-  return COMPACT.format(value);
+	return COMPACT.format(value);
 }
 
 /** Full form, for tooltips and anywhere the exact number matters. */
 export function exact(value: number): string {
-  return EXACT.format(value);
+	return EXACT.format(value);
 }
 
 export function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
+	if (!iso) return '—';
+	const date = new Date(iso);
+	return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
 }

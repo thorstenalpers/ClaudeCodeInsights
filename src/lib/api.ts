@@ -1,115 +1,115 @@
 import { invoke } from './ipc.svelte';
 
 export type Overview = {
-  sessions: number;
-  turns: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadTokens: number;
-  cacheWriteTokens: number;
-  activeDays: number;
-  firstTs: string | null;
-  lastTs: string | null;
+	sessions: number;
+	turns: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	activeDays: number;
+	firstTs: string | null;
+	lastTs: string | null;
 };
 
 export type ScanState = {
-  running: boolean;
-  roots: string[];
+	running: boolean;
+	roots: string[];
 };
 
 export type ScanProgress = {
-  filesDone: number;
-  filesTotal: number;
-  currentFile: string | null;
+	filesDone: number;
+	filesTotal: number;
+	currentFile: string | null;
 };
 
 export type ScanStats = {
-  filesTotal: number;
-  filesRead: number;
-  filesSkipped: number;
-  turnsInserted: number;
-  sessionsSeen: number;
-  malformedLines: number;
-  filesFailed: number;
-  firstError: string | null;
+	filesTotal: number;
+	filesRead: number;
+	filesSkipped: number;
+	turnsInserted: number;
+	sessionsSeen: number;
+	malformedLines: number;
+	filesFailed: number;
+	firstError: string | null;
 };
 
 export type SessionRow = {
-  sessionId: string;
-  topic: string | null;
-  projectName: string | null;
-  gitBranch: string | null;
-  firstTs: string | null;
-  lastTs: string | null;
-  durationMinutes: number;
-  model: string | null;
-  turnCount: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadTokens: number;
-  cacheWriteTokens: number;
-  hasSubagents: boolean;
-  activity: string;
-  /** Share per tool category; can sum above 1 because a tool may be in several. */
-  profile: Record<string, number>;
-  tags: string[];
+	sessionId: string;
+	topic: string | null;
+	projectName: string | null;
+	gitBranch: string | null;
+	firstTs: string | null;
+	lastTs: string | null;
+	durationMinutes: number;
+	model: string | null;
+	turnCount: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	hasSubagents: boolean;
+	activity: string;
+	/** Share per tool category; can sum above 1 because a tool may be in several. */
+	profile: Record<string, number>;
+	tags: string[];
 };
 
 export type SessionPage = {
-  rows: SessionRow[];
-  total: number;
-  page: number;
-  pageSize: number;
+	rows: SessionRow[];
+	total: number;
+	page: number;
+	pageSize: number;
 };
 
 export type SessionQuery = {
-  page?: number;
-  pageSize?: number;
-  sort?: string;
-  descending?: boolean;
-  search?: string | null;
-  activities?: string[];
-  models?: string[];
-  tags?: string[];
+	page?: number;
+	pageSize?: number;
+	sort?: string;
+	descending?: boolean;
+	search?: string | null;
+	activities?: string[];
+	models?: string[];
+	tags?: string[];
 };
 
 export type SessionFacets = {
-  models: string[];
-  activities: string[];
-  tags: string[];
+	models: string[];
+	activities: string[];
+	tags: string[];
 };
 
 export type ToolCall = {
-  name: string;
-  input: string;
-  inputTruncated: boolean;
-  result: string | null;
-  resultTruncated: boolean;
-  isError: boolean;
+	name: string;
+	input: string;
+	inputTruncated: boolean;
+	result: string | null;
+	resultTruncated: boolean;
+	isError: boolean;
 };
 
 export type TranscriptTurn = {
-  index: number;
-  role: 'user' | 'assistant';
-  timestamp: string | null;
-  text: string | null;
-  thinking: string | null;
-  toolCalls: ToolCall[];
+	index: number;
+	role: 'user' | 'assistant';
+	timestamp: string | null;
+	text: string | null;
+	thinking: string | null;
+	toolCalls: ToolCall[];
 };
 
 export type TranscriptPage = {
-  turns: TranscriptTurn[];
-  total: number;
-  offset: number;
-  path: string | null;
+	turns: TranscriptTurn[];
+	total: number;
+	offset: number;
+	path: string | null;
 };
 
 export const api = {
-  getOverview: () => invoke<Overview>('get_overview'),
-  getTranscript: (sessionId: string, offset: number, limit: number) =>
-    invoke<TranscriptPage>('get_transcript', { sessionId, offset, limit }),
-  getScanState: () => invoke<ScanState>('get_scan_state'),
-  startScan: () => invoke<boolean>('start_scan'),
-  listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),
-  getSessionFacets: () => invoke<SessionFacets>('get_session_facets'),
+	getOverview: () => invoke<Overview>('get_overview'),
+	getTranscript: (sessionId: string, offset: number, limit: number) =>
+		invoke<TranscriptPage>('get_transcript', { sessionId, offset, limit }),
+	getScanState: () => invoke<ScanState>('get_scan_state'),
+	startScan: () => invoke<boolean>('start_scan'),
+	listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),
+	getSessionFacets: () => invoke<SessionFacets>('get_session_facets')
 };

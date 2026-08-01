@@ -9,6 +9,7 @@ WPF shell with two WebView2 controls, Vite dual build (chrome + content), chrome
 with Zod contract and mock, sidebar navigation, log view, settings, Storybook, CI.
 
 **Acceptance**
+
 - The app starts and shows the sidebar with all sections.
 - `npm run dev` runs fully in the browser against the mock bridge.
 - The contract-sync test is green (bridge methods exist on both TypeScript and C# sides).
@@ -22,6 +23,7 @@ Content script for `deleteComments` and `deleteLikes`, YouTube navigation and lo
 detection, progress push events, retry-across-reloads loop.
 
 **Acceptance**
+
 - Comments are actually deleted on a test account; count is correct.
 - The retry loop runs until `isEmpty()` returns true.
 - Failed pages show a count and reason in the log.
@@ -33,6 +35,7 @@ Content script for `deletePosts`, `deleteReplies`, `deleteReposts`, `deleteLikes
 `deleteFollowing`. Username detection.
 
 **Acceptance**
+
 - All five actions delete on a test account; count correct for each.
 - Conservative wait times are the default; a run over 500 items on a test account does
   not trigger a suspension.
@@ -44,6 +47,7 @@ Installer (Inno Setup), auto-updater feed, confirmation dialog, theme toggle, si
 collapse, persistent log, about dialog with version and links.
 
 **Acceptance**
+
 - Installer installs and uninstalls cleanly.
 - Auto-updater detects a new version and offers the update.
 - All settings persist across restarts.

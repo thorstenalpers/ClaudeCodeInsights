@@ -4,10 +4,17 @@ root = true
 charset = utf-8
 trim_trailing_whitespace = true
 
-[*.{ts,js,svelte,css,html,json,jsonc,yml,yaml,md}]
+# Prettier owns the formatting of these files; the settings here only keep
+# editors from fighting prettier.config.js before it runs.
+[*.{ts,js,svelte,css,html,md}]
+indent_style = tab
+tab_width = 2
+insert_final_newline = true
+
+# Prettier always indents these with spaces, whatever useTabs says.
+[*.{json,jsonc,yml,yaml}]
 indent_style = space
 indent_size = 2
-tab_width = 2
 insert_final_newline = true
 
 [*.{xml,csproj,props,targets,slnx}]
