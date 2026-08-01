@@ -2,14 +2,17 @@
   import { ModeWatcher } from 'mode-watcher';
   import AppSidebar from '$lib/components/app-sidebar.svelte';
   import PageHost from '$lib/components/page-host.svelte';
+  import ScanButton from '$lib/components/scan-button.svelte';
   import ThemeMenu from '$lib/components/theme-menu.svelte';
   import * as Sidebar from '$lib/components/ui/sidebar';
   import { Separator } from '$lib/components/ui/separator';
   import { nav } from '$lib/nav.svelte';
   import { PAGES, SETTINGS_PAGE, pageFor } from '$lib/pages';
+  import { scan } from '$lib/scan.svelte';
   import { theme } from '$lib/theme.svelte';
 
   theme.init();
+  void scan.init();
 
   const current = $derived(pageFor(nav.active));
 </script>
@@ -33,6 +36,7 @@
         <p class="text-muted-foreground truncate text-xs leading-tight">{current.description}</p>
       </div>
       <div class="ml-auto flex items-center gap-1">
+        <ScanButton />
         <ThemeMenu />
       </div>
     </header>

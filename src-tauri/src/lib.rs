@@ -1,3 +1,8 @@
+pub mod commands;
+pub mod ingest;
+pub mod paths;
+pub mod storage;
+
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
@@ -100,7 +105,13 @@ async fn set_complete(
 pub fn run() {
     tauri::Builder::default()
         .manage(Mutex::new(SetupState::default()))
-        .invoke_handler(tauri::generate_handler![set_complete])
+        .manage(commands::ScanGuard::default())
+        .invoke_handler(tauri::generate_handler![
+            set_complete,
+            commands::get_scan_state,
+            commands::start_scan,
+            commands::get_overview,
+        ])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -122,6 +133,8 @@ pub fn run() {
                 std::thread::sleep(READY_TIMEOUT);
                 reveal_main_window(&handle);
             });
+
+            commands::scan_on_first_launch(app.handle());
 
             Ok(())
         })
