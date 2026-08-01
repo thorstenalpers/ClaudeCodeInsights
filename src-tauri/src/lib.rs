@@ -1,3 +1,4 @@
+pub mod analysis;
 pub mod commands;
 pub mod ingest;
 pub mod paths;
@@ -111,6 +112,8 @@ pub fn run() {
             commands::get_scan_state,
             commands::start_scan,
             commands::get_overview,
+            commands::list_sessions,
+            commands::get_session_facets,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

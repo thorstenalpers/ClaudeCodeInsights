@@ -1,3 +1,6 @@
+use crate::analysis::categories::CategoryMap;
+use crate::analysis::sessions::{SessionFacets, SessionPage, SessionQuery};
+use crate::analysis::{activity, sessions};
 use crate::ingest::scanner::{self, ScanProgress, ScanStats};
 use crate::{paths, storage};
 use serde::Serialize;
@@ -83,7 +86,7 @@ fn run_scan(app: &AppHandle) -> Result<ScanStats, String> {
     let emitter = app.clone();
     let mut last_emit = std::time::Instant::now() - std::time::Duration::from_secs(1);
 
-    scanner::scan(&mut conn, &roots, move |progress: ScanProgress| {
+    let stats = scanner::scan(&mut conn, &roots, move |progress: ScanProgress| {
         // A file can be parsed in milliseconds; forwarding every one of them
         // would flood the UI with more events than it can render.
         let finished = progress.files_done == progress.files_total;
@@ -92,7 +95,22 @@ fn run_scan(app: &AppHandle) -> Result<ScanStats, String> {
             let _ = emitter.emit("scan:progress", &progress);
         }
     })
-    .map_err(|e| format!("{e:#}"))
+    .map_err(|e| format!("{e:#}"))?;
+
+    activity::recompute(&conn, &CategoryMap::default()).map_err(|e| format!("{e:#}"))?;
+    Ok(stats)
+}
+
+#[tauri::command]
+pub fn list_sessions(query: SessionQuery) -> Result<SessionPage, String> {
+    let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
+    sessions::query(&conn, &query).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+pub fn get_session_facets() -> Result<SessionFacets, String> {
+    let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
+    sessions::facets(&conn).map_err(|e| format!("{e:#}"))
 }
 
 /// Starts a scan if the database holds nothing yet.
@@ -145,7 +163,9 @@ pub fn get_overview() -> Result<Overview, String> {
         .query_row(
             r#"
             SELECT
-                (SELECT COUNT(*) FROM sessions),
+                -- Sessions holding no turns are title-only leftovers; counting
+                -- them here would disagree with the sessions list.
+                (SELECT COUNT(*) FROM sessions WHERE turn_count > 0),
                 COUNT(*),
                 COALESCE(SUM(input_tokens), 0),
                 COALESCE(SUM(output_tokens), 0),

@@ -100,7 +100,15 @@ where
     });
 
     recompute_derived(conn)?;
-    let sessions: i64 = conn.query_row("SELECT COUNT(*) FROM sessions", [], |r| r.get(0))?;
+
+    // Only sessions that actually hold turns are counted. A transcript can leave
+    // behind a session row carrying nothing but a title, and reporting those
+    // would make this figure disagree with every list that shows real sessions.
+    let sessions: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM sessions WHERE turn_count > 0",
+        [],
+        |r| r.get(0),
+    )?;
     stats.sessions_seen = sessions as usize;
     Ok(stats)
 }

@@ -3,13 +3,16 @@ use rusqlite::Connection;
 
 /// Bumped whenever a migration is added. Forward only — this is a cache that can
 /// be rebuilt from the transcripts at any time, so there is no downgrade path.
-const TARGET_VERSION: i64 = 1;
+pub(crate) const TARGET_VERSION: i64 = 2;
 
 pub fn migrate(conn: &Connection) -> Result<()> {
     let current: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
 
     if current < 1 {
         conn.execute_batch(V1)?;
+    }
+    if current < 2 {
+        conn.execute_batch(V2)?;
     }
 
     conn.pragma_update(None, "user_version", TARGET_VERSION)?;
@@ -122,4 +125,21 @@ CREATE TABLE IF NOT EXISTS session_tags (
 );
 
 CREATE INDEX IF NOT EXISTS ix_session_tags_tag ON session_tags(tag);
+"#;
+
+const V2: &str = r#"
+-- The activity derived from a session's tool mix, materialised so the sessions
+-- list can filter, sort and group on it in SQL.
+--
+-- It depends on the tool-to-category mapping, which the user can edit, so it is
+-- rebuilt whenever that mapping changes. That is cheap because
+-- session_tool_counts holds raw tool names and encodes no mapping itself — the
+-- rebuild never touches a transcript.
+CREATE TABLE IF NOT EXISTS session_activity (
+    session_id   TEXT PRIMARY KEY,
+    activity     TEXT NOT NULL,
+    profile_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS ix_session_activity ON session_activity(activity);
 "#;

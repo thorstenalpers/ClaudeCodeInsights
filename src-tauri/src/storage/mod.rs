@@ -37,7 +37,7 @@ mod tests {
         let version: i64 = conn
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 1);
+        assert_eq!(version, schema::TARGET_VERSION);
 
         // Migrating twice must be a no-op, not an error.
         schema::migrate(&conn).unwrap();
