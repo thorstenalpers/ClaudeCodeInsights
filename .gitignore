@@ -13,6 +13,9 @@ storybook-static/
 .idea/
 *.user
 
+# Tooling scratch
+.playwright-mcp/
+
 # Local data — never commit a usage database
 *.db
 *.db-shm

@@ -4,7 +4,7 @@
     {
       "name": "ui",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "src/ClaudeUsageAnalyzer.UI", "run", "dev"],
+      "runtimeArgs": ["run", "dev"],
       "port": 5173
     }
   ]
