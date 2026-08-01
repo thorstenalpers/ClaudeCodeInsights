@@ -12,7 +12,7 @@ export const PRESETS = [
 export type PresetId = (typeof PRESETS)[number]['id'];
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-const STORAGE_KEY = 'cua.theme.preset';
+const STORAGE_KEY = 'claudeadmin.theme.preset';
 
 function readStoredPreset(): PresetId {
 	if (typeof localStorage === 'undefined') return 'default';

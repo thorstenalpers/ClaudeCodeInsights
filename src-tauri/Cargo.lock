@@ -339,7 +339,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "claude-usage-analyzer"
+name = "claude-admin"
 version = "0.1.0"
 dependencies = [
  "anyhow",

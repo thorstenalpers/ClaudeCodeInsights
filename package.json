@@ -1,5 +1,5 @@
 {
-	"name": "claude-usage-analyzer",
+	"name": "claude-admin",
 	"private": true,
 	"version": "0.1.0",
 	"type": "module",

@@ -26,7 +26,7 @@
 			<span
 				class="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
 			>
-				ClaudeUsageAnalyzer
+				ClaudeAdmin
 			</span>
 		</div>
 	</Sidebar.Header>

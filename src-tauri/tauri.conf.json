@@ -1,8 +1,8 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-	"productName": "ClaudeUsageAnalyzer",
+	"productName": "ClaudeAdmin",
 	"version": "0.1.0",
-	"identifier": "dev.thor.claudeusageanalyzer",
+	"identifier": "dev.thor.claudeadmin",
 	"build": {
 		"frontendDist": "../dist",
 		"devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "ClaudeUsageAnalyzer",
+				"title": "ClaudeAdmin",
 				"width": 1280,
 				"height": 840,
 				"minWidth": 900,

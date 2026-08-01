@@ -180,5 +180,5 @@ finally {
 Write-Host ''
 Write-Host 'Machine is ready.' -ForegroundColor Green
 Write-Host 'Open a new shell so the updated PATH is picked up, then run:' -ForegroundColor DarkGray
-Write-Host '    npm --prefix src/ClaudeUsageAnalyzer.UI install' -ForegroundColor DarkGray
+Write-Host '    npm install' -ForegroundColor DarkGray
 Write-Host ''
