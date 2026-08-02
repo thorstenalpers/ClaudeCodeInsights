@@ -36,7 +36,8 @@ works by compiling a throwaway binary — a green checklist alone does not.
 
 ```bash
 npm install
-npm run app          # the real window, with hot reload
+npm run start        # the real window, with hot reload
+npm run app:exe      # a runnable exe in bin/, without the installer
 npm run app:build    # installer
 ```
 
