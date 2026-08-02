@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, type ToolRow } from '$lib/api';
+	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -8,19 +9,39 @@
 	import { exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { costOfSplit } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { createTable } from '$lib/table.svelte';
 
 	const COLUMNS = [
-		{ id: 'name', label: 'tools.column.name' as const },
-		{ id: 'calls', label: 'tools.column.calls' as const, numeric: true },
+		{ id: 'name', label: 'tools.column.name' as const, info: 'info.calls' as const },
+		{
+			id: 'calls',
+			label: 'tools.column.calls' as const,
+			numeric: true,
+			info: 'info.calls' as const
+		},
 		{
 			id: 'sessions',
 			label: 'tools.column.sessions' as const,
 			numeric: true,
-			class: 'hidden @xl:table-cell'
+			info: 'info.sessions' as const,
+			class: 'hidden @md:table-cell'
+		},
+		{
+			id: 'cost',
+			label: 'tools.column.cost' as const,
+			numeric: true,
+			info: 'info.toolCost' as const
 		}
 	];
+
+	// One hide rule per column, read by both the header and the cell. Keeping
+	// them in two places is how the body drifted out of step with the header.
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
 
 	let rows = $state<ToolRow[] | null>(null);
 	let error = $state<string | null>(null);
@@ -57,7 +78,8 @@
 		{
 			name: (row) => row.name,
 			calls: (row) => row.calls,
-			sessions: (row) => row.sessions
+			sessions: (row) => row.sessions,
+			cost: (row) => costOfSplit(row.byModel)
 		},
 		{ sort: 'calls' }
 	);
@@ -68,7 +90,7 @@
 	const totalCalls = $derived(rows?.reduce((sum, row) => sum + row.calls, 0) ?? 0);
 </script>
 
-<div class="flex h-full flex-col gap-3 p-4">
+<div class="@container flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -93,7 +115,8 @@
 		</Card.Root>
 	{:else if rows}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
-			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
+			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
 			<span class="text-xs text-muted-foreground tabular-nums">
 				{t('tools.count', { count: exact(rows.length) })}
 			</span>
@@ -112,6 +135,7 @@
 							<SortHeader
 								{...column}
 								label={t(column.label)}
+								info={t(column.info)}
 								direction={table.direction(column.id)}
 								rank={table.rank(column.id)}
 								multi={table.sorts.length > 1}
@@ -129,17 +153,23 @@
 								onclear={(id: string) => table.clearFilter(id)}
 							/>
 						{/each}
-						<Table.Head class="hidden w-64 lg:table-cell">{t('tools.column.share')}</Table.Head>
+						<Table.Head class="hidden w-56 @2xl:table-cell">{t('tools.column.share')}</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
 					{#each table.rows as row (row.name)}
 						<Table.Row>
-							<Table.Cell class="font-medium">{row.name}</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
-							<Table.Cell class="hidden text-right tabular-nums md:table-cell"
-								>{exact(row.sessions)}</Table.Cell
+							<Table.Cell class="max-w-56 truncate font-medium" title={row.name}
+								>{row.name}</Table.Cell
 							>
+							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
+							<Table.Cell class={[CLASS.sessions, 'text-right tabular-nums']}>
+								{exact(row.sessions)}
+							</Table.Cell>
+							<Table.Cell class="text-right tabular-nums">
+								{@const cost = costOfSplit(row.byModel)}
+								{cost === null ? t('common.none') : region.format(cost)}
+							</Table.Cell>
 							<Table.Cell class="hidden @2xl:table-cell">
 								<div class="flex items-center gap-2">
 									<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">

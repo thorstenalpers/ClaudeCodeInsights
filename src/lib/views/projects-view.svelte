@@ -5,6 +5,7 @@
 	import { api, type ProjectRow, type ProjectsReport, type TranscriptFile } from '$lib/api';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
+	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -17,39 +18,66 @@
 	import { compact, exact, formatBytes, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { costOfSplit } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { createTable } from '$lib/table.svelte';
 
 	const COLUMNS = [
-		{ id: 'path', label: 'projects.column.project' as const },
-		{ id: 'status', label: 'projects.column.status' as const },
-		{ id: 'sessions', label: 'projects.column.sessions' as const, numeric: true },
+		{ id: 'path', label: 'projects.column.project' as const, info: 'info.status' as const },
+		{ id: 'status', label: 'projects.column.status' as const, info: 'info.status' as const },
+		{
+			id: 'sessions',
+			label: 'projects.column.sessions' as const,
+			numeric: true,
+			info: 'info.sessions' as const
+		},
+		{
+			id: 'cost',
+			label: 'projects.column.cost' as const,
+			numeric: true,
+			info: 'info.cost' as const
+		},
 		{
 			id: 'turns',
 			label: 'projects.column.turns' as const,
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			info: 'info.turns' as const,
+			class: 'hidden @lg:table-cell'
 		},
 		{
 			id: 'inputTokens',
 			label: 'projects.column.input' as const,
 			numeric: true,
-			class: 'hidden @3xl:table-cell'
+			info: 'info.input' as const,
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'outputTokens',
 			label: 'projects.column.output' as const,
 			numeric: true,
-			class: 'hidden @3xl:table-cell'
+			info: 'info.output' as const,
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'transcriptBytes',
 			label: 'projects.column.transcripts' as const,
 			numeric: true,
+			info: 'info.transcripts' as const,
 			class: 'hidden @xl:table-cell'
 		},
-		{ id: 'lastTs', label: 'projects.column.lastActive' as const, class: 'hidden @xl:table-cell' }
+		{
+			id: 'lastTs',
+			label: 'projects.column.lastActive' as const,
+			info: 'info.lastActive' as const,
+			class: 'hidden @md:table-cell'
+		}
 	];
+
+	// One hide rule per column, read by both the header and the cell.
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
 
 	let report = $state<ProjectsReport | null>(null);
 	let loading = $state(true);
@@ -190,6 +218,7 @@
 			path: (row) => row.path,
 			status: (row) => statusOf(row),
 			sessions: (row) => row.sessions,
+			cost: (row) => costOfSplit(row.byModel),
 			turns: (row) => row.turns,
 			inputTokens: (row) => row.inputTokens,
 			outputTokens: (row) => row.outputTokens,
@@ -204,7 +233,7 @@
 	);
 </script>
 
-<div class="flex h-full flex-col gap-3 p-4">
+<div class="@container flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
 			{t('common.noHost')}
@@ -224,8 +253,9 @@
 		</div>
 	{:else if report}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
-			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
-			<span class="text-xs text-muted-foreground">
+			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
+			<span class="hidden text-xs text-muted-foreground @xl:inline">
 				{t('projects.source', { path: report.configPath })}
 			</span>
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
@@ -258,6 +288,7 @@
 							<SortHeader
 								id="path"
 								label={t('projects.column.project')}
+								info={t('info.status')}
 								direction={table.direction('path')}
 								rank={table.rank('path')}
 								multi={table.sorts.length > 1}
@@ -278,6 +309,7 @@
 								<SortHeader
 									{...column}
 									label={t(column.label)}
+									info={t(column.info)}
 									direction={table.direction(column.id)}
 									rank={table.rank(column.id)}
 									multi={table.sorts.length > 1}
@@ -301,7 +333,10 @@
 					<Table.Body>
 						{#each table.rows as project (project.path + (project.transcriptDir ?? ''))}
 							<Table.Row>
-								<Table.Cell class="max-w-96 truncate font-mono text-xs" title={project.path}>
+								<Table.Cell
+									class="max-w-64 truncate font-mono text-xs @xl:max-w-96"
+									title={project.path}
+								>
 									{project.path}
 								</Table.Cell>
 								<Table.Cell>
@@ -313,30 +348,36 @@
 											<Badge variant="destructive">{t('projects.badge.missingDir')}</Badge>
 										{/if}
 										{#if project.duplicateGroup}
-											<Badge variant="secondary">{t('projects.badge.duplicate')}</Badge>
+											<Badge variant="secondary" title={t('projects.badge.duplicate.hint')}>
+												{t('projects.badge.duplicate')}
+											</Badge>
 										{/if}
 									</div>
 								</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">{exact(project.sessions)}</Table.Cell>
-								<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
-									>{exact(project.turns)}</Table.Cell
-								>
-								<Table.Cell class="hidden text-right tabular-nums xl:table-cell">
+								<Table.Cell class="text-right tabular-nums">
+									{@const cost = costOfSplit(project.byModel)}
+									{cost === null ? t('common.none') : region.format(cost)}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
+									{exact(project.turns)}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.inputTokens, 'text-right tabular-nums']}>
 									{compact(project.inputTokens)}
 								</Table.Cell>
-								<Table.Cell class="hidden text-right tabular-nums xl:table-cell">
+								<Table.Cell class={[CLASS.outputTokens, 'text-right tabular-nums']}>
 									{compact(project.outputTokens)}
 								</Table.Cell>
-								<Table.Cell class="hidden text-right tabular-nums md:table-cell">
+								<Table.Cell class={[CLASS.transcriptBytes, 'text-right tabular-nums']}>
 									{#if project.transcriptFiles > 0}
 										{exact(project.transcriptFiles)} · {formatBytes(project.transcriptBytes)}
 									{:else}
 										—
 									{/if}
 								</Table.Cell>
-								<Table.Cell class="hidden whitespace-nowrap md:table-cell"
-									>{formatWhen(project.lastTs)}</Table.Cell
-								>
+								<Table.Cell class={[CLASS.lastTs, 'whitespace-nowrap']}>
+									{formatWhen(project.lastTs)}
+								</Table.Cell>
 								<Table.Cell>
 									<div class="flex justify-end gap-1">
 										{#if project.registered}

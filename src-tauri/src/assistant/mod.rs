@@ -10,18 +10,29 @@ pub mod providers;
 pub mod secrets;
 
 use crate::error::{Error, Result};
+use cli::Answer;
 
 /// The id the local CLI answers to, alongside the hosted providers.
 pub const LOCAL: &str = "claude-code";
 
 /// Routes one question to the chosen source.
-pub fn ask(source: &str, cli_path: Option<&str>, prompt: &str) -> Result<String> {
+///
+/// `model` and `effort` only reach the local CLI; a hosted provider is pinned
+/// to the model its entry names, and pretending otherwise would put a control
+/// on screen that changes nothing.
+pub fn ask(
+    source: &str,
+    cli_path: Option<&str>,
+    prompt: &str,
+    model: Option<&str>,
+    effort: Option<&str>,
+) -> Result<Answer> {
     if prompt.trim().is_empty() {
         return Err(Error::BadRequest("the prompt is empty".to_owned()));
     }
 
     if source == LOCAL {
-        return cli::ask(cli_path, prompt);
+        return cli::ask(cli_path, prompt, model, effort);
     }
 
     let provider = providers::find(source)
@@ -29,7 +40,11 @@ pub fn ask(source: &str, cli_path: Option<&str>, prompt: &str) -> Result<String>
     let key = secrets::get(source)?
         .ok_or_else(|| Error::BadRequest(format!("no API key set for {source}")))?;
 
-    providers::ask(provider, &key, prompt)
+    Ok(Answer {
+        text: providers::ask(provider, &key, prompt)?,
+        model: Some(provider.model.to_owned()),
+        ..Answer::default()
+    })
 }
 
 #[cfg(test)]
@@ -38,13 +53,13 @@ mod tests {
 
     #[test]
     fn an_empty_prompt_never_reaches_a_source() {
-        assert!(ask(LOCAL, None, "   ").is_err());
-        assert!(ask("openai", None, "").is_err());
+        assert!(ask(LOCAL, None, "   ", None, None).is_err());
+        assert!(ask("openai", None, "", None, None).is_err());
     }
 
     #[test]
     fn an_unknown_source_is_refused() {
-        let error = ask("telepathy", None, "question").unwrap_err();
+        let error = ask("telepathy", None, "question", None, None).unwrap_err();
         assert!(matches!(error, Error::BadRequest(_)));
     }
 }

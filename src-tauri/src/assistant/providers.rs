@@ -24,7 +24,7 @@ pub struct Provider {
     pub id: &'static str,
     dialect: Dialect,
     endpoint: &'static str,
-    model: &'static str,
+    pub model: &'static str,
     /// Where a free key can be had, for providers that give one away.
     pub free_key_url: Option<&'static str>,
 }

@@ -160,7 +160,6 @@ export const de: Messages = {
 	'settings.region.system': 'Aus der Sprache',
 	'settings.rate': 'Kurs',
 	'settings.rate.hint': '{currency} pro US-Dollar',
-	'settings.rate.missing': 'Kein Kurs gesetzt, die Beträge bleiben in US-Dollar.',
 
 	'tools.count': '{count} Werkzeuge',
 	'tools.column.name': 'Werkzeug',
@@ -294,5 +293,97 @@ export const de: Messages = {
 	'placeholder.cost.1': 'Kosten pro Modell, mit bearbeitbarer Preistabelle',
 	'placeholder.cost.2': 'Cache-Ersparnis gegenüber dem Preis ohne Cache',
 	'placeholder.assistant.1': 'Fragen zum eigenen Verbrauch in normaler Sprache',
-	'placeholder.assistant.2': 'Antworten ausschließlich aus der lokalen Datenbank'
+	'placeholder.assistant.2': 'Antworten ausschließlich aus der lokalen Datenbank',
+
+	// Cost columns, the status bar, the plan history and voice.
+	'common.resetView': 'Ansicht zurücksetzen',
+	'common.whatIsThis': 'Was ist das?',
+	'common.resetViewHint': 'Alle Filter löschen und die Sortierung zurückstellen',
+	'sessions.column.cost': 'Kosten',
+	'projects.column.cost': 'Kosten',
+	'projects.badge.duplicate.hint':
+		'Eine weitere Registrierung in ~/.claude.json zeigt auf dasselbe Verzeichnis, meist derselbe Pfad einmal mit Schrägstrich und einmal mit umgekehrtem. Beide Zeilen zeigen dieselbe Historie — sie ist geteilt, nicht verdoppelt. Wird eine Registrierung entfernt, bleibt die andere unberührt.',
+	'tools.column.cost': 'Zugerechnete Kosten',
+	'agents.column.cost': 'Kosten',
+	'info.tokens':
+		'Tokens sind die Stücke, die ein Modell liest und schreibt — etwa drei Viertel eines Wortes je Token. Alles auf dieser Seite wird darin gezählt, denn darauf werden die Preise berechnet.',
+	'info.input':
+		'Eingabe-Tokens sind das, was an das Modell ging: deine Nachricht und der Kontext, der mitkam. Sie sind die günstigsten der vier.',
+	'info.output':
+		'Ausgabe-Tokens sind das, was das Modell zurückschrieb. Sie kosten etwa das Fünffache der Eingabe, eine lange Antwort wiegt also schwerer als eine lange Frage.',
+	'info.cacheRead':
+		'Cache-Lesevorgänge sind Kontext, den das Modell schon kannte und nicht erneut geschickt bekam. Sie kosten ein Zehntel frischer Eingabe — deshalb wird eine lange Sitzung günstiger statt stetig teurer.',
+	'info.cacheWrite':
+		'Cache-Schreibvorgänge legen Kontext für später ab. Sie kosten einmalig mehr als einfache Eingabe und rechnen sich beim zweiten Mal, wenn derselbe Kontext gebraucht wird.',
+	'info.cost':
+		'Die Kosten werden hier aus den Token-Zahlen und der Preistabelle gerechnet — nichts wird gespeichert, ein korrigierter Preis korrigiert also jede Zahl auf einmal.',
+	'info.turns':
+		'Ein Zug ist eine Antwort des Modells. Mehrere Werkzeugaufrufe können in einem Zug passieren, Züge zählen also Wechsel, nicht Aktionen.',
+	'info.sessions':
+		'Eine Sitzung ist ein Gespräch, von der ersten bis zur letzten Nachricht. Wird dasselbe Verzeichnis geschlossen und wieder geöffnet, beginnt eine neue.',
+	'info.calls': 'Wie oft dieses Werkzeug aufgerufen wurde, über alle Sitzungen hinweg.',
+	'info.toolCost':
+		'Einem Zug mit drei Werkzeugen wird jedem ein Drittel zugerechnet. In Summe ergeben sie die Tokens der Züge, die Werkzeuge genutzt haben — nichts wird doppelt gezählt.',
+	'info.runs': 'Wie oft ein Subagent dieses Typs gestartet wurde.',
+	'info.duration':
+		'Uhrzeit von der ersten bis zur letzten Nachricht einer Sitzung, nicht die tatsächliche Arbeitszeit.',
+	'info.agentCost':
+		'Aus den eigenen Zügen des Subagenten berechnet. Ein Strich heißt: kein Zug trägt seine Kennung — unbekannt, nicht kostenlos.',
+	'info.activity':
+		'Die Art Arbeit, die eine Sitzung überwiegend geleistet hat, abgeleitet aus den genutzten Werkzeugen.',
+	'info.model':
+		'Das Modell, das geantwortet hat. Die Preise unterscheiden sich je Familie, deshalb zählt die Mischung mehr als die Summe.',
+	'info.transcripts':
+		'Die .jsonl-Dateien, die Claude Code für dieses Projekt geschrieben hat, und ihr Platz auf der Platte.',
+	'info.lastActive': 'Wann der jüngste Zug in diesem Projekt stattfand.',
+	'info.status':
+		'Ob das Projekt noch in ~/.claude.json registriert ist und sein Verzeichnis noch existiert.',
+	'info.share': 'Die Aufrufe dieses Werkzeugs gegen das meistgenutzte, nicht gegen die Summe.',
+	'status.billing.hint': 'Was die Kostenzahlen in diesem Fenster bedeuten.',
+	'status.billing.subscription': 'Abo — Zahlen sind API-Gegenwerte, keine Rechnung',
+	'status.billing.api': 'API',
+	'status.billing.api.hint': 'Zahlung je Token — die Zahlen sind die tatsächlichen Kosten',
+	'status.chat.hint': 'Wer im Assistenten antwortet, und was das kostet.',
+	'status.chat.local': 'Chat läuft über deine Claude-Code-Anmeldung — ohne Aufpreis',
+	'status.chat.hosted': 'Chat geht an {source} und wird über diesen Schlüssel abgerechnet',
+	'status.rate.indicative': 'Richtwert 1 USD = {rate} {currency}',
+	'cost.column.plan': 'Abo',
+	'cost.plans.title': 'Abo im Zeitverlauf',
+	'cost.plans.description':
+		'Was das Abo je Monat gekostet hat, gegen das, was dieselben Monate über die API gekostet hätten. Auf diesem Rechner steht kein Abowechsel geschrieben — die Historie ist das Einzige hier, das du selbst eintragen musst.',
+	'cost.plans.actual': 'Zu API-Preisen',
+	'cost.plans.fee': 'Abogebühr',
+	'cost.plans.add': 'Wechsel eintragen',
+	'cost.plans.from': 'Ab Monat',
+	'cost.plans.empty':
+		'Kein Abowechsel eingetragen, jeder Monat wird also zum aktuellen Abo gerechnet.',
+	'cost.plans.remove': 'Entfernen',
+	'assistant.open': 'Assistenten fragen',
+	'assistant.close': 'Schließen',
+	'settings.rate.indicative': 'Richtwert',
+	'settings.rate.indicative.hint':
+		'Ein in der App hinterlegter Kurs, kein abgerufener — genau genug, um Monate zu vergleichen, nicht genau genug für die Buchhaltung. Trage deinen eigenen ein, um ihn zu ersetzen.',
+	'settings.voice': 'Sprache',
+	'settings.voice.description':
+		'Wie du mit dem Assistenten sprichst, und ob er zurückspricht. Die Erkennung läuft über die Windows-Spracherkennung auf diesem Rechner; nichts wird verschickt.',
+	'settings.voice.input': 'Eingabe',
+	'settings.voice.input.manual': 'Tastatur',
+	'settings.voice.input.manualHint': 'Frage tippen. Die Voreinstellung.',
+	'settings.voice.input.speech': 'Sprache',
+	'settings.voice.input.speechHint': 'Mikrofon drücken und sprechen.',
+	'settings.voice.output': 'Antworten vorlesen',
+	'settings.voice.output.off': 'Aus',
+	'settings.voice.output.on': 'An',
+	'settings.voice.unavailable': 'Auf diesem Rechner ist keine Windows-Spracherkennung verfügbar.',
+	'voice.listen': 'Sprechen',
+	'voice.listening': 'Hört zu…',
+	'voice.stop': 'Stopp',
+	'voice.speak': 'Vorlesen',
+	'voice.failed': 'Spracherkennung fehlgeschlagen: {message}',
+	'assistant.model.default': 'CLI-Vorgabe',
+	'assistant.effort': 'Aufwand',
+	'assistant.effort.default': 'Standardaufwand',
+	'assistant.answeredBy': 'Beantwortet von {model}',
+	'assistant.answerCost': 'diese Antwort kostete {amount}',
+	'status.model.hint': 'Modell und Aufwand, die die letzte Antwort tatsächlich genutzt hat.'
 };

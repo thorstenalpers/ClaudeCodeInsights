@@ -40,6 +40,8 @@ export function createTable<T>(
 	columns: TableColumns<T>,
 	initial: { sort: string; descending?: boolean }
 ) {
+	const startSort: SortEntry = { id: initial.sort, descending: initial.descending ?? true };
+
 	let query = $state('');
 	/** Chosen values per column, for the list kind. */
 	let selected = $state<Record<string, string[]>>({});
@@ -47,7 +49,7 @@ export function createTable<T>(
 	let text = $state<Record<string, string>>({});
 	/** Inclusive bounds per column, for the range kind. Empty means open. */
 	let ranges = $state<Record<string, { min: string; max: string }>>({});
-	let sorts = $state<SortEntry[]>([{ id: initial.sort, descending: initial.descending ?? true }]);
+	let sorts = $state<SortEntry[]>([{ ...startSort }]);
 
 	function distinct(id: string, rows: T[]): string[] {
 		const read = columns[id];
@@ -135,6 +137,26 @@ export function createTable<T>(
 		},
 		get rows() {
 			return rows;
+		},
+		/** True while anything narrows or reorders the list, so the reset has work. */
+		get dirty(): boolean {
+			return (
+				query.trim() !== '' ||
+				Object.values(selected).some((values) => values.length > 0) ||
+				Object.values(text).some((value) => value.trim() !== '') ||
+				Object.values(ranges).some((bounds) => bounds.min !== '' || bounds.max !== '') ||
+				sorts.length !== 1 ||
+				sorts[0].id !== startSort.id ||
+				sorts[0].descending !== startSort.descending
+			);
+		},
+		/** Back to the view the page opens with — search, filters and sort at once. */
+		reset() {
+			query = '';
+			selected = {};
+			text = {};
+			ranges = {};
+			sorts = [{ ...startSort }];
 		},
 		kind,
 		/**

@@ -3,31 +3,23 @@
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import {
-		api,
-		type CliStatus,
-		type ModelRow,
-		type ProviderInfo,
-		type Rhythm,
-		type ToolRow
-	} from '$lib/api';
+	import { api, type CliStatus, type ProviderInfo } from '$lib/api';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { assistant, LOCAL_SOURCE } from '$lib/assistant.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { cli } from '$lib/cli.svelte';
-	import { exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import { costOf } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { voice } from '$lib/voice.svelte';
 
 	let status = $state<CliStatus | null>(null);
 	let providers = $state<ProviderInfo[]>([]);
-	let models = $state<ModelRow[]>([]);
-	let tools = $state<ToolRow[]>([]);
-	let rhythm = $state<Rhythm | null>(null);
+	let models = $state<string[]>([]);
+	let efforts = $state<string[]>([]);
 
 	let question = $state('');
 	let answer = $state<string | null>(null);
@@ -39,6 +31,10 @@
 		void cli.path;
 		void api.getCliStatus(cli.configured).then((value) => (status = value));
 		void api.listProviders().then((value) => (providers = value));
+		void api.localOptions().then(([m, e]) => {
+			models = m;
+			efforts = e;
+		});
 	});
 
 	const usingLocal = $derived(assistant.source === LOCAL_SOURCE);
@@ -51,50 +47,7 @@
 
 	$effect(() => {
 		void scan.dataVersion;
-		if (!isHosted) return;
-		void api.listModels().then((value) => (models = value));
-		void api.listTools().then((value) => (tools = value));
-		void api.getRhythm().then((value) => (rhythm = value));
-	});
-
-	/**
-	 * The figures, as plain text.
-	 *
-	 * Deliberately a summary rather than the database: the question is about
-	 * totals, and a transcript would be both useless here and the one thing this
-	 * app promises never to hand around.
-	 */
-	const context = $derived.by(() => {
-		const lines: string[] = ['Claude Code usage on this machine.', ''];
-
-		if (models.length > 0) {
-			lines.push('Models (turns, input, output, cache read, cost at API rates in USD):');
-			for (const row of models) {
-				lines.push(
-					`- ${row.model}: ${exact(row.turns)} turns, ${exact(row.inputTokens)} in, ` +
-						`${exact(row.outputTokens)} out, ${exact(row.cacheReadTokens)} cache read, ` +
-						`$${costOf(row.model, row).toFixed(2)}`
-				);
-			}
-			lines.push('');
-		}
-
-		if (tools.length > 0) {
-			lines.push('Top tools (calls, sessions):');
-			for (const row of tools.slice(0, 10)) {
-				lines.push(`- ${row.name}: ${exact(row.calls)} calls in ${exact(row.sessions)} sessions`);
-			}
-			lines.push('');
-		}
-
-		if (rhythm) {
-			lines.push(
-				`Active days: ${rhythm.activeDays}, longest streak ${rhythm.longestStreak}, ` +
-					`current streak ${rhythm.currentStreak}.`
-			);
-		}
-
-		return lines.join('\n');
+		void assistant.load();
 	});
 
 	const suggestions = $derived([
@@ -109,11 +62,8 @@
 		error = null;
 		answer = null;
 		try {
-			answer = await api.askClaude(
-				assistant.source,
-				cli.configured,
-				`${context}\n\nQuestion: ${question.trim()}\n\nAnswer briefly, using only the figures above.`
-			);
+			answer = await assistant.ask(question);
+			if (voice.speaks) void voice.speak(answer);
 		} catch (cause) {
 			error = errorMessage(cause);
 		} finally {
@@ -167,6 +117,57 @@
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 
+			{#if usingLocal}
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger>
+						{#snippet child({ props })}
+							<Button {...props} variant="outline" size="sm" class="h-8 gap-1 font-normal">
+								{assistant.model || t('assistant.model.default')}
+								<ChevronDown class="size-3.5 opacity-60" />
+							</Button>
+						{/snippet}
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content align="start" class="w-48">
+						<DropdownMenu.Item onSelect={() => assistant.setModel('')}>
+							<span class="flex-1">{t('assistant.model.default')}</span>
+							{#if assistant.model === ''}<Check class="size-4" />{/if}
+						</DropdownMenu.Item>
+						{#each models as option (option)}
+							<DropdownMenu.Item onSelect={() => assistant.setModel(option)}>
+								<span class="flex-1 capitalize">{option}</span>
+								{#if assistant.model === option}<Check class="size-4" />{/if}
+							</DropdownMenu.Item>
+						{/each}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger>
+						{#snippet child({ props })}
+							<Button {...props} variant="outline" size="sm" class="h-8 gap-1 font-normal">
+								{assistant.effort || t('assistant.effort.default')}
+								<ChevronDown class="size-3.5 opacity-60" />
+							</Button>
+						{/snippet}
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content align="start" class="w-48">
+						<DropdownMenu.Label class="text-xs font-normal text-muted-foreground">
+							{t('assistant.effort')}
+						</DropdownMenu.Label>
+						<DropdownMenu.Item onSelect={() => assistant.setEffort('')}>
+							<span class="flex-1">{t('assistant.effort.default')}</span>
+							{#if assistant.effort === ''}<Check class="size-4" />{/if}
+						</DropdownMenu.Item>
+						{#each efforts as option (option)}
+							<DropdownMenu.Item onSelect={() => assistant.setEffort(option)}>
+								<span class="flex-1">{option}</span>
+								{#if assistant.effort === option}<Check class="size-4" />{/if}
+							</DropdownMenu.Item>
+						{/each}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+			{/if}
+
 			<span class="text-xs text-muted-foreground">
 				{#if usingLocal && status?.path}
 					{t('assistant.found', { path: status.path })}
@@ -213,8 +214,27 @@
 
 		{#if answer}
 			<Card.Root>
-				<Card.Content class="pt-6 text-sm leading-relaxed whitespace-pre-wrap">
-					{answer}
+				<Card.Content class="flex flex-col gap-2 pt-6">
+					<p class="text-sm leading-relaxed whitespace-pre-wrap">{answer}</p>
+					{#if assistant.last}
+						<!-- Reported by the source, not repeated back from the request:
+						     an alias can resolve to a different model than expected. -->
+						<p class="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+							{#if assistant.last.model}
+								<span>{t('assistant.answeredBy', { model: assistant.last.model })}</span>
+							{/if}
+							{#if assistant.last.effort}
+								<span>{t('assistant.effort')}: {assistant.last.effort}</span>
+							{/if}
+							{#if assistant.last.costUsd !== null}
+								<span
+									>{t('assistant.answerCost', {
+										amount: region.format(assistant.last.costUsd)
+									})}</span
+								>
+							{/if}
+						</p>
+					{/if}
 				</Card.Content>
 			</Card.Root>
 		{/if}
@@ -222,7 +242,8 @@
 		<details class="rounded-md border p-3 text-xs">
 			<summary class="cursor-pointer text-muted-foreground">{t('assistant.context')}</summary>
 			<p class="mt-2 text-muted-foreground">{t('assistant.contextNote')}</p>
-			<pre class="mt-2 overflow-x-auto font-mono text-[11px] whitespace-pre-wrap">{context}</pre>
+			<pre
+				class="mt-2 overflow-x-auto font-mono text-[11px] whitespace-pre-wrap">{assistant.context}</pre>
 		</details>
 	{/if}
 </div>

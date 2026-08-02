@@ -23,6 +23,24 @@ pub struct CliStatus {
     pub path: Option<String>,
 }
 
+/// The effort levels the CLI accepts, in the order it lists them.
+pub const EFFORTS: &[&str] = &["low", "medium", "high", "xhigh", "max"];
+
+/// The model aliases worth offering. An empty choice leaves the CLI on
+/// whatever the user configured for it, which is the honest default.
+pub const MODELS: &[&str] = &["opus", "sonnet", "haiku", "fable"];
+
+#[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Answer {
+    pub text: String,
+    /// What the CLI reports it actually used, not what was asked for.
+    pub model: Option<String>,
+    pub effort: Option<String>,
+    /// What this one question cost, as the CLI accounts for it.
+    pub cost_usd: Option<f64>,
+}
+
 /// Where Claude Code installs itself, in the order worth trying.
 fn candidates() -> Vec<PathBuf> {
     let mut paths = Vec::new();
@@ -54,8 +72,15 @@ pub fn status(configured: Option<&str>) -> CliStatus {
 /// Runs one prompt through the CLI and returns what it printed.
 ///
 /// `-p` is the non-interactive form: it answers once and exits, which is the
-/// only shape that fits a button.
-pub fn ask(configured: Option<&str>, prompt: &str) -> Result<String> {
+/// only shape that fits a button. `--output-format json` costs nothing extra
+/// and carries back which model actually answered and what it cost — so the
+/// window can state those rather than repeat what it asked for.
+pub fn ask(
+    configured: Option<&str>,
+    prompt: &str,
+    model: Option<&str>,
+    effort: Option<&str>,
+) -> Result<Answer> {
     if prompt.trim().is_empty() {
         return Err(Error::BadRequest("the prompt is empty".to_owned()));
     }
@@ -63,9 +88,17 @@ pub fn ask(configured: Option<&str>, prompt: &str) -> Result<String> {
     let binary = locate(configured)
         .ok_or_else(|| Error::BadRequest("Claude Code was not found on this machine".to_owned()))?;
 
-    let mut child = Command::new(&binary)
-        .arg("-p")
-        .arg(prompt)
+    let mut command = Command::new(&binary);
+    command.arg("-p").arg(prompt).arg("--output-format").arg("json");
+
+    if let Some(model) = model.filter(|value| !value.trim().is_empty()) {
+        command.arg("--model").arg(model);
+    }
+    if let Some(effort) = effort.filter(|value| EFFORTS.contains(value)) {
+        command.arg("--effort").arg(effort);
+    }
+
+    let mut child = command
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -97,7 +130,38 @@ pub fn ask(configured: Option<&str>, prompt: &str) -> Result<String> {
         }));
     }
 
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    parse(&String::from_utf8_lossy(&output.stdout), effort)
+}
+
+/// Reads the CLI's JSON result, falling back to the raw text.
+///
+/// A future version that changes the envelope should degrade to showing the
+/// answer, not to showing nothing.
+fn parse(stdout: &str, effort: Option<&str>) -> Result<Answer> {
+    let trimmed = stdout.trim();
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed) else {
+        return Ok(Answer {
+            text: trimmed.to_owned(),
+            effort: effort.map(str::to_owned),
+            ..Answer::default()
+        });
+    };
+
+    if value["is_error"].as_bool() == Some(true) {
+        let message = value["result"].as_str().unwrap_or("Claude Code reported an error");
+        return Err(Error::BadRequest(message.to_owned()));
+    }
+
+    Ok(Answer {
+        text: value["result"].as_str().unwrap_or(trimmed).trim().to_owned(),
+        // The key of modelUsage is the full model id, which is the only place
+        // the answer says what actually served it.
+        model: value["modelUsage"]
+            .as_object()
+            .and_then(|usage| usage.keys().next().cloned()),
+        effort: effort.map(str::to_owned),
+        cost_usd: value["total_cost_usd"].as_f64(),
+    })
 }
 
 #[cfg(test)]
@@ -106,7 +170,7 @@ mod tests {
 
     #[test]
     fn an_empty_prompt_is_refused_before_anything_is_launched() {
-        let error = ask(Some("does-not-exist.exe"), "   ").unwrap_err();
+        let error = ask(Some("does-not-exist.exe"), "   ", None, None).unwrap_err();
         assert!(matches!(error, Error::BadRequest(_)));
     }
 
@@ -116,6 +180,33 @@ mod tests {
         let status = status(Some("C:/nowhere/claude.exe"));
         assert!(!status.found);
         assert!(status.path.is_none());
+    }
+
+    #[test]
+    fn the_json_envelope_gives_up_the_model_and_the_cost() {
+        let answer = parse(
+            r#"{"type":"result","is_error":false,"result":"Ok.","total_cost_usd":0.021,
+                "modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":10}}}"#,
+            Some("low"),
+        )
+        .unwrap();
+        assert_eq!(answer.text, "Ok.");
+        assert_eq!(answer.model.as_deref(), Some("claude-haiku-4-5-20251001"));
+        assert_eq!(answer.effort.as_deref(), Some("low"));
+        assert_eq!(answer.cost_usd, Some(0.021));
+    }
+
+    #[test]
+    fn plain_text_still_reaches_the_window() {
+        let answer = parse("just words", None).unwrap();
+        assert_eq!(answer.text, "just words");
+        assert!(answer.model.is_none());
+    }
+
+    #[test]
+    fn a_reported_error_is_an_error() {
+        let failed = parse(r#"{"is_error":true,"result":"no session"}"#, None);
+        assert!(failed.is_err());
     }
 
     #[test]

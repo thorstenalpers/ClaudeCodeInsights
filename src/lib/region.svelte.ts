@@ -42,6 +42,33 @@ const DEFAULT_CURRENCY: Record<Locale, Currency> = {
 	ar: 'AED'
 };
 
+/**
+ * A rough conversion rate per currency, in target units per US dollar.
+ *
+ * Written down rather than fetched, because this app never asks the network.
+ * They are a starting point, not a quote: near enough for "is the plan carrying
+ * its weight", not near enough for accounting. The window says so wherever one
+ * is in use, and the user can overwrite any of them.
+ */
+const INDICATIVE: Record<Currency, number> = {
+	USD: 1,
+	EUR: 0.92,
+	GBP: 0.79,
+	CHF: 0.88,
+	CAD: 1.37,
+	AUD: 1.52,
+	BRL: 5.4,
+	INR: 84,
+	CNY: 7.2,
+	JPY: 150,
+	RUB: 90,
+	AED: 3.67
+};
+
+export function indicativeRate(currency: Currency): number {
+	return INDICATIVE[currency];
+}
+
 const CURRENCY_KEY = 'claudeadmin.currency';
 const RATE_KEY = 'claudeadmin.rate';
 
@@ -81,11 +108,11 @@ class Region {
 
 	/** Dollars are the source, so they never need converting. */
 	get rate(): number {
-		return this.currency === 'USD' ? 1 : (this.rates[this.currency] ?? 1);
+		return this.rates[this.currency] ?? INDICATIVE[this.currency];
 	}
 
-	/** True while a non-dollar currency is showing dollar amounts unconverted. */
-	get needsRate(): boolean {
+	/** True while the figures lean on a written-down rate rather than a set one. */
+	get isIndicative(): boolean {
 		return this.currency !== 'USD' && this.rates[this.currency] === undefined;
 	}
 

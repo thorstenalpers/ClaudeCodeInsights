@@ -5,76 +5,16 @@ pub mod error;
 pub mod ingest;
 pub mod paths;
 pub mod projects;
+pub mod speech;
 pub mod state;
 pub mod storage;
 
-use crate::error::{Error, Result};
-use crate::state::{SetupState, SetupTask};
-use std::sync::Mutex;
-use std::time::Duration;
-use tauri::{AppHandle, Manager};
-
-/// How long the splash waits before showing the window regardless.
-///
-/// A UI that is merely slow is still better than a splash the user cannot get
-/// past, so this is a safety net, not a deadline.
-const READY_TIMEOUT: Duration = Duration::from_secs(15);
-
-fn mark_ready(app: &AppHandle, task: SetupTask) {
-    let both_ready = {
-        let state = app.state::<Mutex<SetupState>>();
-        let Ok(mut setup) = state.lock() else {
-            return;
-        };
-        setup.complete(task)
-    };
-
-    if both_ready {
-        reveal_main_window(app);
-    }
-}
-
-/// Closes the splash and shows the main window. Safe to call more than once —
-/// the handshake and the timeout race, and whichever arrives first wins.
-fn reveal_main_window(app: &AppHandle) {
-    {
-        let state = app.state::<Mutex<SetupState>>();
-        let Ok(mut setup) = state.lock() else {
-            return;
-        };
-        if !setup.claim_reveal() {
-            return;
-        }
-    }
-
-    if let Some(splash) = app.get_webview_window("splashscreen") {
-        let _ = splash.close();
-    }
-    if let Some(main) = app.get_webview_window("main") {
-        let _ = main.show();
-        let _ = main.set_focus();
-    }
-}
-
-/// Reported by each side once it has finished starting up.
-///
-/// The frontend calls this only after its first real paint — a window that is
-/// visible but still blank looks broken, which is why the splash exists at all.
-#[tauri::command]
-async fn set_complete(app: AppHandle, task: String) -> Result<()> {
-    let task = SetupTask::parse(&task)
-        .ok_or_else(|| Error::BadRequest(format!("unknown setup task '{task}'")))?;
-    mark_ready(&app, task);
-    Ok(())
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(Mutex::new(SetupState::default()))
         .manage(state::ScanGuard::default())
         .invoke_handler(tauri::generate_handler![
-            set_complete,
             commands::scan::get_scan_state,
             commands::scan::start_scan,
             commands::overview::get_overview,
@@ -93,9 +33,12 @@ pub fn run() {
             commands::usage::get_rhythm,
             commands::usage::get_series,
             commands::usage::get_series_facets,
+            commands::speech::speech_available,
+            commands::speech::recognize_speech,
             commands::assistant::get_cli_status,
             commands::assistant::ask_claude,
             commands::assistant::list_providers,
+            commands::assistant::local_options,
             commands::assistant::has_api_key,
             commands::assistant::set_api_key,
             commands::assistant::open_free_key_url,
@@ -108,19 +51,6 @@ pub fn run() {
                         .build(),
                 )?;
             }
-
-            // Nothing slow to do yet; the database and the transcript scan will
-            // hang off here, which is why the handshake has a backend half.
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                mark_ready(&handle, SetupTask::Backend);
-            });
-
-            let handle = app.handle().clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(READY_TIMEOUT);
-                reveal_main_window(&handle);
-            });
 
             commands::scan::scan_on_first_launch(app.handle());
 

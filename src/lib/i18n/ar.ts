@@ -157,7 +157,6 @@ export const ar: Messages = {
 	'settings.region.system': 'حسب اللغة',
 	'settings.rate': 'سعر التحويل',
 	'settings.rate.hint': '{currency} لكل دولار أمريكي',
-	'settings.rate.missing': 'لم يُحدَّد سعر تحويل، لذا تبقى المبالغ بالدولار الأمريكي.',
 
 	'tools.count': '{count} أداة',
 	'tools.column.name': 'الأداة',
@@ -288,5 +287,96 @@ export const ar: Messages = {
 	'placeholder.cost.1': 'التكلفة لكل نموذج، مع جدول أسعار قابل للتحرير',
 	'placeholder.cost.2': 'وفورات الذاكرة المؤقتة مقابل السعر بدونها',
 	'placeholder.assistant.1': 'اسأل عن استخدامك بلغة بسيطة',
-	'placeholder.assistant.2': 'إجابات مبنية على قاعدة البيانات المحلية فقط'
+	'placeholder.assistant.2': 'إجابات مبنية على قاعدة البيانات المحلية فقط',
+
+	// Cost columns, the status bar, the plan history and voice.
+	'common.resetView': 'إعادة ضبط العرض',
+	'common.whatIsThis': 'ما هذا؟',
+	'common.resetViewHint': 'مسح كل عوامل التصفية وإعادة الترتيب',
+	'sessions.column.cost': 'التكلفة',
+	'projects.column.cost': 'التكلفة',
+	'projects.badge.duplicate.hint':
+		'Another registration in ~/.claude.json points at the same directory, usually the same path once with a forward slash and once with a backslash. Both rows show the same history — it is shared, not doubled. Removing one registration leaves the other intact.',
+	'tools.column.cost': 'التكلفة المنسوبة',
+	'agents.column.cost': 'التكلفة',
+	'info.tokens':
+		'Tokens are the pieces a model reads and writes — roughly three quarters of a word each. Everything on this page is counted in them, because that is what the rates are charged on.',
+	'info.input':
+		'Input tokens are what was sent to the model: your message plus whatever context came with it. They are the cheapest of the four.',
+	'info.output':
+		'Output tokens are what the model wrote back. They cost about five times what input does, so a long answer weighs more than a long question.',
+	'info.cacheRead':
+		'Cache reads are context the model had already seen and did not have to be sent again. They cost a tenth of fresh input, which is why a long session gets cheaper rather than steadily worse.',
+	'info.cacheWrite':
+		'Cache writes are context being put into the cache for later. They cost more than plain input once, and pay for themselves the second time that context is needed.',
+	'info.cost':
+		'Cost is worked out here from the token counts and the price table — nothing is stored, so correcting a rate corrects every figure at once.',
+	'info.turns':
+		'A turn is one response from the model. Several tool calls can happen inside one turn, so turns count exchanges rather than actions.',
+	'info.sessions':
+		'A session is one conversation, from the first message to the last. Closing and reopening the same directory starts a new one.',
+	'info.calls': 'How many times this tool was invoked, across every session.',
+	'info.toolCost':
+		'A turn that calls three tools is charged a third to each, so these add up to the tokens of the turns that used tools with nothing counted twice.',
+	'info.runs': 'How many times a subagent of this type was started.',
+	'info.duration':
+		'Wall-clock time from the first message of a session to the last, not time spent working.',
+	'info.agentCost':
+		'Priced from the subagent’s own turns. A dash means no turn carries its id — unknown rather than free.',
+	'info.activity':
+		'The kind of work a session mostly did, derived from which tools it reached for.',
+	'info.model':
+		'The model that answered. Rates differ by family, which is why the mix matters more than the total.',
+	'info.transcripts':
+		'The .jsonl files Claude Code wrote for this project, and what they take up on disk.',
+	'info.lastActive': 'When the most recent turn in this project happened.',
+	'info.status':
+		'Whether the project is still registered in ~/.claude.json and its directory still exists.',
+	'info.share': 'This tool’s calls against the busiest tool, not against the total.',
+	'status.billing.hint': 'What the cost figures in this window mean.',
+	'status.billing.subscription': 'subscription — figures are API-equivalent, not a bill',
+	'status.billing.api': 'API',
+	'status.billing.api.hint': 'pay per token — figures are the actual cost',
+	'status.chat.hint': 'Who answers in the Assistant, and what that costs.',
+	'status.chat.local': 'Chat runs on your Claude Code sign-in — no extra charge',
+	'status.chat.hosted': 'Chat goes to {source} and is billed to that key',
+	'status.rate.indicative': 'indicative rate 1 USD = {rate} {currency}',
+	'cost.column.plan': 'الخطة',
+	'cost.plans.title': 'الخطة عبر الزمن',
+	'cost.plans.description':
+		'What the plan cost each month against what the same months would have cost on the API. Nothing on this machine records a plan change, so the history is the one thing here you have to tell it.',
+	'cost.plans.actual': 'بأسعار الواجهة',
+	'cost.plans.fee': 'رسوم الخطة',
+	'cost.plans.add': 'تسجيل تغيير',
+	'cost.plans.from': 'من شهر',
+	'cost.plans.empty': 'No plan changes recorded, so every month is priced at the current plan.',
+	'cost.plans.remove': 'إزالة',
+	'assistant.open': 'اسأل المساعد',
+	'assistant.close': 'إغلاق',
+	'settings.rate.indicative': 'تقريبي',
+	'settings.rate.indicative.hint':
+		'A rate written into the app, not fetched — near enough to compare months, not near enough for accounting. Type your own to replace it.',
+	'settings.voice': 'الصوت',
+	'settings.voice.description':
+		'How you talk to the assistant, and whether it talks back. Recognition runs on this machine through Windows speech; nothing is sent anywhere.',
+	'settings.voice.input': 'الإدخال',
+	'settings.voice.input.manual': 'لوحة المفاتيح',
+	'settings.voice.input.manualHint': 'Type your question. The default.',
+	'settings.voice.input.speech': 'الصوت',
+	'settings.voice.input.speechHint': 'Press the microphone and speak.',
+	'settings.voice.output': 'قراءة الإجابات بصوت عالٍ',
+	'settings.voice.output.off': 'إيقاف',
+	'settings.voice.output.on': 'تشغيل',
+	'settings.voice.unavailable': 'Windows speech recognition is not available on this machine.',
+	'voice.listen': 'تحدّث',
+	'voice.listening': 'يستمع…',
+	'voice.stop': 'إيقاف',
+	'voice.speak': 'اقرأ بصوت',
+	'voice.failed': 'Speech recognition failed: {message}',
+	'assistant.model.default': 'CLI default',
+	'assistant.effort': 'Effort',
+	'assistant.effort.default': 'default effort',
+	'assistant.answeredBy': 'Answered by {model}',
+	'assistant.answerCost': 'this answer cost {amount}',
+	'status.model.hint': 'The model and effort the last answer actually used.'
 };

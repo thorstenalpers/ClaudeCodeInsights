@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, type AgentRow } from '$lib/api';
+	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -9,27 +10,57 @@
 	import { compact, exact, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { costOfSplit } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { createTable } from '$lib/table.svelte';
 
 	const COLUMNS = [
-		{ id: 'agentType', label: 'agents.column.type' as const },
-		{ id: 'runs', label: 'agents.column.runs' as const, numeric: true },
-		{ id: 'totalTokens', label: 'agents.column.tokens' as const, numeric: true },
+		{ id: 'agentType', label: 'agents.column.type' as const, info: 'info.runs' as const },
+		{
+			id: 'runs',
+			label: 'agents.column.runs' as const,
+			numeric: true,
+			info: 'info.runs' as const
+		},
+		{
+			id: 'totalTokens',
+			label: 'agents.column.tokens' as const,
+			numeric: true,
+			info: 'info.tokens' as const
+		},
+		{
+			id: 'cost',
+			label: 'agents.column.cost' as const,
+			numeric: true,
+			info: 'info.agentCost' as const
+		},
 		{
 			id: 'totalDurationMs',
 			label: 'agents.column.duration' as const,
 			numeric: true,
-			class: 'hidden @xl:table-cell'
+			info: 'info.duration' as const,
+			class: 'hidden @md:table-cell'
 		},
 		{
 			id: 'toolUseCount',
 			label: 'agents.column.toolCalls' as const,
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			info: 'info.calls' as const,
+			class: 'hidden @xl:table-cell'
 		},
-		{ id: 'lastTs', label: 'agents.column.last' as const, class: 'hidden @xl:table-cell' }
+		{
+			id: 'lastTs',
+			label: 'agents.column.last' as const,
+			info: 'info.lastActive' as const,
+			class: 'hidden @lg:table-cell'
+		}
 	];
+
+	// One hide rule per column, read by both the header and the cell.
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
 
 	let rows = $state<AgentRow[] | null>(null);
 	let selected = $state<AgentRow | null>(null);
@@ -68,6 +99,7 @@
 			agentType: (row) => row.agentType,
 			runs: (row) => row.runs,
 			totalTokens: (row) => row.totalTokens,
+			cost: (row) => costOfSplit(row.byModel),
 			totalDurationMs: (row) => row.totalDurationMs,
 			toolUseCount: (row) => row.toolUseCount,
 			lastTs: (row) => row.lastTs
@@ -86,7 +118,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-3 p-4">
+<div class="@container flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -111,7 +143,8 @@
 		</Card.Root>
 	{:else if rows}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
-			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
+			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
 				{t('agents.count', { count: exact(rows.length) })}
 			</span>
@@ -127,6 +160,7 @@
 							<SortHeader
 								{...column}
 								label={t(column.label)}
+								info={t(column.info)}
 								direction={table.direction(column.id)}
 								rank={table.rank(column.id)}
 								multi={table.sorts.length > 1}
@@ -154,15 +188,19 @@
 							<Table.Cell class="text-right tabular-nums" title={exact(row.totalTokens)}>
 								{compact(row.totalTokens)}
 							</Table.Cell>
-							<Table.Cell class="hidden text-right tabular-nums md:table-cell">
+							<Table.Cell class="text-right tabular-nums">
+								{@const cost = costOfSplit(row.byModel)}
+								{cost === null ? t('common.none') : region.format(cost)}
+							</Table.Cell>
+							<Table.Cell class={[CLASS.totalDurationMs, 'text-right tabular-nums']}>
 								{duration(row.totalDurationMs)}
 							</Table.Cell>
-							<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
-								>{exact(row.toolUseCount)}</Table.Cell
-							>
-							<Table.Cell class="hidden whitespace-nowrap md:table-cell"
-								>{formatWhen(row.lastTs)}</Table.Cell
-							>
+							<Table.Cell class={[CLASS.toolUseCount, 'text-right tabular-nums']}>
+								{exact(row.toolUseCount)}
+							</Table.Cell>
+							<Table.Cell class={[CLASS.lastTs, 'whitespace-nowrap']}>
+								{formatWhen(row.lastTs)}
+							</Table.Cell>
 						</Table.Row>
 					{/each}
 				</Table.Body>
@@ -188,6 +226,7 @@
 		</Dialog.Header>
 
 		{#if selected}
+			{@const selectedCost = costOfSplit(selected.byModel)}
 			<dl class="grid grid-cols-2 gap-3 text-sm">
 				<dt class="text-muted-foreground">{t('agents.column.runs')}</dt>
 				<dd class="text-right tabular-nums">{exact(selected.runs)}</dd>
@@ -198,6 +237,11 @@
 				<dt class="text-muted-foreground">{t('agents.detail.perRun')}</dt>
 				<dd class="text-right tabular-nums">
 					{exact(Math.round(selected.totalTokens / Math.max(1, selected.runs)))}
+				</dd>
+
+				<dt class="text-muted-foreground">{t('agents.column.cost')}</dt>
+				<dd class="text-right tabular-nums">
+					{selectedCost === null ? t('common.none') : region.format(selectedCost)}
 				</dd>
 
 				<dt class="text-muted-foreground">{t('agents.column.duration')}</dt>

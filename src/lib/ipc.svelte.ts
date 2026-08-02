@@ -53,9 +53,3 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
 export function errorMessage(cause: unknown): string {
 	return cause instanceof Error ? cause.message : String(cause);
 }
-
-/** Tells the host that this half of the startup is done. */
-export async function reportReady(task: 'frontend' | 'backend'): Promise<void> {
-	if (!isHosted) return;
-	await invoke('set_complete', { task });
-}

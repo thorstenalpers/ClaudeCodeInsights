@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import Info from '@lucide/svelte/icons/info';
 	import Filter from '@lucide/svelte/icons/list-filter';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -8,6 +9,7 @@
 	import { api, type SessionFacets, type SessionPage } from '$lib/api';
 	import ActivityBadge from '$lib/components/activity-badge.svelte';
 	import DateRangeMenu from '$lib/components/date-range-menu.svelte';
+	import ResetView from '$lib/components/reset-view.svelte';
 	import FilterMenu from '$lib/components/filter-menu.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -24,6 +26,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { nav } from '$lib/nav.svelte';
+	import { costOf } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	type Column = {
@@ -32,38 +36,51 @@
 		/** Sortable columns name the key the host understands. */
 		sort?: string;
 		numeric?: boolean;
+		/** One hide rule, applied to the header and the cell alike. */
 		class?: string;
+		info: MessageKey;
 	};
 
 	const COLUMNS: Column[] = [
-		{ id: 'topic', label: 'sessions.column.topic', sort: 'topic' },
+		{ id: 'topic', label: 'sessions.column.topic', sort: 'topic', info: 'info.sessions' },
 		{
 			id: 'project',
 			label: 'sessions.column.project',
 			sort: 'project',
-			class: 'hidden @2xl:table-cell'
+			info: 'info.status',
+			class: 'hidden @xl:table-cell'
 		},
-		{ id: 'activity', label: 'sessions.column.activity', sort: 'activity', class: 'w-40' },
-		{ id: 'last', label: 'sessions.column.last', sort: 'last' },
+		{
+			id: 'activity',
+			label: 'sessions.column.activity',
+			sort: 'activity',
+			info: 'info.activity',
+			class: 'w-36 hidden @md:table-cell'
+		},
+		{ id: 'last', label: 'sessions.column.last', sort: 'last', info: 'info.lastActive' },
+		{ id: 'cost', label: 'sessions.column.cost', numeric: true, info: 'info.cost' },
 		{
 			id: 'duration',
 			label: 'sessions.column.duration',
 			sort: 'duration',
 			numeric: true,
-			class: 'hidden @3xl:table-cell'
+			info: 'info.duration',
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'turns',
 			label: 'sessions.column.turns',
 			sort: 'turns',
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			info: 'info.turns',
+			class: 'hidden @lg:table-cell'
 		},
 		{
 			id: 'input',
 			label: 'sessions.column.input',
 			sort: 'input',
 			numeric: true,
+			info: 'info.input',
 			class: 'hidden @3xl:table-cell'
 		},
 		{
@@ -71,6 +88,7 @@
 			label: 'sessions.column.output',
 			sort: 'output',
 			numeric: true,
+			info: 'info.output',
 			class: 'hidden @3xl:table-cell'
 		},
 		{
@@ -78,10 +96,21 @@
 			label: 'sessions.column.cache',
 			sort: 'cacheRead',
 			numeric: true,
-			class: 'hidden @3xl:table-cell'
+			info: 'info.cacheRead',
+			class: 'hidden @4xl:table-cell'
 		},
-		{ id: 'model', label: 'sessions.column.model', sort: 'model', class: 'hidden @xl:table-cell' }
+		{
+			id: 'model',
+			label: 'sessions.column.model',
+			sort: 'model',
+			info: 'info.model',
+			class: 'hidden @2xl:table-cell'
+		}
 	];
+
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, column.class ?? ''])
+	);
 
 	const PAGE_SIZE = 25;
 
@@ -218,6 +247,19 @@
 		}
 	}
 
+	function resetView() {
+		searchInput = '';
+		search = '';
+		activities = [];
+		models = [];
+		tags = [];
+		projects = [];
+		branches = [];
+		from = null;
+		to = null;
+		page = 0;
+	}
+
 	const hasFilters = $derived(
 		Boolean(search) ||
 			activities.length + models.length + tags.length + projects.length + branches.length > 0 ||
@@ -247,7 +289,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-3 p-4">
+<div class="@container flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
 			{t('common.noHost')}
@@ -256,10 +298,11 @@
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
 			<Input
 				placeholder={t('sessions.search')}
-				class="max-w-xs"
+				class="h-8 max-w-xs"
 				bind:value={searchInput}
 				oninput={onSearchInput}
 			/>
+			<ResetView show={hasFilters} onreset={resetView} />
 
 			{#if facets}
 				<FilterMenu
@@ -387,6 +430,24 @@
 											{t(column.label)}
 										{/if}
 
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												{#snippet child({ props })}
+													<button
+														{...props}
+														type="button"
+														aria-label={`${t(column.label)} — ${t('common.whatIsThis')}`}
+														class="rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground"
+													>
+														<Info class="size-3" />
+													</button>
+												{/snippet}
+											</Tooltip.Trigger>
+											<Tooltip.Content class="max-w-72 text-xs font-normal">
+												{t(column.info)}
+											</Tooltip.Content>
+										</Tooltip.Root>
+
 										{#if facets && columnFilter(column.id)}
 											{@const filter = columnFilter(column.id)!}
 											<DropdownMenu.Root>
@@ -447,7 +508,7 @@
 								class="cursor-pointer"
 								onclick={() => openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
 							>
-								<Table.Cell class="max-w-[22rem]">
+								<Table.Cell class="max-w-[16rem] @2xl:max-w-[22rem]">
 									<div class="flex items-center gap-2">
 										<span class="truncate font-medium">
 											{row.topic ?? row.sessionId.slice(0, 8)}
@@ -474,14 +535,14 @@
 									{/if}
 								</Table.Cell>
 
-								<Table.Cell class="max-w-[14rem] text-muted-foreground">
+								<Table.Cell class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}>
 									<span class="block truncate">{row.projectName ?? '—'}</span>
 									{#if row.gitBranch}
 										<span class="block truncate font-mono text-xs opacity-70">{row.gitBranch}</span>
 									{/if}
 								</Table.Cell>
 
-								<Table.Cell>
+								<Table.Cell class={CLASS.activity}>
 									<ActivityBadge activity={row.activity} profile={row.profile} />
 								</Table.Cell>
 
@@ -489,19 +550,33 @@
 									{formatWhen(row.lastTs)}
 								</Table.Cell>
 								<Table.Cell class="text-right whitespace-nowrap tabular-nums">
+									{row.model ? region.format(costOf(row.model, row)) : t('common.none')}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.duration, 'text-right whitespace-nowrap tabular-nums']}>
 									{formatDuration(row.durationMinutes)}
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums">{row.turnCount}</Table.Cell>
-								<Table.Cell class="text-right tabular-nums" title={exact(row.inputTokens)}>
+								<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
+									{row.turnCount}
+								</Table.Cell>
+								<Table.Cell
+									class={[CLASS.input, 'text-right tabular-nums']}
+									title={exact(row.inputTokens)}
+								>
 									{compact(row.inputTokens)}
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums" title={exact(row.outputTokens)}>
+								<Table.Cell
+									class={[CLASS.output, 'text-right tabular-nums']}
+									title={exact(row.outputTokens)}
+								>
 									{compact(row.outputTokens)}
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums" title={exact(row.cacheReadTokens)}>
+								<Table.Cell
+									class={[CLASS.cacheRead, 'text-right tabular-nums']}
+									title={exact(row.cacheReadTokens)}
+								>
 									{compact(row.cacheReadTokens)}
 								</Table.Cell>
-								<Table.Cell class="whitespace-nowrap text-muted-foreground">
+								<Table.Cell class={[CLASS.model, 'whitespace-nowrap text-muted-foreground']}>
 									{shortModel(row.model)}
 								</Table.Cell>
 							</Table.Row>

@@ -111,6 +111,15 @@ export type TranscriptPage = {
 	path: string | null;
 };
 
+/** Tokens a row spent on one model, so a mixed row can still be priced. */
+export type ModelTokens = {
+	model: string;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+};
+
 export type ProjectRow = {
 	path: string;
 	registered: boolean;
@@ -126,6 +135,7 @@ export type ProjectRow = {
 	cacheReadTokens: number;
 	cacheWriteTokens: number;
 	lastTs: string | null;
+	byModel: ModelTokens[];
 };
 
 export type ProjectsReport = {
@@ -154,6 +164,8 @@ export type ToolRow = {
 	name: string;
 	calls: number;
 	sessions: number;
+	/** Each turn's tokens shared over the tool calls it made. */
+	byModel: ModelTokens[];
 };
 
 export type ModelRow = {
@@ -168,6 +180,14 @@ export type ModelRow = {
 	lastTs: string | null;
 };
 
+/** What came back, and what actually served it. */
+export type Answer = {
+	text: string;
+	model: string | null;
+	effort: string | null;
+	costUsd: number | null;
+};
+
 export type AgentRow = {
 	agentType: string;
 	runs: number;
@@ -175,6 +195,8 @@ export type AgentRow = {
 	totalDurationMs: number;
 	toolUseCount: number;
 	lastTs: string | null;
+	/** Empty when no turn carries the agent's id, which is not the same as free. */
+	byModel: ModelTokens[];
 };
 
 export type DayRow = { date: string; turns: number };
@@ -256,10 +278,18 @@ export const api = {
 	getSeries: (query: SeriesQuery) => invoke<Series>('get_series', { query }),
 	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets'),
 	getCliStatus: (path: string | null) => invoke<CliStatus>('get_cli_status', { path }),
-	askClaude: (source: string, path: string | null, prompt: string) =>
-		invoke<string>('ask_claude', { source, path, prompt }),
+	askClaude: (
+		source: string,
+		path: string | null,
+		prompt: string,
+		model: string | null,
+		effort: string | null
+	) => invoke<Answer>('ask_claude', { source, path, prompt, model, effort }),
+	localOptions: () => invoke<[string[], string[]]>('local_options'),
 	listProviders: () => invoke<ProviderInfo[]>('list_providers'),
 	hasApiKey: (provider: string) => invoke<boolean>('has_api_key', { provider }),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
-	openFreeKeyUrl: (provider: string) => invoke<void>('open_free_key_url', { provider })
+	openFreeKeyUrl: (provider: string) => invoke<void>('open_free_key_url', { provider }),
+	speechAvailable: () => invoke<boolean>('speech_available'),
+	recognizeSpeech: (locale: string) => invoke<string>('recognize_speech', { locale })
 };

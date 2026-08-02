@@ -1,6 +1,7 @@
 //! Projects as Claude Code sees them: the registrations in `~/.claude.json`
 //! joined with the transcript folders and the figures already in the database.
 
+use crate::analysis::cost::{self, ModelTokens};
 use anyhow::{Context, Result, bail};
 use rusqlite::Connection;
 use serde::Serialize;
@@ -29,6 +30,8 @@ pub struct ProjectRow {
     pub cache_read_tokens: i64,
     pub cache_write_tokens: i64,
     pub last_ts: Option<String>,
+    /// The same tokens split by model, so the window can price the mix.
+    pub by_model: Vec<ModelTokens>,
 }
 
 #[derive(Debug, Serialize)]
@@ -89,6 +92,7 @@ struct DbStats {
     cache_read_tokens: i64,
     cache_write_tokens: i64,
     last_ts: Option<String>,
+    by_model: Vec<ModelTokens>,
 }
 
 fn db_stats_by_project(conn: &Connection) -> Result<HashMap<String, DbStats>> {
@@ -119,6 +123,7 @@ fn db_stats_by_project(conn: &Connection) -> Result<HashMap<String, DbStats>> {
                 cache_read_tokens: row.get(5)?,
                 cache_write_tokens: row.get(6)?,
                 last_ts: row.get(7)?,
+                by_model: Vec::new(),
             },
         ))
     })?;
@@ -135,6 +140,25 @@ fn db_stats_by_project(conn: &Connection) -> Result<HashMap<String, DbStats>> {
         entry.cache_write_tokens += stats.cache_write_tokens;
         if stats.last_ts > entry.last_ts {
             entry.last_ts = stats.last_ts;
+        }
+    }
+
+    for (path, models) in cost::by_project(conn)? {
+        let entry = map.entry(normalize(&path)).or_default();
+        for tokens in models {
+            match entry
+                .by_model
+                .iter_mut()
+                .find(|entry| entry.model == tokens.model)
+            {
+                Some(existing) => {
+                    existing.input_tokens += tokens.input_tokens;
+                    existing.output_tokens += tokens.output_tokens;
+                    existing.cache_read_tokens += tokens.cache_read_tokens;
+                    existing.cache_write_tokens += tokens.cache_write_tokens;
+                }
+                None => entry.by_model.push(tokens),
+            }
         }
     }
     Ok(map)
@@ -247,6 +271,7 @@ pub fn list(conn: &Connection) -> Result<ProjectsReport> {
             cache_read_tokens: db.cache_read_tokens,
             cache_write_tokens: db.cache_write_tokens,
             last_ts: db.last_ts,
+            by_model: db.by_model,
         });
     }
 
@@ -290,6 +315,7 @@ pub fn list(conn: &Connection) -> Result<ProjectsReport> {
                 cache_read_tokens: db.cache_read_tokens,
                 cache_write_tokens: db.cache_write_tokens,
                 last_ts: db.last_ts,
+                by_model: db.by_model,
             });
         }
     }

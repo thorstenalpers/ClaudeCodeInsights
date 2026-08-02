@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { api, type ModelRow, type Series } from '$lib/api';
 	import BarChart from '$lib/components/bar-chart.svelte';
+	import LineChart from '$lib/components/line-chart.svelte';
+	import ResetView from '$lib/components/reset-view.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -17,6 +19,7 @@
 	import {
 		PLANS,
 		billing,
+		type PlanId,
 		costOf,
 		isPriced,
 		plan,
@@ -194,6 +197,19 @@
 		return region.format(value);
 	}
 
+	/** The plan fee against the API-rate cost, month by month. */
+	const planLines = $derived([
+		{ key: t('cost.plans.actual'), values: monthlyTotals.map((value) => value) },
+		{
+			key: t('cost.plans.fee'),
+			values: history.labels.map((month) => plan.monthlyAt(month)),
+			dashed: true
+		}
+	]);
+
+	let newFrom = $state(new Date().toISOString().slice(0, 7));
+	let newPlan = $state<PlanId>(plan.id);
+
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
 	function shortModel(model: string): string {
@@ -201,7 +217,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-3 overflow-auto p-4">
+<div class="@container flex h-full flex-col gap-3 overflow-auto p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -323,7 +339,7 @@
 			<Card.Root data-size="sm" class="shrink-0">
 				<Card.Header class="gap-2">
 					<div class="flex flex-wrap items-center justify-between gap-2">
-						<Card.Title class="text-base">{t('cost.plan')}</Card.Title>
+						<Card.Title class="text-base">{t('cost.plans.title')}</Card.Title>
 						<div class="flex flex-wrap gap-1">
 							{#each PLANS as entry (entry.id)}
 								<Button
@@ -348,13 +364,65 @@
 					</Card.Description>
 				</Card.Header>
 
-				<Card.Content class="overflow-x-auto">
+				<Card.Content class="flex flex-col gap-3 overflow-x-auto">
+					<LineChart labels={history.labels} series={planLines} format={money} />
+
+					<p class="text-xs text-muted-foreground">{t('cost.plans.description')}</p>
+
+					<div class="flex flex-wrap items-end gap-2">
+						<label class="flex flex-col gap-1 text-xs text-muted-foreground">
+							{t('cost.plans.from')}
+							<Input type="month" class="h-8 w-40" bind:value={newFrom} />
+						</label>
+						<div class="flex flex-wrap gap-1">
+							{#each PLANS as entry (entry.id)}
+								<Button
+									variant={newPlan === entry.id ? 'default' : 'outline'}
+									size="sm"
+									class="h-8 font-normal"
+									onclick={() => (newPlan = entry.id)}
+								>
+									{t(`cost.plan.${entry.id}`)}
+								</Button>
+							{/each}
+						</div>
+						<Button
+							size="sm"
+							class="h-8"
+							disabled={!/^\d{4}-\d{2}$/.test(newFrom)}
+							onclick={() => plan.record(newFrom, newPlan)}
+						>
+							{t('cost.plans.add')}
+						</Button>
+					</div>
+
+					{#if plan.periods.length === 0}
+						<p class="text-xs text-muted-foreground">{t('cost.plans.empty')}</p>
+					{:else}
+						<div class="flex flex-wrap gap-1">
+							{#each plan.periods as period (period.from)}
+								<Badge variant="secondary" class="gap-1 font-normal">
+									<span class="tabular-nums">{period.from}</span>
+									<span>· {t(`cost.plan.${period.id}`)}</span>
+									<button
+										type="button"
+										aria-label={t('cost.plans.remove')}
+										class="ml-0.5 opacity-60 transition-opacity hover:opacity-100"
+										onclick={() => plan.forget(period.from)}
+									>
+										×
+									</button>
+								</Badge>
+							{/each}
+						</div>
+					{/if}
+
 					<Table.Root>
 						<Table.Header>
 							<Table.Row>
 								<Table.Head>{t('cost.month')}</Table.Head>
 								<Table.Head class="text-right">{t('cost.column.cost')}</Table.Head>
-								<Table.Head class="text-right">{t('cost.plan')}</Table.Head>
+								<Table.Head class="text-right">{t('cost.column.plan')}</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -365,7 +433,7 @@
 										{money(monthlyTotals[index])}
 									</Table.Cell>
 									<Table.Cell class="text-right text-muted-foreground tabular-nums">
-										{money(plan.monthly)}
+										{money(plan.monthlyAt(month))} · {t(`cost.plan.${plan.at(month)}`)}
 									</Table.Cell>
 								</Table.Row>
 							{/each}
@@ -374,6 +442,11 @@
 				</Card.Content>
 			</Card.Root>
 		{/if}
+
+		<div class="flex shrink-0 flex-wrap items-center gap-2">
+			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
+		</div>
 
 		<div
 			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
@@ -453,8 +526,8 @@
 		</div>
 
 		<p class="shrink-0 text-xs text-muted-foreground">
-			{#if region.needsRate}
-				{t('settings.rate.missing')}
+			{#if region.isIndicative}
+				{t('settings.rate.indicative.hint')}
 			{/if}
 			{t(billing.mode === 'subscription' ? 'cost.noteSubscription' : 'cost.note')}
 		</p>

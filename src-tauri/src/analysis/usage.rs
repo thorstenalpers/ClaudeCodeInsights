@@ -4,6 +4,7 @@
 //! read are already the materialised form, and a second cache would be one more
 //! thing to invalidate after a scan.
 
+use crate::analysis::cost::{self, ModelTokens};
 use anyhow::Result;
 use rusqlite::Connection;
 use serde::Serialize;
@@ -14,6 +15,8 @@ pub struct ToolRow {
     pub name: String,
     pub calls: i64,
     pub sessions: i64,
+    /// The turns that reached for this tool, shared out over their calls.
+    pub by_model: Vec<ModelTokens>,
 }
 
 #[derive(Debug, Serialize)]
@@ -39,6 +42,9 @@ pub struct AgentRow {
     pub total_duration_ms: i64,
     pub tool_use_count: i64,
     pub last_ts: Option<String>,
+    /// The subagent's own turns, so its cost is priced per model rather than
+    /// from the blended total the transcript reports.
+    pub by_model: Vec<ModelTokens>,
 }
 
 /// Tool calls per tool, with the number of sessions that reached for it.
@@ -58,9 +64,16 @@ pub fn tools(conn: &Connection) -> Result<Vec<ToolRow>> {
             name: row.get(0)?,
             calls: row.get(1)?,
             sessions: row.get(2)?,
+            by_model: Vec::new(),
         })
     })?;
-    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+
+    let mut rows = rows.collect::<Result<Vec<_>, _>>()?;
+    let mut split = cost::by_tool(conn)?;
+    for row in &mut rows {
+        row.by_model = split.remove(&row.name).unwrap_or_default();
+    }
+    Ok(rows)
 }
 
 /// Token totals per model. Cost stays out of here on purpose — it is derived
@@ -119,9 +132,16 @@ pub fn agents(conn: &Connection) -> Result<Vec<AgentRow>> {
             total_duration_ms: row.get(3)?,
             tool_use_count: row.get(4)?,
             last_ts: row.get(5)?,
+            by_model: Vec::new(),
         })
     })?;
-    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+
+    let mut rows = rows.collect::<Result<Vec<_>, _>>()?;
+    let mut split = cost::by_agent_type(conn)?;
+    for row in &mut rows {
+        row.by_model = split.remove(&row.agent_type).unwrap_or_default();
+    }
+    Ok(rows)
 }
 
 #[cfg(test)]

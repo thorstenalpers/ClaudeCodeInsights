@@ -24,7 +24,7 @@ API keys live in the Windows credential store and never reach the window.
   activity it was mostly spent on derived from its tool calls.
 - **Transcript replay** — click a session for the full conversation: messages,
   thinking blocks, and tool calls paired with their results.
-- **Projects** _(in progress)_ — analyse, tidy and remove the projects Claude
+- **Projects** _(in progress)_ — analyze, tidy and remove the projects Claude
   Code has registered.
 
 ## Requirements
@@ -57,7 +57,7 @@ price entry shows `n/a`, never `$0.00` — an unknown cost is not a zero one.
 ## Contributing
 
 Architecture and conventions are in [AGENTS.md](AGENTS.md) and
-[.claude/docs/](.claude/docs/). [03-decisions.md](.claude/docs/03-decisions.md)
+[.claude/docs/](.claude/docs). [03-decisions.md](.claude/docs/03-decisions.md)
 records why things are as they are; worth reading before changing something that
 looks odd.
 

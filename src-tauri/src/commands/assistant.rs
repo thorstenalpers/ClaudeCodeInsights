@@ -1,4 +1,8 @@
-use crate::assistant::{self, cli::CliStatus, providers::ProviderInfo};
+use crate::assistant::{
+    self,
+    cli::{Answer, CliStatus},
+    providers::ProviderInfo,
+};
 use crate::error::Result;
 
 #[tauri::command]
@@ -27,10 +31,33 @@ pub fn set_api_key(provider: String, key: String) -> Result<()> {
 /// Runs on a worker thread: a hosted call takes seconds, and an invoke that
 /// blocks freezes the window for all of them.
 #[tauri::command]
-pub async fn ask_claude(source: String, path: Option<String>, prompt: String) -> Result<String> {
-    tauri::async_runtime::spawn_blocking(move || assistant::ask(&source, path.as_deref(), &prompt))
-        .await
-        .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
+pub async fn ask_claude(
+    source: String,
+    path: Option<String>,
+    prompt: String,
+    model: Option<String>,
+    effort: Option<String>,
+) -> Result<Answer> {
+    tauri::async_runtime::spawn_blocking(move || {
+        assistant::ask(
+            &source,
+            path.as_deref(),
+            &prompt,
+            model.as_deref(),
+            effort.as_deref(),
+        )
+    })
+    .await
+    .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
+}
+
+/// The model aliases and effort levels the local CLI accepts.
+#[tauri::command]
+pub fn local_options() -> (Vec<&'static str>, Vec<&'static str>) {
+    (
+        assistant::cli::MODELS.to_vec(),
+        assistant::cli::EFFORTS.to_vec(),
+    )
 }
 
 /// Opens the chosen provider's free-key page in the system browser.

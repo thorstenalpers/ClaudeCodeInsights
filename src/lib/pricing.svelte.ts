@@ -145,6 +145,17 @@ export function costOf(model: string, tokens: TokenCounts): number {
 	);
 }
 
+/**
+ * A row that spans several models, priced per model and added up.
+ *
+ * `null` when the split is empty: a row whose tokens were never linked back to
+ * a turn is unknown, not free, and a zero would read as the latter.
+ */
+export function costOfSplit(split: ({ model: string } & TokenCounts)[]): number | null {
+	if (split.length === 0) return null;
+	return split.reduce((sum, entry) => sum + costOf(entry.model, entry), 0);
+}
+
 /** What the same tokens would have cost had nothing been served from cache. */
 export function uncachedCostOf(model: string, tokens: TokenCounts): number {
 	const rate = rateFor(model);
@@ -192,6 +203,7 @@ export const PLANS = [
 export type PlanId = (typeof PLANS)[number]['id'];
 
 const PLAN_KEY = 'claudeadmin.plan';
+const PLAN_HISTORY_KEY = 'claudeadmin.planHistory';
 
 function readStoredPlan(): PlanId {
 	if (typeof localStorage === 'undefined') return 'pro';
@@ -199,8 +211,42 @@ function readStoredPlan(): PlanId {
 	return PLANS.some((plan) => plan.id === stored) ? (stored as PlanId) : 'pro';
 }
 
+/** A plan and the month it started, as `YYYY-MM`. */
+export type PlanPeriod = { from: string; id: PlanId };
+
+function isMonth(value: unknown): value is string {
+	return typeof value === 'string' && /^\d{4}-\d{2}$/.test(value);
+}
+
+function readStoredHistory(): PlanPeriod[] {
+	if (typeof localStorage === 'undefined') return [];
+	try {
+		const raw: unknown = JSON.parse(localStorage.getItem(PLAN_HISTORY_KEY) ?? '[]');
+		if (!Array.isArray(raw)) return [];
+		return raw
+			.filter((entry): entry is PlanPeriod => {
+				if (typeof entry !== 'object' || entry === null) return false;
+				const period = entry as Record<string, unknown>;
+				return isMonth(period.from) && PLANS.some((plan) => plan.id === period.id);
+			})
+			.sort((a, b) => a.from.localeCompare(b.from));
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * The plan in force, and the ones before it.
+ *
+ * A year of usage rarely sat on one plan, so a single monthly figure would
+ * misprice every month before the last upgrade. The history is what the user
+ * remembers signing up for — nothing on the machine records it, so it cannot be
+ * derived and has to be told.
+ */
 class Plan {
 	id = $state<PlanId>(readStoredPlan());
+	/** Sorted by start month, oldest first. */
+	periods = $state<PlanPeriod[]>(readStoredHistory());
 
 	get monthly(): number {
 		return PLANS.find((plan) => plan.id === this.id)?.monthly ?? 0;
@@ -209,6 +255,37 @@ class Plan {
 	set(next: PlanId): void {
 		this.id = next;
 		localStorage.setItem(PLAN_KEY, next);
+	}
+
+	/** The plan that was running in a given `YYYY-MM`; the current one if the
+	 *  month predates every recorded change. */
+	at(month: string): PlanId {
+		let current: PlanId | null = null;
+		for (const period of this.periods) {
+			if (period.from <= month) current = period.id;
+		}
+		return current ?? this.id;
+	}
+
+	monthlyAt(month: string): number {
+		const id = this.at(month);
+		return PLANS.find((plan) => plan.id === id)?.monthly ?? 0;
+	}
+
+	/** One plan per start month: setting the same month again corrects it. */
+	record(from: string, id: PlanId): void {
+		const rest = this.periods.filter((period) => period.from !== from);
+		this.periods = [...rest, { from, id }].sort((a, b) => a.from.localeCompare(b.from));
+		this.save();
+	}
+
+	forget(from: string): void {
+		this.periods = this.periods.filter((period) => period.from !== from);
+		this.save();
+	}
+
+	private save(): void {
+		localStorage.setItem(PLAN_HISTORY_KEY, JSON.stringify(this.periods));
 	}
 }
 

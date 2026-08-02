@@ -1,9 +1,11 @@
 <script lang="ts">
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import Info from '@lucide/svelte/icons/info';
 	import Filter from '@lucide/svelte/icons/list-filter';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { FilterKind } from '$lib/table.svelte';
 
@@ -23,6 +25,8 @@
 		range: { min: string; max: string };
 		numeric?: boolean;
 		class?: string;
+		/** A sentence or three on what the column actually measures. */
+		info?: string;
 		onsort: (id: string, additive: boolean) => void;
 		ontoggle: (id: string, value: string) => void;
 		ontext: (id: string, value: string) => void;
@@ -44,6 +48,7 @@
 		range,
 		numeric = false,
 		class: className,
+		info,
 		onsort,
 		ontoggle,
 		ontext,
@@ -74,6 +79,26 @@
 				<span class="text-[10px] text-muted-foreground tabular-nums">{rank}</span>
 			{/if}
 		</button>
+
+		{#if info}
+			<Tooltip.Provider delayDuration={200}>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<button
+								{...props}
+								type="button"
+								aria-label={`${label} — ${t('common.whatIsThis')}`}
+								class="rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground"
+							>
+								<Info class="size-3" />
+							</button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content class="max-w-72 text-xs font-normal">{info}</Tooltip.Content>
+				</Tooltip.Root>
+			</Tooltip.Provider>
+		{/if}
 
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>

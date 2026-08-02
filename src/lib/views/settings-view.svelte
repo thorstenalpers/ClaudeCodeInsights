@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as Card from '$lib/components/ui/card';
@@ -14,8 +15,14 @@
 	import { isHosted } from '$lib/ipc.svelte';
 	import { CURRENCIES, region, type CurrencySetting } from '$lib/region.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
+	import { voice, type InputMode } from '$lib/voice.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
+	const INPUT_MODES: InputMode[] = ['manual', 'speech'];
+
+	$effect(() => {
+		void voice.check();
+	});
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
 	const LANGUAGES: { id: LocaleSetting; label: string }[] = $derived([
@@ -149,14 +156,24 @@
 					<span class="text-xs text-muted-foreground">
 						{t('settings.rate')} · {t('settings.rate.hint', { currency: region.currency })}
 					</span>
-					<Input
-						type="number"
-						step="0.01"
-						min="0"
-						class="w-32"
-						value={region.rates[region.currency] ?? ''}
-						oninput={onRateInput}
-					/>
+					<div class="flex items-center gap-2">
+						<Input
+							type="number"
+							step="0.01"
+							min="0"
+							class="h-8 w-32"
+							value={region.rate}
+							oninput={onRateInput}
+						/>
+						{#if region.isIndicative}
+							<Badge variant="secondary" class="font-normal">
+								{t('settings.rate.indicative')}
+							</Badge>
+						{/if}
+					</div>
+					<p class="max-w-md text-xs text-muted-foreground">
+						{t('settings.rate.indicative.hint')}
+					</p>
 				</div>
 			{/if}
 		</Card.Content>
@@ -181,6 +198,54 @@
 						: t('settings.cli.missing')}
 				</p>
 			{/if}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root data-size="sm" class="shrink-0">
+		<Card.Header>
+			<Card.Title>{t('settings.voice')}</Card.Title>
+			<Card.Description>{t('settings.voice.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-3">
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">{t('settings.voice.input')}</span>
+				{#each INPUT_MODES as option (option)}
+					<button
+						type="button"
+						class={[
+							'flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors',
+							voice.mode === option ? 'border-primary bg-accent' : 'hover:bg-accent/50',
+							option === 'speech' && voice.available === false && 'opacity-50'
+						]}
+						disabled={option === 'speech' && voice.available === false}
+						onclick={() => voice.setMode(option)}
+					>
+						<span class="flex-1">
+							<span class="font-medium">{t(`settings.voice.input.${option}`)}</span>
+							<span class="block text-xs text-muted-foreground">
+								{t(`settings.voice.input.${option}Hint`)}
+							</span>
+						</span>
+						{#if voice.mode === option}
+							<Check class="size-4" />
+						{/if}
+					</button>
+				{/each}
+				{#if voice.available === false}
+					<p class="text-xs text-muted-foreground">{t('settings.voice.unavailable')}</p>
+				{/if}
+			</div>
+
+			<label class="flex items-center gap-2 text-sm">
+				<input
+					type="checkbox"
+					class="size-4 accent-primary"
+					checked={voice.speaks}
+					onchange={(event: Event) =>
+						voice.setSpeaks((event.currentTarget as HTMLInputElement).checked)}
+				/>
+				{t('settings.voice.output')}
+			</label>
 		</Card.Content>
 	</Card.Root>
 
