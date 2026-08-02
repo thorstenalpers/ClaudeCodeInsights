@@ -18,8 +18,9 @@ Everything stays on the machine. Nothing is uploaded.
 ## Commands
 
 ```bash
-npm run app          # tauri dev: the real window, with HMR
+npm start            # tauri dev: the real window, with HMR
 npm run dev          # frontend only, in a browser, no host attached
+npm run app:exe      # debug exe without installer, copied to bin/
 npm run lint         # prettier --check . && eslint .
 npm run format       # prettier --write .
 npm run check        # svelte-check
@@ -27,8 +28,8 @@ cd src-tauri && cargo test
 cd src-tauri && cargo lint    # clippy in its own target dir
 ```
 
-`npx tauri build --debug --no-bundle` produces a runnable exe without the
-installer, which is the fastest way to see a change in the real window.
+`npm run app:exe` is the fastest way to see a change in the real window without
+a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 
 ## Hard rules
 

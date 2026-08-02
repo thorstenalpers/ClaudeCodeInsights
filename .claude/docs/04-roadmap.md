@@ -15,24 +15,21 @@ State as of 2026-08-01.
   activity with a profile bar, subagent marker, tag display.
 - Session detail: full transcript with messages, thinking, and tool calls paired
   with their results; chips to hide tools or reveal thinking; paged.
-- 38 Rust tests, ESLint with `recommendedTypeChecked`, Prettier, CI on Windows.
+- 43 Rust tests, ESLint with `recommendedTypeChecked`, Prettier, CI on Windows.
+- Project management: registrations from `~/.claude.json` joined with the
+  transcript folders and the scanned figures; missing directories, duplicates
+  (slash/backslash twins) and unregistered transcript folders flagged. Delete
+  transcripts with an exact file-and-size preview, remove a registration, edit
+  the per-project settings JSON — every `~/.claude.json` write goes through a
+  timestamped backup and an atomic replace (`projects.rs`).
+
+- Settings page: mode, colour preset, and per-mode brand colours (primary and
+  accent, foreground derived from luminance) layered above the presets via an
+  injected stylesheet. Everything persists in localStorage across restarts.
 
 ## Placeholder pages
 
-Cost & Models, Projects, Activity, Agents, Tools, Assistant, Settings. Each says
-what it will show.
-
-## Next: project management
-
-The reason for the rename. Ordered from harmless to invasive:
-
-1. **Read.** Projects from `~/.claude.json`: path, whether the directory still
-   exists, sessions, tokens, cost, last activity. Orphans and duplicates flagged.
-2. **Delete transcripts.** Remove a project's `.jsonl` files. Preview the exact
-   files and their sizes before confirming.
-3. **Edit or remove the registration.** Change `~/.claude.json`. A backup is
-   written next to it before every change, without exception.
-4. **Edit per-project settings.** The most invasive; build last.
+Cost & Models, Activity, Agents, Tools, Assistant. Each says what it will show.
 
 ## Open questions
 

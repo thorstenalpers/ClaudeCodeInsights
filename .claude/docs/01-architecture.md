@@ -34,10 +34,21 @@ questions; it holds no domain logic and no rates.
     ├── lib.rs          builder, splash handshake, command registration
     ├── commands.rs     every #[tauri::command]
     ├── paths.rs        every path the app reads or writes
+    ├── projects.rs     ~/.claude.json registrations: list, delete transcripts,
+    │                   edit settings — writes go backup-first, then atomic
     ├── storage/        connection, pragmas, forward-only migrations
     ├── ingest/         transcript reading and the incremental scan
     └── analysis/       categories, activity, session queries, transcript replay
 ```
+
+## IPC
+
+How the two halves talk — commands via `invoke` (request/response), events via
+`emit`/`listen` (push), with the concrete files and handlers on both sides — is
+drawn as a BPMN collaboration of the scan flow in
+[diagrams/ipc-communication.drawio](diagrams/ipc-communication.drawio)
+(rendered: [ipc-communication.svg](diagrams/ipc-communication.svg)): one pool
+per side, sequence flows inside, Tauri IPC as the message flows between them.
 
 ## Startup
 
