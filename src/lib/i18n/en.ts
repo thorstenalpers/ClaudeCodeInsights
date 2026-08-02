@@ -177,6 +177,16 @@ export const en = {
 	'cost.unpriced': 'no rate',
 	'cost.note': 'Cost is derived from the token counts and the published rates, never stored.',
 	'cost.empty': 'Nothing scanned yet.',
+	'cost.totalEquivalent': '{amount} at API rates',
+	'cost.noteSubscription':
+		'On a subscription these tokens are covered by the plan. The figure is what the same work would have cost on the API — a yardstick, not a bill.',
+	'settings.billing': 'Billing',
+	'settings.billing.description':
+		'What the cost figures mean. It changes the wording, never the arithmetic.',
+	'settings.billing.api': 'API',
+	'settings.billing.apiHint': 'Pay per token. The figures are the actual cost.',
+	'settings.billing.subscription': 'Subscription',
+	'settings.billing.subscriptionHint': 'Pro or Max. The figures are API-equivalent value.',
 	'agents.count': '{count} agent types',
 	'agents.column.type': 'Agent',
 	'agents.column.runs': 'Runs',

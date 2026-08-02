@@ -177,6 +177,16 @@ export const fr: Messages = {
 	'cost.unpriced': 'pas de tarif',
 	'cost.note': 'Le coût est dérivé du nombre de jetons et des tarifs publiés, jamais stocké.',
 	'cost.empty': 'Rien analysé pour le moment.',
+	'cost.totalEquivalent': '{amount} aux tarifs API',
+	'cost.noteSubscription':
+		"Avec un abonnement, ces jetons sont couverts par le forfait. Le chiffre correspond à ce que le même travail aurait coûté via l'API — un repère, pas une facture.",
+	'settings.billing': 'Facturation',
+	'settings.billing.description':
+		'Ce que signifient les montants. Cela change le libellé, jamais le calcul.',
+	'settings.billing.api': 'API',
+	'settings.billing.apiHint': 'Paiement au jeton. Les montants sont le coût réel.',
+	'settings.billing.subscription': 'Abonnement',
+	'settings.billing.subscriptionHint': "Pro ou Max. Les montants sont l'équivalent API.",
 	'agents.count': "{count} types d'agents",
 	'agents.column.type': 'Agent',
 	'agents.column.runs': 'Exécutions',

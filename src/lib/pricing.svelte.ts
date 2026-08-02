@@ -8,6 +8,11 @@
  * USD per million tokens, as published for the API. A model that is not listed
  * falls back to the closest family match, and anything unrecognised is priced
  * at zero rather than guessed — a wrong number is worse than an obvious gap.
+ *
+ * On a subscription these figures are not a bill. Tokens are covered by the
+ * plan, and the number is what the same work would have cost on the API — a
+ * yardstick, not an invoice. The billing mode below decides which of the two
+ * the window claims it is showing.
  */
 export type Rate = {
 	input: number;
@@ -72,3 +77,23 @@ export function uncachedCostOf(model: string, tokens: TokenCounts): number {
 		1_000_000
 	);
 }
+
+export type BillingMode = 'api' | 'subscription';
+
+const BILLING_KEY = 'claudeadmin.billing';
+
+class Billing {
+	mode = $state<BillingMode>(readStoredMode());
+
+	set(next: BillingMode): void {
+		this.mode = next;
+		localStorage.setItem(BILLING_KEY, next);
+	}
+}
+
+function readStoredMode(): BillingMode {
+	if (typeof localStorage === 'undefined') return 'api';
+	return localStorage.getItem(BILLING_KEY) === 'subscription' ? 'subscription' : 'api';
+}
+
+export const billing = new Billing();

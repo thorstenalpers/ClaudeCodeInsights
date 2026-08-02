@@ -7,7 +7,7 @@
 	import { compact, exact } from '$lib/format';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import { costOf, isPriced, uncachedCostOf } from '$lib/pricing';
+	import { billing, costOf, isPriced, uncachedCostOf } from '$lib/pricing.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	let rows = $state<ModelRow[] | null>(null);
@@ -92,7 +92,9 @@
 	{:else if rows}
 		<div class="flex shrink-0 flex-wrap items-center gap-3">
 			<span class="text-lg font-semibold tabular-nums">
-				{t('cost.total', { amount: money(totalCost) })}
+				{t(billing.mode === 'subscription' ? 'cost.totalEquivalent' : 'cost.total', {
+					amount: money(totalCost)
+				})}
 			</span>
 			{#if totalSaved > 0}
 				<Badge variant="secondary" class="font-normal">
@@ -154,6 +156,8 @@
 			</Table.Root>
 		</div>
 
-		<p class="shrink-0 text-xs text-muted-foreground">{t('cost.note')}</p>
+		<p class="shrink-0 text-xs text-muted-foreground">
+			{t(billing.mode === 'subscription' ? 'cost.noteSubscription' : 'cost.note')}
+		</p>
 	{/if}
 </div>

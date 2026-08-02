@@ -1,5 +1,6 @@
 use super::db;
 use crate::analysis::rhythm::{self, Rhythm};
+use crate::analysis::series::{self, Series, SeriesFacets, SeriesQuery};
 use crate::analysis::usage::{self, AgentRow, ModelRow, ToolRow};
 use crate::error::Result;
 
@@ -21,4 +22,14 @@ pub fn list_agents() -> Result<Vec<AgentRow>> {
 #[tauri::command]
 pub fn get_rhythm() -> Result<Rhythm> {
     Ok(rhythm::load(&db()?)?)
+}
+
+#[tauri::command]
+pub fn get_series(query: SeriesQuery) -> Result<Series> {
+    Ok(series::load(&db()?, &query)?)
+}
+
+#[tauri::command]
+pub fn get_series_facets() -> Result<SeriesFacets> {
+    Ok(series::facets(&db()?)?)
 }

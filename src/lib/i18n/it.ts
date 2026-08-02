@@ -178,6 +178,16 @@ export const it: Messages = {
 	'cost.note':
 		'Il costo è derivato dal numero di token e dalle tariffe pubblicate, mai memorizzato.',
 	'cost.empty': 'Nessuna scansione finora.',
+	'cost.totalEquivalent': '{amount} alle tariffe API',
+	'cost.noteSubscription':
+		'Con un abbonamento questi token sono coperti dal piano. La cifra è quanto sarebbe costato lo stesso lavoro sull’API: un metro di paragone, non una fattura.',
+	'settings.billing': 'Fatturazione',
+	'settings.billing.description':
+		'Che cosa significano le cifre di costo. Cambia la dicitura, mai il calcolo.',
+	'settings.billing.api': 'API',
+	'settings.billing.apiHint': 'Pagamento a token. Le cifre sono il costo reale.',
+	'settings.billing.subscription': 'Abbonamento',
+	'settings.billing.subscriptionHint': 'Pro o Max. Le cifre sono l’equivalente API.',
 	'agents.count': '{count} tipi di agente',
 	'agents.column.type': 'Agente',
 	'agents.column.runs': 'Esecuzioni',

@@ -90,6 +90,8 @@ pub fn run() {
             commands::usage::list_models,
             commands::usage::list_agents,
             commands::usage::get_rhythm,
+            commands::usage::get_series,
+            commands::usage::get_series_facets,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

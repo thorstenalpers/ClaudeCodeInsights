@@ -5,9 +5,11 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import { LOCALES, i18n, t, type LocaleSetting } from '$lib/i18n/index.svelte';
+	import { billing, type BillingMode } from '$lib/pricing.svelte';
 	import { PRESETS, theme, type BrandToken, type ThemeMode } from '$lib/theme.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
+	const BILLING: BillingMode[] = ['api', 'subscription'];
 
 	const TOKENS: { id: BrandToken; label: string; hint: string }[] = $derived([
 		{ id: 'primary', label: t('settings.brand.primary'), hint: t('settings.brand.primaryHint') },
@@ -44,6 +46,33 @@
 				>
 					{language.label}
 				</Button>
+			{/each}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>{t('settings.billing')}</Card.Title>
+			<Card.Description>{t('settings.billing.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-3">
+			{#each BILLING as option (option)}
+				<button
+					type="button"
+					class="flex items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-accent"
+					class:border-primary={billing.mode === option}
+					onclick={() => billing.set(option)}
+				>
+					<span
+						class="mt-0.5 size-4 shrink-0 rounded-full border-2"
+						class:bg-primary={billing.mode === option}
+						class:border-primary={billing.mode === option}
+					></span>
+					<span class="flex flex-col gap-0.5">
+						<span class="text-sm font-medium">{t(`settings.billing.${option}`)}</span>
+						<span class="text-xs text-muted-foreground">{t(`settings.billing.${option}Hint`)}</span>
+					</span>
+				</button>
 			{/each}
 		</Card.Content>
 	</Card.Root>

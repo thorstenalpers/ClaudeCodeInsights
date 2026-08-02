@@ -176,6 +176,16 @@ export const de: Messages = {
 	'cost.note':
 		'Die Kosten werden aus den Token-Zahlen und den veröffentlichten Preisen abgeleitet, nie gespeichert.',
 	'cost.empty': 'Noch nichts eingelesen.',
+	'cost.totalEquivalent': '{amount} zu API-Preisen',
+	'cost.noteSubscription':
+		'Im Abo sind diese Tokens vom Tarif gedeckt. Die Zahl ist, was dieselbe Arbeit über die API gekostet hätte — ein Maßstab, keine Rechnung.',
+	'settings.billing': 'Abrechnung',
+	'settings.billing.description':
+		'Was die Kostenzahlen bedeuten. Ändert die Beschriftung, nie die Rechnung.',
+	'settings.billing.api': 'API',
+	'settings.billing.apiHint': 'Zahlung pro Token. Die Zahlen sind die tatsächlichen Kosten.',
+	'settings.billing.subscription': 'Abo',
+	'settings.billing.subscriptionHint': 'Pro oder Max. Die Zahlen sind der API-Gegenwert.',
 	'agents.count': '{count} Agententypen',
 	'agents.column.type': 'Agent',
 	'agents.column.runs': 'Läufe',
