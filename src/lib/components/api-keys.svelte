@@ -8,7 +8,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import { openUrl } from '@tauri-apps/plugin-opener';
 
 	let providers = $state<ProviderInfo[]>([]);
 	let stored = $state<Record<string, boolean>>({});
@@ -71,12 +70,11 @@
 			{/if}
 
 			{#if provider.freeKeyUrl}
-				{@const url = provider.freeKeyUrl}
 				<Button
 					variant="ghost"
 					size="sm"
 					class="h-7 gap-1 px-2 text-xs font-normal"
-					onclick={() => void openUrl(url)}
+					onclick={() => void api.openFreeKeyUrl(provider.id)}
 				>
 					<Gift class="size-3.5" />
 					{t('settings.keys.free')}

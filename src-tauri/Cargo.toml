@@ -28,7 +28,6 @@ thiserror = "2"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 keyring = { version = "3.6.3", features = ["windows-native"] }
 reqwest = { version = "0.13.4", default-features = false, features = ["blocking", "json"] }
-tauri-plugin-opener = "2.5.4"
 
 [profile.release]
 # The publish artifact competed against a 224 MB .NET folder; keeping it small

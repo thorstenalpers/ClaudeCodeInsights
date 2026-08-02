@@ -260,5 +260,6 @@ export const api = {
 		invoke<string>('ask_claude', { source, path, prompt }),
 	listProviders: () => invoke<ProviderInfo[]>('list_providers'),
 	hasApiKey: (provider: string) => invoke<boolean>('has_api_key', { provider }),
-	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key })
+	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
+	openFreeKeyUrl: (provider: string) => invoke<void>('open_free_key_url', { provider })
 };

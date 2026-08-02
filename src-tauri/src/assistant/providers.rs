@@ -168,6 +168,28 @@ pub fn ask(provider: &Provider, key: &str, prompt: &str) -> Result<String> {
         .ok_or_else(|| Error::BadRequest("the provider returned no answer".to_owned()))
 }
 
+/// Opens a provider's free-key page in the system browser.
+///
+/// It takes a provider id rather than a URL: the address then comes from the
+/// table above and never from the window, so nothing the frontend can say ends
+/// up as an argument to the shell.
+pub fn open_free_key_url(id: &str) -> Result<()> {
+    let provider = find(id).ok_or_else(|| Error::BadRequest(format!("unknown provider '{id}'")))?;
+    let url = provider
+        .free_key_url
+        .ok_or_else(|| Error::BadRequest(format!("{id} has no free key page")))?;
+
+    #[cfg(windows)]
+    std::process::Command::new("rundll32")
+        .args(["url.dll,FileProtocolHandler", url])
+        .spawn()?;
+
+    #[cfg(not(windows))]
+    std::process::Command::new("xdg-open").arg(url).spawn()?;
+
+    Ok(())
+}
+
 /// Keeps a key out of anything the window will show or log.
 fn strip_key(message: &str, key: &str) -> String {
     if key.is_empty() {
@@ -227,6 +249,13 @@ mod tests {
     fn a_missing_key_never_reaches_the_network() {
         let provider = find("openai").unwrap();
         assert!(ask(provider, "   ", "question").is_err());
+    }
+
+    #[test]
+    fn only_a_known_provider_with_a_free_page_can_be_opened() {
+        assert!(open_free_key_url("nope").is_err());
+        // OpenAI charges, so it has no page to open and must not silently pass.
+        assert!(open_free_key_url("openai").is_err());
     }
 
     #[test]

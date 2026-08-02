@@ -32,3 +32,9 @@ pub async fn ask_claude(source: String, path: Option<String>, prompt: String) ->
         .await
         .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
 }
+
+/// Opens the chosen provider's free-key page in the system browser.
+#[tauri::command]
+pub fn open_free_key_url(provider: String) -> Result<()> {
+    assistant::providers::open_free_key_url(&provider)
+}
