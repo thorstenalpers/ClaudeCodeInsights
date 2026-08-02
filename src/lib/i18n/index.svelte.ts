@@ -1,29 +1,54 @@
 /**
  * The active language, and the lookup every view uses.
  *
- * There is no i18n library behind this: five flat catalogs and a lookup are all
- * the app needs, and the English catalog doubles as the type, so a key that
- * exists nowhere is a compile error rather than a blank spot in the window.
+ * There is no i18n library behind this: flat catalogs and a lookup are all the
+ * app needs, and the English catalog doubles as the type, so a key that exists
+ * nowhere is a compile error rather than a blank spot in the window.
  */
+import { ar } from './ar';
 import { de } from './de';
 import { en, type MessageKey, type Messages } from './en';
 import { es } from './es';
 import { fr } from './fr';
+import { hi } from './hi';
 import { it } from './it';
+import { ru } from './ru';
+import { zh } from './zh';
 
+/** Listed in the order the menu shows them: English first, then by endonym. */
 export const LOCALES = [
 	{ id: 'en', label: 'English' },
+	{ id: 'ar', label: 'العربية' },
 	{ id: 'de', label: 'Deutsch' },
-	{ id: 'fr', label: 'Français' },
 	{ id: 'es', label: 'Español' },
-	{ id: 'it', label: 'Italiano' }
+	{ id: 'fr', label: 'Français' },
+	{ id: 'hi', label: 'हिन्दी' },
+	{ id: 'it', label: 'Italiano' },
+	{ id: 'ru', label: 'Русский' },
+	{ id: 'zh', label: '中文' }
 ] as const;
 
 export type Locale = (typeof LOCALES)[number]['id'];
 /** 'system' follows the OS; anything else is the user's explicit choice. */
 export type LocaleSetting = Locale | 'system';
 
-const CATALOGS: Record<Locale, Messages> = { en, de, fr, es, it };
+const CATALOGS: Record<Locale, Messages> = { en, ar, de, es, fr, hi, it, ru, zh };
+
+/** Scripts that run right to left. The layout mirrors for these. */
+const RTL: ReadonlySet<string> = new Set(['ar']);
+
+const INTL_TAGS: Record<Locale, string> = {
+	en: 'en-US',
+	ar: 'ar-EG',
+	de: 'de-DE',
+	es: 'es-ES',
+	fr: 'fr-FR',
+	hi: 'hi-IN',
+	it: 'it-IT',
+	ru: 'ru-RU',
+	zh: 'zh-CN'
+};
+
 const STORAGE_KEY = 'claudeadmin.locale';
 
 function isLocale(value: unknown): value is Locale {
@@ -56,7 +81,11 @@ class I18n {
 
 	/** A BCP 47 tag for Intl, which wants a region for sensible defaults. */
 	get intlLocale(): string {
-		return { en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' }[this.locale];
+		return INTL_TAGS[this.locale];
+	}
+
+	get isRtl(): boolean {
+		return RTL.has(this.locale);
 	}
 
 	set(next: LocaleSetting): void {
@@ -66,7 +95,7 @@ class I18n {
 		} else {
 			localStorage.setItem(STORAGE_KEY, next);
 		}
-		document.documentElement.lang = this.locale;
+		this.applyDocumentLanguage();
 	}
 
 	/** Looks a message up, filling `{placeholders}` from `params`. */
@@ -78,8 +107,15 @@ class I18n {
 		);
 	}
 
+	/** `lang` for screen readers and hyphenation, `dir` so Arabic mirrors. */
+	private applyDocumentLanguage(): void {
+		const root = document.documentElement;
+		root.lang = this.locale;
+		root.dir = this.isRtl ? 'rtl' : 'ltr';
+	}
+
 	init(): void {
-		document.documentElement.lang = this.locale;
+		this.applyDocumentLanguage();
 	}
 }
 

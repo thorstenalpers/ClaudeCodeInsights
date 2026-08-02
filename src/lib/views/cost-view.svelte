@@ -4,10 +4,14 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Check from '@lucide/svelte/icons/check';
+	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { compact, exact } from '$lib/format';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import { billing, costOf, isPriced, uncachedCostOf } from '$lib/pricing.svelte';
+	import { billing, costOf, isPriced, uncachedCostOf, type BillingMode } from '$lib/pricing.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	let rows = $state<ModelRow[] | null>(null);
@@ -61,6 +65,8 @@
 		}).format(value);
 	}
 
+	const BILLING: BillingMode[] = ['api', 'subscription'];
+
 	function shortModel(model: string): string {
 		return model.replace(/^claude-/, '');
 	}
@@ -101,6 +107,32 @@
 					{t('cost.saved', { amount: money(totalSaved) })}
 				</Badge>
 			{/if}
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="outline" size="sm">
+							{t(`settings.billing.${billing.mode}`)}
+							<ChevronDown class="size-3.5 opacity-60" />
+						</Button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="start" class="w-64">
+					{#each BILLING as option (option)}
+						<DropdownMenu.Item onSelect={() => billing.set(option)}>
+							<span class="flex flex-1 flex-col gap-0.5">
+								<span>{t(`settings.billing.${option}`)}</span>
+								<span class="text-xs text-muted-foreground">
+									{t(`settings.billing.${option}Hint`)}
+								</span>
+							</span>
+							{#if billing.mode === option}
+								<Check class="size-4" />
+							{/if}
+						</DropdownMenu.Item>
+					{/each}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
 				{t('cost.count', { count: exact(rows.length) })}
 			</span>
