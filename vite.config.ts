@@ -11,7 +11,7 @@ export default defineConfig({
 	// window pointing at nothing.
 	clearScreen: false,
 	server: {
-		port: 5173,
+		port: 5177,
 		strictPort: true,
 		host: host || false,
 		hmr: host ? { protocol: 'ws', host, port: 5174 } : undefined,

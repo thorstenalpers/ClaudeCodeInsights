@@ -5,7 +5,7 @@
 	"identifier": "dev.thor.claudeadmin",
 	"build": {
 		"frontendDist": "../build",
-		"devUrl": "http://localhost:5173",
+		"devUrl": "http://localhost:5177",
 		"beforeDevCommand": "npm run dev",
 		"beforeBuildCommand": "npm run build"
 	},
