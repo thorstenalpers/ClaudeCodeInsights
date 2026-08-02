@@ -135,6 +135,13 @@ export const ru: Messages = {
 	'settings.language': 'Язык',
 	'settings.language.description': 'Окно следует языку системы, пока вы не выберете свой.',
 	'settings.language.system': 'Системный',
+	'settings.region': 'Страна и валюта',
+	'settings.region.description':
+		'Тарифы публикуются в долларах США. Для другой валюты нужен курс пересчёта, а это приложение никогда не запрашивает его из сети.',
+	'settings.region.system': 'По языку',
+	'settings.rate': 'Курс',
+	'settings.rate.hint': '{currency} за доллар США',
+	'settings.rate.missing': 'Курс не задан, суммы остаются в долларах США.',
 	'settings.preview': 'Предпросмотр',
 	'settings.preview.primary': 'Основное действие',
 	'settings.preview.outline': 'Контур',

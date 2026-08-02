@@ -137,6 +137,13 @@ export const en = {
 	'settings.language': 'Language',
 	'settings.language.description': 'The window follows your system language until you choose one.',
 	'settings.language.system': 'System',
+	'settings.region': 'Country and currency',
+	'settings.region.description':
+		'Rates are published in US dollars. Another currency needs a conversion rate, and this app never asks the network for one.',
+	'settings.region.system': 'From the language',
+	'settings.rate': 'Rate',
+	'settings.rate.hint': '{currency} per US dollar',
+	'settings.rate.missing': 'No rate set, so amounts are still US dollars.',
 	'settings.preview': 'Preview',
 	'settings.preview.primary': 'Primary action',
 	'settings.preview.outline': 'Outline',

@@ -135,6 +135,13 @@ export const de: Messages = {
 	'settings.language': 'Sprache',
 	'settings.language.description': 'Das Fenster folgt deiner Systemsprache, bis du eine auswählst.',
 	'settings.language.system': 'System',
+	'settings.region': 'Land und Währung',
+	'settings.region.description':
+		'Die Preise sind in US-Dollar veröffentlicht. Eine andere Währung braucht einen Umrechnungskurs, und diese App fragt dafür nie das Netz.',
+	'settings.region.system': 'Aus der Sprache',
+	'settings.rate': 'Kurs',
+	'settings.rate.hint': '{currency} pro US-Dollar',
+	'settings.rate.missing': 'Kein Kurs gesetzt, die Beträge bleiben in US-Dollar.',
 	'settings.preview': 'Vorschau',
 	'settings.preview.primary': 'Primäre Aktion',
 	'settings.preview.outline': 'Umriss',

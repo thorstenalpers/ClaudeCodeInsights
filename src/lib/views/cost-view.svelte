@@ -9,9 +9,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { compact, exact } from '$lib/format';
-	import { i18n, t } from '$lib/i18n/index.svelte';
+	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { billing, costOf, isPriced, uncachedCostOf, type BillingMode } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	let rows = $state<ModelRow[] | null>(null);
@@ -58,11 +59,7 @@
 	);
 
 	function money(value: number): string {
-		return new Intl.NumberFormat(i18n.intlLocale, {
-			style: 'currency',
-			currency: 'USD',
-			maximumFractionDigits: value < 10 ? 2 : 0
-		}).format(value);
+		return region.format(value);
 	}
 
 	const BILLING: BillingMode[] = ['api', 'subscription'];
@@ -189,6 +186,9 @@
 		</div>
 
 		<p class="shrink-0 text-xs text-muted-foreground">
+			{#if region.needsRate}
+				{t('settings.rate.missing')}
+			{/if}
 			{t(billing.mode === 'subscription' ? 'cost.noteSubscription' : 'cost.note')}
 		</p>
 	{/if}

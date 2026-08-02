@@ -1,4 +1,4 @@
-import { setMode, mode } from 'mode-watcher';
+import { setMode, mode, userPrefersMode } from 'mode-watcher';
 import { applyThemeChange } from './theme/apply-theme-change';
 
 export const PRESETS = [
@@ -23,9 +23,15 @@ function readStoredPreset(): PresetId {
 class Theme {
 	preset = $state<PresetId>(readStoredPreset());
 
-	/** 'system' while following the OS, otherwise the explicit choice. */
+	/**
+	 * The setting, which is what the picker highlights.
+	 *
+	 * Deliberately not `mode.current`: that is the *resolved* mode and is only
+	 * ever 'light' or 'dark', so reading it here left "System" impossible to
+	 * select — picking it immediately highlighted whatever the OS had chosen.
+	 */
 	get mode(): ThemeMode {
-		return mode.current ?? 'system';
+		return userPrefersMode.current ?? 'system';
 	}
 
 	/**
@@ -53,9 +59,12 @@ class Theme {
 		applyThemeChange(() => setMode(next));
 	}
 
-	/** Applies the stored preset before the first paint. */
+	/** Applies the stored preset and the mode before the first paint. */
 	init(): void {
 		this.setPreset(this.preset);
+		// Reading the resolved mode is what puts the class on <html> — following
+		// the OS at startup depends on this line, not on a component rendering.
+		void this.resolvedMode;
 	}
 }
 

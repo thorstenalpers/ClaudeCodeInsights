@@ -137,6 +137,13 @@ export const it: Messages = {
 	'settings.language.description':
 		'La finestra segue la lingua del sistema finché non ne scegli una.',
 	'settings.language.system': 'Sistema',
+	'settings.region': 'Paese e valuta',
+	'settings.region.description':
+		'Le tariffe sono pubblicate in dollari statunitensi. Un’altra valuta richiede un tasso di cambio, e questa app non lo chiede mai alla rete.',
+	'settings.region.system': 'Dalla lingua',
+	'settings.rate': 'Tasso',
+	'settings.rate.hint': '{currency} per dollaro statunitense',
+	'settings.rate.missing': 'Nessun tasso impostato, gli importi restano in dollari statunitensi.',
 	'settings.preview': 'Anteprima',
 	'settings.preview.primary': 'Azione principale',
 	'settings.preview.outline': 'Contorno',

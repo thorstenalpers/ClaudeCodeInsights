@@ -2,10 +2,12 @@
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import * as Card from '$lib/components/ui/card';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { LOCALES, i18n, t, type LocaleSetting } from '$lib/i18n/index.svelte';
 	import { billing, type BillingMode } from '$lib/pricing.svelte';
+	import { REGIONS, region, type RegionSetting } from '$lib/region.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
@@ -15,6 +17,21 @@
 		{ id: 'system', label: t('settings.language.system') },
 		...LOCALES.map((entry) => ({ id: entry.id, label: entry.label }))
 	]);
+
+	const REGION_OPTIONS: { id: RegionSetting; label: string }[] = $derived([
+		{ id: 'system', label: t('settings.region.system') },
+		...REGIONS.map((entry) => ({ id: entry.id, label: `${entry.id} · ${entry.currency}` }))
+	]);
+
+	const currentRegion = $derived(
+		REGION_OPTIONS.find((entry) => entry.id === region.setting)?.label ??
+			t('settings.region.system')
+	);
+
+	function onRateInput(event: Event) {
+		const raw = (event.currentTarget as HTMLInputElement).value;
+		region.setRate(raw === '' ? null : Number(raw));
+	}
 
 	const currentLanguage = $derived(
 		LANGUAGES.find((entry) => entry.id === i18n.setting)?.label ?? t('settings.language.system')
@@ -81,6 +98,51 @@
 					{/each}
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>{t('settings.region')}</Card.Title>
+			<Card.Description>{t('settings.region.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-wrap items-end gap-4">
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="outline" class="w-56 justify-between">
+							{currentRegion}
+							<ChevronDown class="size-4 opacity-60" />
+						</Button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content class="max-h-80 w-56 overflow-y-auto">
+					{#each REGION_OPTIONS as option (option.id)}
+						<DropdownMenu.Item onSelect={() => region.set(option.id)}>
+							<span class="flex-1">{option.label}</span>
+							{#if region.setting === option.id}
+								<Check class="size-4" />
+							{/if}
+						</DropdownMenu.Item>
+					{/each}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+
+			{#if region.currency !== 'USD'}
+				<div class="flex flex-col gap-1">
+					<span class="text-xs text-muted-foreground">
+						{t('settings.rate')} · {t('settings.rate.hint', { currency: region.currency })}
+					</span>
+					<Input
+						type="number"
+						step="0.01"
+						min="0"
+						class="w-32"
+						value={region.rates[region.currency] ?? ''}
+						oninput={onRateInput}
+					/>
+				</div>
+			{/if}
 		</Card.Content>
 	</Card.Root>
 

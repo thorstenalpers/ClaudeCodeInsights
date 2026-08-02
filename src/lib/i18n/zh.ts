@@ -131,6 +131,13 @@ export const zh: Messages = {
 	'settings.language': '语言',
 	'settings.language.description': '在你选择之前，窗口会跟随系统语言。',
 	'settings.language.system': '跟随系统',
+	'settings.region': '国家与货币',
+	'settings.region.description':
+		'价格以美元发布。使用其他货币需要一个换算汇率，而本应用从不向网络索取汇率。',
+	'settings.region.system': '跟随语言',
+	'settings.rate': '汇率',
+	'settings.rate.hint': '每美元兑 {currency}',
+	'settings.rate.missing': '未设置汇率，金额仍以美元显示。',
 	'settings.preview': '预览',
 	'settings.preview.primary': '主要操作',
 	'settings.preview.outline': '描边',

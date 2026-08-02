@@ -132,6 +132,13 @@ export const ar: Messages = {
 	'settings.language': 'اللغة',
 	'settings.language.description': 'تتبع النافذة لغة نظامك حتى تختار واحدة.',
 	'settings.language.system': 'النظام',
+	'settings.region': 'البلد والعملة',
+	'settings.region.description':
+		'الأسعار منشورة بالدولار الأمريكي. أي عملة أخرى تحتاج سعر تحويل، وهذا التطبيق لا يطلبه من الشبكة أبداً.',
+	'settings.region.system': 'حسب اللغة',
+	'settings.rate': 'سعر التحويل',
+	'settings.rate.hint': '{currency} لكل دولار أمريكي',
+	'settings.rate.missing': 'لم يُحدَّد سعر تحويل، لذا تبقى المبالغ بالدولار الأمريكي.',
 	'settings.preview': 'معاينة',
 	'settings.preview.primary': 'إجراء أساسي',
 	'settings.preview.outline': 'محدد',

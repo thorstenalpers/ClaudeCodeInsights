@@ -135,6 +135,13 @@ export const hi: Messages = {
 	'settings.language': 'भाषा',
 	'settings.language.description': 'जब तक आप कोई चुनें, विंडो आपकी सिस्टम भाषा का अनुसरण करती है।',
 	'settings.language.system': 'सिस्टम',
+	'settings.region': 'देश और मुद्रा',
+	'settings.region.description':
+		'दरें अमेरिकी डॉलर में प्रकाशित होती हैं। किसी अन्य मुद्रा के लिए विनिमय दर चाहिए, और यह ऐप उसे कभी नेटवर्क से नहीं माँगता।',
+	'settings.region.system': 'भाषा के अनुसार',
+	'settings.rate': 'दर',
+	'settings.rate.hint': 'प्रति अमेरिकी डॉलर {currency}',
+	'settings.rate.missing': 'कोई दर तय नहीं, राशियाँ अमेरिकी डॉलर में ही रहेंगी।',
 	'settings.preview': 'पूर्वावलोकन',
 	'settings.preview.primary': 'प्राथमिक क्रिया',
 	'settings.preview.outline': 'आउटलाइन',

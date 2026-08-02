@@ -135,6 +135,13 @@ export const es: Messages = {
 	'settings.language': 'Idioma',
 	'settings.language.description': 'La ventana sigue el idioma del sistema hasta que elijas uno.',
 	'settings.language.system': 'Sistema',
+	'settings.region': 'País y moneda',
+	'settings.region.description':
+		'Las tarifas se publican en dólares estadounidenses. Otra moneda necesita un tipo de cambio, y esta aplicación nunca lo pide a la red.',
+	'settings.region.system': 'Según el idioma',
+	'settings.rate': 'Tipo de cambio',
+	'settings.rate.hint': '{currency} por dólar estadounidense',
+	'settings.rate.missing': 'Sin tipo de cambio, los importes siguen en dólares estadounidenses.',
 	'settings.preview': 'Vista previa',
 	'settings.preview.primary': 'Acción principal',
 	'settings.preview.outline': 'Contorno',
