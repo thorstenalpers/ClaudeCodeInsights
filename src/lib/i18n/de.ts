@@ -269,6 +269,13 @@ export const de: Messages = {
 	'assistant.sendsData':
 		'Ein gehostetes Modell erhält die Zusammenfassung unten über das Netz. Die lokale Quelle nicht.',
 
+	'settings.rates': 'Preise',
+	'settings.rates.description':
+		'USD pro Million Tokens. Standard sind die veröffentlichten API-Preise; korrigiere einen, und jede Zahl folgt — gespeichert wird nichts.',
+	'settings.rates.unit': 'USD pro Million Tokens',
+	'settings.rates.edited': 'geändert',
+	'settings.rates.reset': 'Zurück zu veröffentlicht',
+
 	'activity.coding': 'Programmieren',
 	'activity.debugging': 'Fehlersuche',
 	'activity.exploration': 'Erkundung',

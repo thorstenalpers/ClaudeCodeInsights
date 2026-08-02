@@ -20,15 +20,15 @@
 			id: 'totalDurationMs',
 			label: 'agents.column.duration' as const,
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			class: 'hidden @xl:table-cell'
 		},
 		{
 			id: 'toolUseCount',
 			label: 'agents.column.toolCalls' as const,
 			numeric: true,
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
-		{ id: 'lastTs', label: 'agents.column.last' as const, class: 'hidden @2xl:table-cell' }
+		{ id: 'lastTs', label: 'agents.column.last' as const, class: 'hidden @xl:table-cell' }
 	];
 
 	let rows = $state<AgentRow[] | null>(null);

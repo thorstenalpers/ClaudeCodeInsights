@@ -18,7 +18,7 @@
 			id: 'sessions',
 			label: 'tools.column.sessions' as const,
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			class: 'hidden @xl:table-cell'
 		}
 	];
 
@@ -140,7 +140,7 @@
 							<Table.Cell class="hidden text-right tabular-nums md:table-cell"
 								>{exact(row.sessions)}</Table.Cell
 							>
-							<Table.Cell class="hidden @4xl:table-cell">
+							<Table.Cell class="hidden @2xl:table-cell">
 								<div class="flex items-center gap-2">
 									<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
 										<div

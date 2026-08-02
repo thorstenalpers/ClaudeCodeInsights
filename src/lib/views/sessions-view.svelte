@@ -41,7 +41,7 @@
 			id: 'project',
 			label: 'sessions.column.project',
 			sort: 'project',
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
 		{ id: 'activity', label: 'sessions.column.activity', sort: 'activity', class: 'w-40' },
 		{ id: 'last', label: 'sessions.column.last', sort: 'last' },
@@ -50,37 +50,37 @@
 			label: 'sessions.column.duration',
 			sort: 'duration',
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{
 			id: 'turns',
 			label: 'sessions.column.turns',
 			sort: 'turns',
 			numeric: true,
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'input',
 			label: 'sessions.column.input',
 			sort: 'input',
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{
 			id: 'output',
 			label: 'sessions.column.output',
 			sort: 'output',
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{
 			id: 'cacheRead',
 			label: 'sessions.column.cache',
 			sort: 'cacheRead',
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
-		{ id: 'model', label: 'sessions.column.model', sort: 'model', class: 'hidden @2xl:table-cell' }
+		{ id: 'model', label: 'sessions.column.model', sort: 'model', class: 'hidden @xl:table-cell' }
 	];
 
 	const PAGE_SIZE = 25;

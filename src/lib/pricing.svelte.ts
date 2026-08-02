@@ -21,33 +21,105 @@ export type Rate = {
 	cacheWrite: number;
 };
 
-const RATES: { match: RegExp; rate: Rate }[] = [
+/** A model family, matched by name because that is all a transcript records. */
+export type FamilyId = 'opus' | 'fable' | 'sonnet' | 'haiku';
+
+export const FAMILIES: { id: FamilyId; match: RegExp; published: Rate }[] = [
 	{
+		id: 'opus',
 		match: /opus/i,
-		rate: { input: 15, output: 75, cacheRead: 1.5, cacheWrite: 18.75 }
+		published: { input: 15, output: 75, cacheRead: 1.5, cacheWrite: 18.75 }
 	},
 	{
+		id: 'fable',
 		match: /fable|mythos/i,
-		rate: { input: 15, output: 75, cacheRead: 1.5, cacheWrite: 18.75 }
+		published: { input: 15, output: 75, cacheRead: 1.5, cacheWrite: 18.75 }
 	},
 	{
+		id: 'sonnet',
 		match: /sonnet/i,
-		rate: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 }
+		published: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 }
 	},
 	{
+		id: 'haiku',
 		match: /haiku/i,
-		rate: { input: 0.8, output: 4, cacheRead: 0.08, cacheWrite: 1 }
+		published: { input: 0.8, output: 4, cacheRead: 0.08, cacheWrite: 1 }
 	}
 ];
 
 const ZERO: Rate = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 
+const RATES_KEY = 'claudeadmin.rates';
+
+function readStoredRates(): Partial<Record<FamilyId, Rate>> {
+	if (typeof localStorage === 'undefined') return {};
+	try {
+		const raw: unknown = JSON.parse(localStorage.getItem(RATES_KEY) ?? '{}');
+		if (typeof raw !== 'object' || raw === null) return {};
+		const result: Partial<Record<FamilyId, Rate>> = {};
+		for (const family of FAMILIES) {
+			const entry = (raw as Record<string, unknown>)[family.id];
+			if (typeof entry !== 'object' || entry === null) continue;
+			const values = entry as Record<string, unknown>;
+			const rate: Rate = { ...family.published };
+			for (const field of ['input', 'output', 'cacheRead', 'cacheWrite'] as const) {
+				const value = values[field];
+				if (typeof value === 'number' && Number.isFinite(value) && value >= 0) rate[field] = value;
+			}
+			result[family.id] = rate;
+		}
+		return result;
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * The rates in force, published or corrected.
+ *
+ * Prices move and this app never asks the network, so the table has to be
+ * editable. An edit changes every figure on screen at once, because nothing is
+ * stored — the numbers are derived from the token counts each time they are
+ * shown.
+ */
+class Rates {
+	overrides = $state<Partial<Record<FamilyId, Rate>>>(readStoredRates());
+
+	for(family: FamilyId): Rate {
+		return (
+			this.overrides[family] ?? FAMILIES.find((entry) => entry.id === family)?.published ?? ZERO
+		);
+	}
+
+	isEdited(family: FamilyId): boolean {
+		return this.overrides[family] !== undefined;
+	}
+
+	set(family: FamilyId, field: keyof Rate, value: number): void {
+		const current = this.for(family);
+		this.overrides = { ...this.overrides, [family]: { ...current, [field]: value } };
+		localStorage.setItem(RATES_KEY, JSON.stringify(this.overrides));
+	}
+
+	reset(): void {
+		this.overrides = {};
+		localStorage.removeItem(RATES_KEY);
+	}
+}
+
+export const rates = new Rates();
+
+function familyOf(model: string): FamilyId | null {
+	return FAMILIES.find((entry) => entry.match.test(model))?.id ?? null;
+}
+
 export function rateFor(model: string): Rate {
-	return RATES.find((entry) => entry.match.test(model))?.rate ?? ZERO;
+	const family = familyOf(model);
+	return family ? rates.for(family) : ZERO;
 }
 
 export function isPriced(model: string): boolean {
-	return RATES.some((entry) => entry.match.test(model));
+	return familyOf(model) !== null;
 }
 
 export type TokenCounts = {

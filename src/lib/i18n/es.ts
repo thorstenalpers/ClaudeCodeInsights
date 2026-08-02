@@ -268,6 +268,13 @@ export const es: Messages = {
 	'assistant.sendsData':
 		'A hosted model receives the summary below over the network. The local source does not.',
 
+	'settings.rates': 'Prices',
+	'settings.rates.description':
+		'USD per million tokens. Published API rates by default; correct one and every figure follows, because nothing is stored.',
+	'settings.rates.unit': 'USD per million tokens',
+	'settings.rates.edited': 'edited',
+	'settings.rates.reset': 'Back to published',
+
 	'activity.coding': 'Programación',
 	'activity.debugging': 'Depuración',
 	'activity.exploration': 'Exploración',

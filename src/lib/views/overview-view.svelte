@@ -77,7 +77,7 @@
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if loading}
-		<div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2 @5xl:grid-cols-3">
+		<div class="grid grid-cols-1 gap-3 @xl:grid-cols-2 @3xl:grid-cols-3">
 			{#each [...Array(6).keys()] as index (index)}
 				<Skeleton class="h-28 w-full" />
 			{/each}
@@ -97,7 +97,7 @@
 			</Card.Header>
 		</Card.Root>
 	{:else if overview}
-		<div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2 @5xl:grid-cols-3">
+		<div class="grid grid-cols-1 gap-3 @xl:grid-cols-2 @3xl:grid-cols-3">
 			{#each cards as card (card.id)}
 				<Card.Root data-size="sm">
 					<Card.Header class="gap-0.5">

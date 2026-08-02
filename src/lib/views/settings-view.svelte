@@ -9,6 +9,7 @@
 	import { billing, type BillingMode } from '$lib/pricing.svelte';
 	import { api, type CliStatus } from '$lib/api';
 	import ApiKeys from '$lib/components/api-keys.svelte';
+	import RateTable from '$lib/components/rate-table.svelte';
 	import { cli } from '$lib/cli.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
 	import { CURRENCIES, region, type CurrencySetting } from '$lib/region.svelte';
@@ -190,6 +191,16 @@
 		</Card.Header>
 		<Card.Content>
 			<ApiKeys />
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root data-size="sm" class="shrink-0">
+		<Card.Header>
+			<Card.Title>{t('settings.rates')}</Card.Title>
+			<Card.Description>{t('settings.rates.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<RateTable />
 		</Card.Content>
 	</Card.Root>
 

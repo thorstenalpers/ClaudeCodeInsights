@@ -28,27 +28,27 @@
 			id: 'turns',
 			label: 'projects.column.turns' as const,
 			numeric: true,
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'inputTokens',
 			label: 'projects.column.input' as const,
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{
 			id: 'outputTokens',
 			label: 'projects.column.output' as const,
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{
 			id: 'transcriptBytes',
 			label: 'projects.column.transcripts' as const,
 			numeric: true,
-			class: 'hidden @2xl:table-cell'
+			class: 'hidden @xl:table-cell'
 		},
-		{ id: 'lastTs', label: 'projects.column.lastActive' as const, class: 'hidden @2xl:table-cell' }
+		{ id: 'lastTs', label: 'projects.column.lastActive' as const, class: 'hidden @xl:table-cell' }
 	];
 
 	let report = $state<ProjectsReport | null>(null);

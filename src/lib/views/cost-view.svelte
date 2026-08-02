@@ -33,13 +33,13 @@
 			id: 'turns',
 			label: 'cost.column.turns' as const,
 			numeric: true,
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'sessions',
 			label: 'cost.column.sessions' as const,
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{ id: 'inputTokens', label: 'cost.column.input' as const, numeric: true },
 		{ id: 'outputTokens', label: 'cost.column.output' as const, numeric: true },
@@ -47,13 +47,13 @@
 			id: 'cacheReadTokens',
 			label: 'cost.column.cacheRead' as const,
 			numeric: true,
-			class: 'hidden @4xl:table-cell'
+			class: 'hidden @2xl:table-cell'
 		},
 		{
 			id: 'cacheWriteTokens',
 			label: 'cost.column.cacheWrite' as const,
 			numeric: true,
-			class: 'hidden @5xl:table-cell'
+			class: 'hidden @3xl:table-cell'
 		},
 		{ id: 'cost', label: 'cost.column.cost' as const, numeric: true }
 	];
