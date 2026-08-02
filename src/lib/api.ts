@@ -143,6 +143,46 @@ export type WriteOutcome = {
 	backupPath: string;
 };
 
+export type ToolRow = {
+	name: string;
+	calls: number;
+	sessions: number;
+};
+
+export type ModelRow = {
+	model: string;
+	turns: number;
+	sessions: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	firstTs: string | null;
+	lastTs: string | null;
+};
+
+export type AgentRow = {
+	agentType: string;
+	runs: number;
+	totalTokens: number;
+	totalDurationMs: number;
+	toolUseCount: number;
+	lastTs: string | null;
+};
+
+export type DayRow = { date: string; turns: number };
+
+export type Rhythm = {
+	/** 7 x 24 turn counts, Monday first, in local time. */
+	grid: number[][];
+	busiestHour: number | null;
+	busiestWeekday: number | null;
+	days: DayRow[];
+	activeDays: number;
+	longestStreak: number;
+	currentStreak: number;
+};
+
 export const api = {
 	getOverview: () => invoke<Overview>('get_overview'),
 	getTranscript: (sessionId: string, offset: number, limit: number) =>
@@ -160,5 +200,9 @@ export const api = {
 	updateProjectSettings: (path: string, settings: string) =>
 		invoke<WriteOutcome>('update_project_settings', { path, settings }),
 	removeProjectRegistration: (path: string) =>
-		invoke<WriteOutcome>('remove_project_registration', { path })
+		invoke<WriteOutcome>('remove_project_registration', { path }),
+	listTools: () => invoke<ToolRow[]>('list_tools'),
+	listModels: () => invoke<ModelRow[]>('list_models'),
+	listAgents: () => invoke<AgentRow[]>('list_agents'),
+	getRhythm: () => invoke<Rhythm>('get_rhythm')
 };

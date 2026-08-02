@@ -1,12 +1,117 @@
 <script lang="ts">
-	import Icon from '@lucide/svelte/icons/wrench';
-	import PlaceholderPanel from '$lib/components/placeholder-panel.svelte';
+	import { api, type ToolRow } from '$lib/api';
+	import * as Card from '$lib/components/ui/card';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import * as Table from '$lib/components/ui/table';
+	import { exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
+	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { scan } from '$lib/scan.svelte';
+
+	let rows = $state<ToolRow[] | null>(null);
+	let error = $state<string | null>(null);
+	let loading = $state(true);
+
+	$effect(() => {
+		void scan.dataVersion;
+		if (!isHosted) {
+			loading = false;
+			return;
+		}
+
+		let cancelled = false;
+		error = null;
+		api
+			.listTools()
+			.then((value) => {
+				if (!cancelled) rows = value;
+			})
+			.catch((cause) => {
+				if (!cancelled) error = errorMessage(cause);
+			})
+			.finally(() => {
+				if (!cancelled) loading = false;
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	// The bar is relative to the busiest tool rather than to the total: with a
+	// long tail, shares against the total are all invisible slivers.
+	const busiest = $derived(rows?.[0]?.calls ?? 0);
+	const totalCalls = $derived(rows?.reduce((sum, row) => sum + row.calls, 0) ?? 0);
 </script>
 
-<PlaceholderPanel
-	icon={Icon}
-	title={t('nav.tools')}
-	description={t('nav.tools.description')}
-	planned={[t('placeholder.tools.1'), t('placeholder.tools.2')]}
-/>
+<div class="flex h-full flex-col gap-4 p-6">
+	{#if !isHosted}
+		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
+	{:else if error}
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>{t('overview.dbFailed')}</Card.Title>
+				<Card.Description class="font-mono text-xs">{error}</Card.Description>
+			</Card.Header>
+		</Card.Root>
+	{:else if loading && !rows}
+		<div class="flex flex-col gap-2">
+			{#each [...Array(8).keys()] as index (index)}
+				<Skeleton class="h-10 w-full" />
+			{/each}
+		</div>
+	{:else if rows && rows.length === 0}
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>{t('tools.empty')}</Card.Title>
+				<Card.Description>{t('sessions.emptyScan')}</Card.Description>
+			</Card.Header>
+		</Card.Root>
+	{:else if rows}
+		<div class="flex shrink-0 items-center gap-2">
+			<span class="text-xs text-muted-foreground tabular-nums">
+				{t('tools.count', { count: exact(rows.length) })}
+			</span>
+			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
+				{t('tools.column.calls')}: {exact(totalCalls)}
+			</span>
+		</div>
+
+		<div
+			class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+		>
+			<Table.Root>
+				<Table.Header class="sticky top-0 z-10 bg-background">
+					<Table.Row>
+						<Table.Head>{t('tools.column.name')}</Table.Head>
+						<Table.Head class="text-right">{t('tools.column.calls')}</Table.Head>
+						<Table.Head class="text-right">{t('tools.column.sessions')}</Table.Head>
+						<Table.Head class="w-64">{t('tools.column.share')}</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each rows as row (row.name)}
+						<Table.Row>
+							<Table.Cell class="font-medium">{row.name}</Table.Cell>
+							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
+							<Table.Cell class="text-right tabular-nums">{exact(row.sessions)}</Table.Cell>
+							<Table.Cell>
+								<div class="flex items-center gap-2">
+									<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+										<div
+											class="h-full rounded-full bg-primary"
+											style="width: {busiest > 0 ? (row.calls / busiest) * 100 : 0}%"
+										></div>
+									</div>
+									<span class="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+										{totalCalls > 0 ? Math.round((row.calls / totalCalls) * 100) : 0}%
+									</span>
+								</div>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
+	{/if}
+</div>

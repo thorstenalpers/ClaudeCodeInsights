@@ -7,6 +7,7 @@ pub mod overview;
 pub mod projects;
 pub mod scan;
 pub mod sessions;
+pub mod usage;
 
 use crate::paths;
 use crate::storage;

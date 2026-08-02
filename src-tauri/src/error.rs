@@ -71,8 +71,7 @@ mod tests {
         let json = serde_json::to_value(Error::from(cause)).unwrap();
         assert_eq!(json["kind"], "internal");
         assert_eq!(
-            json["message"],
-            "reading ~/.claude.json: file is missing",
+            json["message"], "reading ~/.claude.json: file is missing",
             "the context chain is what makes a report actionable"
         );
     }

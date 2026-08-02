@@ -86,6 +86,10 @@ pub fn run() {
             commands::projects::get_project_settings,
             commands::projects::update_project_settings,
             commands::projects::remove_project_registration,
+            commands::usage::list_tools,
+            commands::usage::list_models,
+            commands::usage::list_agents,
+            commands::usage::get_rhythm,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -360,11 +360,9 @@ fn purge_scanned_files(conn: &mut Connection, files: &[String]) -> Result<()> {
     let tx = conn.transaction()?;
     for path in files {
         let file_id: Option<i64> = tx
-            .query_row(
-                "SELECT id FROM scan_files WHERE path = ?1",
-                [path],
-                |row| row.get(0),
-            )
+            .query_row("SELECT id FROM scan_files WHERE path = ?1", [path], |row| {
+                row.get(0)
+            })
             .map(Some)
             .or_else(|e| match e {
                 rusqlite::Error::QueryReturnedNoRows => Ok(None),
@@ -427,8 +425,7 @@ pub fn remove_registration(path: &str) -> Result<WriteOutcome> {
 }
 
 fn read_config(path: &Path) -> Result<Value> {
-    let text =
-        fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let text = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
     serde_json::from_str(&text).with_context(|| format!("parsing {}", path.display()))
 }
 
@@ -457,8 +454,7 @@ where
 
     let serialized = serde_json::to_string(&value)?;
     let tmp_path = config_path.with_extension("json.claudeadmin-tmp");
-    fs::write(&tmp_path, &serialized)
-        .with_context(|| format!("writing {}", tmp_path.display()))?;
+    fs::write(&tmp_path, &serialized).with_context(|| format!("writing {}", tmp_path.display()))?;
     fs::rename(&tmp_path, config_path)
         .with_context(|| format!("replacing {}", config_path.display()))?;
 
@@ -532,7 +528,10 @@ mod tests {
 
         let written: Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
         assert!(written.get("projects").unwrap().get("C:\\A").is_none());
-        assert_eq!(written.get("projects").unwrap().get("C:\\B").unwrap()["x"], 1);
+        assert_eq!(
+            written.get("projects").unwrap().get("C:\\B").unwrap()["x"],
+            1
+        );
         // Everything outside `projects` survives, in its original order.
         assert_eq!(written.get("numStartups").unwrap(), 7);
         assert_eq!(written.get("tail").unwrap(), true);
