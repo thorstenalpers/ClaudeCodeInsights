@@ -179,6 +179,38 @@ export type AgentRow = {
 
 export type DayRow = { date: string; turns: number };
 
+export type SeriesPoint = {
+	date: string;
+	key: string;
+	model: string;
+	turns: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+};
+
+export type Series = { points: SeriesPoint[]; keys: string[] };
+
+export type SeriesQuery = {
+	groupBy: 'model' | 'activity' | 'tool' | 'project' | 'branch' | 'none';
+	models?: string[];
+	activities?: string[];
+	tools?: string[];
+	projects?: string[];
+	branches?: string[];
+	from?: string | null;
+	to?: string | null;
+};
+
+export type SeriesFacets = {
+	models: string[];
+	activities: string[];
+	tools: string[];
+	projects: string[];
+	branches: string[];
+};
+
 export type Rhythm = {
 	/** 7 x 24 turn counts, Monday first, in local time. */
 	grid: number[][];
@@ -211,5 +243,7 @@ export const api = {
 	listTools: () => invoke<ToolRow[]>('list_tools'),
 	listModels: () => invoke<ModelRow[]>('list_models'),
 	listAgents: () => invoke<AgentRow[]>('list_agents'),
-	getRhythm: () => invoke<Rhythm>('get_rhythm')
+	getRhythm: () => invoke<Rhythm>('get_rhythm'),
+	getSeries: (query: SeriesQuery) => invoke<Series>('get_series', { query }),
+	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets')
 };

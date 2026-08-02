@@ -57,6 +57,11 @@ export type TokenCounts = {
 	cacheWriteTokens: number;
 };
 
+/** The same tokens priced as if one model had done all the work. */
+export function costAsModel(target: string, tokens: TokenCounts): number {
+	return costOf(target, tokens);
+}
+
 export function costOf(model: string, tokens: TokenCounts): number {
 	const rate = rateFor(model);
 	return (
@@ -97,3 +102,42 @@ function readStoredMode(): BillingMode {
 }
 
 export const billing = new Billing();
+
+/**
+ * The published subscription plans, in USD per month.
+ *
+ * Hardcoded on purpose: the app never reaches the network, so these cannot be
+ * fetched. They are here to answer one question — is the plan carrying its
+ * weight — and a figure that is a month out of date still answers it.
+ */
+export const PLANS = [
+	{ id: 'free', monthly: 0 },
+	{ id: 'pro', monthly: 20 },
+	{ id: 'max5', monthly: 100 },
+	{ id: 'max20', monthly: 200 }
+] as const;
+
+export type PlanId = (typeof PLANS)[number]['id'];
+
+const PLAN_KEY = 'claudeadmin.plan';
+
+function readStoredPlan(): PlanId {
+	if (typeof localStorage === 'undefined') return 'pro';
+	const stored = localStorage.getItem(PLAN_KEY);
+	return PLANS.some((plan) => plan.id === stored) ? (stored as PlanId) : 'pro';
+}
+
+class Plan {
+	id = $state<PlanId>(readStoredPlan());
+
+	get monthly(): number {
+		return PLANS.find((plan) => plan.id === this.id)?.monthly ?? 0;
+	}
+
+	set(next: PlanId): void {
+		this.id = next;
+		localStorage.setItem(PLAN_KEY, next);
+	}
+}
+
+export const plan = new Plan();

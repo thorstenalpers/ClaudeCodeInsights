@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { api, type ModelRow } from '$lib/api';
+	import { api, type ModelRow, type Series } from '$lib/api';
+	import BarChart from '$lib/components/bar-chart.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -13,7 +14,15 @@
 	import { compact, exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import { billing, costOf, isPriced, uncachedCostOf, type BillingMode } from '$lib/pricing.svelte';
+	import {
+		PLANS,
+		billing,
+		costOf,
+		isPriced,
+		plan,
+		uncachedCostOf,
+		type BillingMode
+	} from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { createTable } from '$lib/table.svelte';
@@ -30,6 +39,9 @@
 	];
 
 	let rows = $state<ModelRow[] | null>(null);
+	let series = $state<Series | null>(null);
+	/** null means "as used": every model priced as itself. */
+	let asModel = $state<string | null>(null);
 	let error = $state<string | null>(null);
 	let loading = $state(true);
 
@@ -58,6 +70,77 @@
 			cancelled = true;
 		};
 	});
+
+	$effect(() => {
+		void scan.dataVersion;
+		if (!isHosted) return;
+
+		let cancelled = false;
+		api
+			.getSeries({ groupBy: 'model' })
+			.then((value) => {
+				if (!cancelled) series = value;
+			})
+			.catch(() => {
+				// The table above already reports a failure; a second card saying
+				// the same thing is noise.
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	/** Buckets the daily points into months, one series per model. */
+	const history = $derived.by(() => {
+		if (!series)
+			return { labels: [] as string[], series: [] as { key: string; values: number[] }[] };
+
+		const months: string[] = [];
+		for (const point of series.points) {
+			const month = point.date.slice(0, 7);
+			if (!months.includes(month)) months.push(month);
+		}
+		months.sort();
+
+		const byKey: Record<string, number[]> = {};
+		for (const point of series.points) {
+			const column = months.indexOf(point.date.slice(0, 7));
+			if (column === -1) continue;
+			byKey[point.key] ??= Array<number>(months.length).fill(0);
+			byKey[point.key][column] += costOf(asModel ?? point.model, point);
+		}
+
+		return {
+			labels: months,
+			series: Object.entries(byKey)
+				.map(([key, values]) => ({ key: shortModel(key), values }))
+				.sort((a, b) => b.values.reduce((x, y) => x + y, 0) - a.values.reduce((x, y) => x + y, 0))
+		};
+	});
+
+	const monthlyTotals = $derived(
+		history.labels.map((_, index) =>
+			history.series.reduce((sum, entry) => sum + (entry.values[index] ?? 0), 0)
+		)
+	);
+
+	/** What the plan has to beat: the average month at API rates. */
+	const averageMonth = $derived(
+		monthlyTotals.length > 0
+			? monthlyTotals.reduce((sum, value) => sum + value, 0) / monthlyTotals.length
+			: 0
+	);
+
+	const whatIfTotal = $derived.by(() => {
+		const target = asModel;
+		if (!series || !target) return null;
+		return series.points.reduce((sum, point) => sum + costOf(target, point), 0);
+	});
+
+	const actualTotal = $derived(
+		series ? series.points.reduce((sum, point) => sum + costOf(point.model, point), 0) : 0
+	);
 
 	const priced = $derived(
 		(rows ?? []).map((row) => ({
@@ -98,7 +181,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-4 p-6">
+<div class="flex h-full flex-col gap-4 overflow-auto p-6">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -164,6 +247,113 @@
 				{t('cost.count', { count: exact(rows.length) })}
 			</span>
 		</div>
+
+		{#if history.labels.length > 0}
+			<Card.Root class="shrink-0">
+				<Card.Header class="gap-1">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<Card.Title class="text-base">{t('cost.history')}</Card.Title>
+
+						<div class="flex items-center gap-2">
+							<span class="text-xs text-muted-foreground">{t('cost.whatIf')}</span>
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger>
+									{#snippet child({ props })}
+										<Button {...props} variant="outline" size="sm" class="h-8 font-normal">
+											{asModel ? shortModel(asModel) : t('cost.whatIf.actual')}
+											<ChevronDown class="size-3.5 opacity-60" />
+										</Button>
+									{/snippet}
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content align="end" class="w-56">
+									<DropdownMenu.Item onSelect={() => (asModel = null)}>
+										<span class="flex-1">{t('cost.whatIf.actual')}</span>
+										{#if asModel === null}
+											<Check class="size-4" />
+										{/if}
+									</DropdownMenu.Item>
+									<DropdownMenu.Separator />
+									{#each rows ?? [] as row (row.model)}
+										<DropdownMenu.Item onSelect={() => (asModel = row.model)}>
+											<span class="flex-1 truncate">{shortModel(row.model)}</span>
+											{#if asModel === row.model}
+												<Check class="size-4" />
+											{/if}
+										</DropdownMenu.Item>
+									{/each}
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
+						</div>
+					</div>
+
+					{#if asModel && whatIfTotal !== null}
+						<Card.Description>
+							{t('cost.whatIf.note')} · {t('cost.whatIf.diff', {
+								amount: `${whatIfTotal >= actualTotal ? '+' : '−'}${money(Math.abs(whatIfTotal - actualTotal))}`
+							})}
+						</Card.Description>
+					{/if}
+				</Card.Header>
+
+				<Card.Content>
+					<BarChart labels={history.labels} series={history.series} format={money} />
+				</Card.Content>
+			</Card.Root>
+
+			<Card.Root class="shrink-0">
+				<Card.Header class="gap-2">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<Card.Title class="text-base">{t('cost.plan')}</Card.Title>
+						<div class="flex flex-wrap gap-1">
+							{#each PLANS as entry (entry.id)}
+								<Button
+									variant={plan.id === entry.id ? 'default' : 'outline'}
+									size="sm"
+									class="h-8 font-normal"
+									onclick={() => plan.set(entry.id)}
+								>
+									{t(`cost.plan.${entry.id}`)}
+								</Button>
+							{/each}
+						</div>
+					</div>
+					<Card.Description>
+						{t('cost.plan.monthly', { amount: money(plan.monthly) })} ·
+						{averageMonth >= plan.monthly
+							? t('cost.plan.verdict.worth', { amount: money(averageMonth) })
+							: t('cost.plan.verdict.under', {
+									amount: money(averageMonth),
+									plan: t(`cost.plan.${plan.id}`)
+								})}
+					</Card.Description>
+				</Card.Header>
+
+				<Card.Content class="overflow-x-auto">
+					<Table.Root>
+						<Table.Header>
+							<Table.Row>
+								<Table.Head>{t('cost.month')}</Table.Head>
+								<Table.Head class="text-right">{t('cost.column.cost')}</Table.Head>
+								<Table.Head class="text-right">{t('cost.plan')}</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each history.labels as month, index (month)}
+								<Table.Row>
+									<Table.Cell class="font-medium tabular-nums">{month}</Table.Cell>
+									<Table.Cell class="text-right tabular-nums">
+										{money(monthlyTotals[index])}
+									</Table.Cell>
+									<Table.Cell class="text-right text-muted-foreground tabular-nums">
+										{money(plan.monthly)}
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</Card.Content>
+			</Card.Root>
+		{/if}
 
 		<div
 			class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
