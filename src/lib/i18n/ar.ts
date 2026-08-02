@@ -139,11 +139,6 @@ export const ar: Messages = {
 	'settings.rate': 'سعر التحويل',
 	'settings.rate.hint': '{currency} لكل دولار أمريكي',
 	'settings.rate.missing': 'لم يُحدَّد سعر تحويل، لذا تبقى المبالغ بالدولار الأمريكي.',
-	'settings.preview': 'معاينة',
-	'settings.preview.primary': 'إجراء أساسي',
-	'settings.preview.outline': 'محدد',
-	'settings.preview.accent': 'سطح مميز',
-	'settings.preview.badge': 'شارة',
 
 	'tools.count': '{count} أداة',
 	'tools.column.name': 'الأداة',

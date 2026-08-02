@@ -142,11 +142,6 @@ export const hi: Messages = {
 	'settings.rate': 'दर',
 	'settings.rate.hint': 'प्रति अमेरिकी डॉलर {currency}',
 	'settings.rate.missing': 'कोई दर तय नहीं, राशियाँ अमेरिकी डॉलर में ही रहेंगी।',
-	'settings.preview': 'पूर्वावलोकन',
-	'settings.preview.primary': 'प्राथमिक क्रिया',
-	'settings.preview.outline': 'आउटलाइन',
-	'settings.preview.accent': 'एक्सेंट सतह',
-	'settings.preview.badge': 'बैज',
 
 	'tools.count': '{count} उपकरण',
 	'tools.column.name': 'उपकरण',

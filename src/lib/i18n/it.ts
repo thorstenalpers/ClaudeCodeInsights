@@ -144,11 +144,6 @@ export const it: Messages = {
 	'settings.rate': 'Tasso',
 	'settings.rate.hint': '{currency} per dollaro statunitense',
 	'settings.rate.missing': 'Nessun tasso impostato, gli importi restano in dollari statunitensi.',
-	'settings.preview': 'Anteprima',
-	'settings.preview.primary': 'Azione principale',
-	'settings.preview.outline': 'Contorno',
-	'settings.preview.accent': 'Superficie d’accento',
-	'settings.preview.badge': 'Badge',
 
 	'tools.count': '{count} strumenti',
 	'tools.column.name': 'Strumento',

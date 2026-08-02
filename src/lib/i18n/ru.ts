@@ -142,11 +142,6 @@ export const ru: Messages = {
 	'settings.rate': 'Курс',
 	'settings.rate.hint': '{currency} за доллар США',
 	'settings.rate.missing': 'Курс не задан, суммы остаются в долларах США.',
-	'settings.preview': 'Предпросмотр',
-	'settings.preview.primary': 'Основное действие',
-	'settings.preview.outline': 'Контур',
-	'settings.preview.accent': 'Акцентная поверхность',
-	'settings.preview.badge': 'Значок',
 
 	'tools.count': 'Инструментов: {count}',
 	'tools.column.name': 'Инструмент',

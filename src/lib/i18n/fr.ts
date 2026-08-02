@@ -144,11 +144,6 @@ export const fr: Messages = {
 	'settings.rate': 'Taux',
 	'settings.rate.hint': '{currency} par dollar américain',
 	'settings.rate.missing': 'Aucun taux défini, les montants restent en dollars américains.',
-	'settings.preview': 'Aperçu',
-	'settings.preview.primary': 'Action principale',
-	'settings.preview.outline': 'Contour',
-	'settings.preview.accent': "Surface d'accent",
-	'settings.preview.badge': 'Badge',
 
 	'tools.count': '{count} outils',
 	'tools.column.name': 'Outil',

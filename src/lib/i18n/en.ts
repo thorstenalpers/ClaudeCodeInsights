@@ -144,11 +144,6 @@ export const en = {
 	'settings.rate': 'Rate',
 	'settings.rate.hint': '{currency} per US dollar',
 	'settings.rate.missing': 'No rate set, so amounts are still US dollars.',
-	'settings.preview': 'Preview',
-	'settings.preview.primary': 'Primary action',
-	'settings.preview.outline': 'Outline',
-	'settings.preview.accent': 'Accent surface',
-	'settings.preview.badge': 'Badge',
 
 	'tools.count': '{count} tools',
 	'tools.column.name': 'Tool',

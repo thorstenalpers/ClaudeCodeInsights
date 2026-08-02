@@ -12,6 +12,8 @@ import { es } from './es';
 import { fr } from './fr';
 import { hi } from './hi';
 import { it } from './it';
+import { ja } from './ja';
+import { pt } from './pt';
 import { ru } from './ru';
 import { zh } from './zh';
 
@@ -24,6 +26,8 @@ export const LOCALES = [
 	{ id: 'fr', label: 'Français' },
 	{ id: 'hi', label: 'हिन्दी' },
 	{ id: 'it', label: 'Italiano' },
+	{ id: 'pt', label: 'Português' },
+	{ id: 'ja', label: '日本語' },
 	{ id: 'ru', label: 'Русский' },
 	{ id: 'zh', label: '中文' }
 ] as const;
@@ -32,7 +36,7 @@ export type Locale = (typeof LOCALES)[number]['id'];
 /** 'system' follows the OS; anything else is the user's explicit choice. */
 export type LocaleSetting = Locale | 'system';
 
-const CATALOGS: Record<Locale, Messages> = { en, ar, de, es, fr, hi, it, ru, zh };
+const CATALOGS: Record<Locale, Messages> = { en, ar, de, es, fr, hi, it, ja, pt, ru, zh };
 
 /** Scripts that run right to left. The layout mirrors for these. */
 const RTL: ReadonlySet<string> = new Set(['ar']);
@@ -45,6 +49,8 @@ const INTL_TAGS: Record<Locale, string> = {
 	fr: 'fr-FR',
 	hi: 'hi-IN',
 	it: 'it-IT',
+	ja: 'ja-JP',
+	pt: 'pt-PT',
 	ru: 'ru-RU',
 	zh: 'zh-CN'
 };

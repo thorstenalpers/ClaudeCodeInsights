@@ -142,11 +142,6 @@ export const de: Messages = {
 	'settings.rate': 'Kurs',
 	'settings.rate.hint': '{currency} pro US-Dollar',
 	'settings.rate.missing': 'Kein Kurs gesetzt, die Beträge bleiben in US-Dollar.',
-	'settings.preview': 'Vorschau',
-	'settings.preview.primary': 'Primäre Aktion',
-	'settings.preview.outline': 'Umriss',
-	'settings.preview.accent': 'Akzentfläche',
-	'settings.preview.badge': 'Abzeichen',
 
 	'tools.count': '{count} Werkzeuge',
 	'tools.column.name': 'Werkzeug',

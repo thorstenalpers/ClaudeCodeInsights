@@ -138,11 +138,6 @@ export const zh: Messages = {
 	'settings.rate': '汇率',
 	'settings.rate.hint': '每美元兑 {currency}',
 	'settings.rate.missing': '未设置汇率，金额仍以美元显示。',
-	'settings.preview': '预览',
-	'settings.preview.primary': '主要操作',
-	'settings.preview.outline': '描边',
-	'settings.preview.accent': '强调面',
-	'settings.preview.badge': '徽章',
 
 	'tools.count': '{count} 个工具',
 	'tools.column.name': '工具',

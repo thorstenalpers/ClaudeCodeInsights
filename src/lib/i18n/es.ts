@@ -142,11 +142,6 @@ export const es: Messages = {
 	'settings.rate': 'Tipo de cambio',
 	'settings.rate.hint': '{currency} por dólar estadounidense',
 	'settings.rate.missing': 'Sin tipo de cambio, los importes siguen en dólares estadounidenses.',
-	'settings.preview': 'Vista previa',
-	'settings.preview.primary': 'Acción principal',
-	'settings.preview.outline': 'Contorno',
-	'settings.preview.accent': 'Superficie de acento',
-	'settings.preview.badge': 'Insignia',
 
 	'tools.count': '{count} herramientas',
 	'tools.column.name': 'Herramienta',
