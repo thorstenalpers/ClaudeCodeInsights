@@ -5,10 +5,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { isHosted } from '$lib/ipc.svelte';
+	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { page as route } from '$app/state';
 
-	type Props = { sessionId: string };
-	let { sessionId }: Props = $props();
+	const sessionId = $derived(route.params.id!);
 
 	const PAGE = 100;
 
@@ -37,7 +37,7 @@
 				if (!cancelled) page = value;
 			})
 			.catch((cause) => {
-				if (!cancelled) error = String(cause);
+				if (!cancelled) error = errorMessage(cause);
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;

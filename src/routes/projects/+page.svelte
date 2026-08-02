@@ -13,7 +13,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { compact, exact, formatBytes } from '$lib/format';
-	import { isHosted } from '$lib/ipc.svelte';
+	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	let report = $state<ProjectsReport | null>(null);
@@ -55,7 +55,7 @@
 				if (!cancelled) report = value;
 			})
 			.catch((cause) => {
-				if (!cancelled) error = String(cause);
+				if (!cancelled) error = errorMessage(cause);
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;
@@ -73,7 +73,7 @@
 		try {
 			deleteFiles = await api.previewProjectTranscripts(project.path);
 		} catch (cause) {
-			deleteError = String(cause);
+			deleteError = errorMessage(cause);
 		}
 	}
 
@@ -90,7 +90,7 @@
 			}
 			localVersion += 1;
 		} catch (cause) {
-			deleteError = String(cause);
+			deleteError = errorMessage(cause);
 		} finally {
 			deleteBusy = false;
 		}
@@ -106,7 +106,7 @@
 			removeTarget = null;
 			localVersion += 1;
 		} catch (cause) {
-			removeError = String(cause);
+			removeError = errorMessage(cause);
 		} finally {
 			removeBusy = false;
 		}
@@ -119,7 +119,7 @@
 		try {
 			settingsText = await api.getProjectSettings(project.path);
 		} catch (cause) {
-			settingsError = String(cause);
+			settingsError = errorMessage(cause);
 		}
 	}
 
@@ -133,7 +133,7 @@
 			settingsTarget = null;
 			localVersion += 1;
 		} catch (cause) {
-			settingsError = String(cause);
+			settingsError = errorMessage(cause);
 		} finally {
 			settingsBusy = false;
 		}

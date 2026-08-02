@@ -1,18 +1,11 @@
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'node:path';
 import { defineConfig } from 'vite';
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
-	plugins: [tailwindcss(), svelte()],
-
-	resolve: {
-		alias: {
-			$lib: path.resolve(import.meta.dirname, './src/lib')
-		}
-	},
+	plugins: [tailwindcss(), sveltekit()],
 
 	// Tauri needs a fixed port; letting Vite silently pick another one leaves the
 	// window pointing at nothing.
@@ -32,13 +25,6 @@ export default defineConfig({
 	build: {
 		target: 'esnext',
 		// DevTools are off in release builds, so a shipped source map is dead weight.
-		sourcemap: !!process.env.TAURI_ENV_DEBUG,
-		rollupOptions: {
-			input: {
-				main: path.resolve(import.meta.dirname, 'index.html'),
-				// Its own entry so it stays a standalone page with no bundle to wait for.
-				splashscreen: path.resolve(import.meta.dirname, 'splashscreen.html')
-			}
-		}
+		sourcemap: !!process.env.TAURI_ENV_DEBUG
 	}
 });

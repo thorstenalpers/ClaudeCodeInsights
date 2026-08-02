@@ -11,7 +11,7 @@ Everything stays on the machine. Nothing is uploaded.
 | Shell         | Tauri 2 (Rust), one WebView2 window                              |
 | Backend       | Rust — `src-tauri/`                                              |
 | Storage       | SQLite via `rusqlite` (bundled), at `%LocalAppData%\ClaudeAdmin` |
-| Frontend      | Svelte 5 runes (no SvelteKit), Vite, Tailwind v4, shadcn-svelte  |
+| Frontend      | SvelteKit (SPA, adapter-static), Svelte 5 runes, Tailwind v4     |
 | Tables        | `@tanstack/table-core`                                           |
 | Lint / format | ESLint flat config with `recommendedTypeChecked`, Prettier       |
 
@@ -51,7 +51,7 @@ a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
    in an exception message.
 8. **`src/lib/components/ui/**` is generated** by `shadcn-svelte add`. Changes
    there are lost on the next update; it is excluded from lint and format.
-9. Components take props and emit events. Views read stores and call the
+9. Components take props and emit events. Route pages read stores and call the
    backend. A component that needs the backend to render cannot be tested.
 10. Only semantic Tailwind tokens (`bg-background`, `text-muted-foreground`).
     No raw colours, no manual `dark:` overrides.

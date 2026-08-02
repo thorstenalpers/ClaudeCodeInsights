@@ -3,7 +3,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { compact, exact, formatDate } from '$lib/format';
-	import { isHosted } from '$lib/ipc.svelte';
+	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
 
 	let overview = $state<Overview | null>(null);
@@ -15,7 +15,7 @@
 		try {
 			overview = await api.getOverview();
 		} catch (cause) {
-			error = String(cause);
+			error = errorMessage(cause);
 		} finally {
 			loading = false;
 		}

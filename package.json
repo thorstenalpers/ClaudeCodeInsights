@@ -5,20 +5,23 @@
 	"type": "module",
 	"scripts": {
 		"start": "tauri dev",
-		"dev": "vite",
+		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"tauri": "tauri",
 		"app:build": "tauri build",
-		"app:exe": "tauri build --debug --no-bundle && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/copy-exe.ps1"
+		"app:exe": "tauri build --debug --no-bundle && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/copy-exe.ps1",
+		"prepare": "svelte-kit sync"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@internationalized/date": "^3.12.3",
 		"@lucide/svelte": "^1.28.0",
+		"@sveltejs/adapter-static": "^3.0.10",
+		"@sveltejs/kit": "^2.70.2",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/table-core": "^8.21.3",

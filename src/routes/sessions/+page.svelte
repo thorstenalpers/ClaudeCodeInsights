@@ -14,7 +14,9 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { compact, exact } from '$lib/format';
-	import { isHosted } from '$lib/ipc.svelte';
+	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { nav } from '$lib/nav.svelte';
 	import { scan } from '$lib/scan.svelte';
 
@@ -107,7 +109,7 @@
 				if (!cancelled) result = value;
 			})
 			.catch((cause) => {
-				if (!cancelled) error = String(cause);
+				if (!cancelled) error = errorMessage(cause);
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;
@@ -141,6 +143,12 @@
 			hour: '2-digit',
 			minute: '2-digit'
 		});
+	}
+
+	/** The table knows the topic; the header would otherwise show a bare UUID. */
+	function openSession(sessionId: string, label: string) {
+		nav.detailLabel = label;
+		void goto(resolve('/sessions/[id]', { id: sessionId }));
 	}
 
 	function shortModel(model: string | null): string {
@@ -242,8 +250,7 @@
 						{#each result.rows as row (row.sessionId)}
 							<Table.Row
 								class="cursor-pointer"
-								onclick={() =>
-									nav.openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
+								onclick={() => openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
 							>
 								<Table.Cell class="max-w-[22rem]">
 									<div class="flex items-center gap-2">

@@ -1,6 +1,7 @@
 # Node
 node_modules/
-dist/
+build/
+.svelte-kit/
 storybook-static/
 *.tsbuildinfo
 .vite/

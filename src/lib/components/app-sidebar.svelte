@@ -1,17 +1,16 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { PageDefinition } from '$lib/pages';
-	import type { PageKey } from '$lib/nav.svelte';
 
 	type Props = {
 		pages: readonly PageDefinition[];
 		settingsPage: PageDefinition;
-		active: PageKey;
-		onselect: (key: PageKey) => void;
+		active: string;
 	};
 
-	let { pages, settingsPage, active, onselect }: Props = $props();
+	let { pages, settingsPage, active }: Props = $props();
 </script>
 
 <Sidebar.Root collapsible="icon">
@@ -35,18 +34,18 @@
 		<Sidebar.Group>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
-					{#each pages as page (page.key)}
+					{#each pages as page (page.href)}
 						<Sidebar.MenuItem>
 							<Tooltip.Root>
 								<Tooltip.Trigger>
 									{#snippet child({ props })}
-										<Sidebar.MenuButton
-											{...props}
-											isActive={active === page.key}
-											onclick={() => onselect(page.key)}
-										>
-											<page.icon />
-											<span>{page.label}</span>
+										<Sidebar.MenuButton {...props} isActive={active === page.href}>
+											{#snippet child({ props: buttonProps })}
+												<a {...buttonProps} href={resolve(page.href)}>
+													<page.icon />
+													<span>{page.label}</span>
+												</a>
+											{/snippet}
 										</Sidebar.MenuButton>
 									{/snippet}
 								</Tooltip.Trigger>
@@ -65,13 +64,13 @@
 				<Tooltip.Root>
 					<Tooltip.Trigger>
 						{#snippet child({ props })}
-							<Sidebar.MenuButton
-								{...props}
-								isActive={active === settingsPage.key}
-								onclick={() => onselect(settingsPage.key)}
-							>
-								<settingsPage.icon />
-								<span>{settingsPage.label}</span>
+							<Sidebar.MenuButton {...props} isActive={active === settingsPage.href}>
+								{#snippet child({ props: buttonProps })}
+									<a {...buttonProps} href={resolve(settingsPage.href)}>
+										<settingsPage.icon />
+										<span>{settingsPage.label}</span>
+									</a>
+								{/snippet}
 							</Sidebar.MenuButton>
 						{/snippet}
 					</Tooltip.Trigger>

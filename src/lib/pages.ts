@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { Pathname } from '$app/types';
 import Activity from '@lucide/svelte/icons/calendar-clock';
 import Agents from '@lucide/svelte/icons/bot';
 import Assistant from '@lucide/svelte/icons/sparkles';
@@ -9,98 +10,84 @@ import Sessions from '@lucide/svelte/icons/messages-square';
 import Settings from '@lucide/svelte/icons/settings';
 import Tools from '@lucide/svelte/icons/wrench';
 
-import type { PageKey } from './nav.svelte';
-import ActivityView from '../views/activity-view.svelte';
-import AgentsView from '../views/agents-view.svelte';
-import AssistantView from '../views/assistant-view.svelte';
-import CostView from '../views/cost-view.svelte';
-import OverviewView from '../views/overview-view.svelte';
-import ProjectsView from '../views/projects-view.svelte';
-import SessionsView from '../views/sessions-view.svelte';
-import SettingsView from '../views/settings-view.svelte';
-import ToolsView from '../views/tools-view.svelte';
-
 export type PageDefinition = {
-	key: PageKey;
+	href: Pathname;
 	label: string;
 	/** Shown under the page title; says what the page answers. */
 	description: string;
 	icon: Component;
-	component: Component;
 };
 
 /** The pages reachable from the rail, in order. Settings is pinned separately. */
 export const PAGES: readonly PageDefinition[] = [
 	{
-		key: 'overview',
+		href: '/',
 		label: 'Overview',
 		description: 'Tokens, cost and activity at a glance',
-		icon: Overview,
-		component: OverviewView
+		icon: Overview
 	},
 	{
-		key: 'sessions',
+		href: '/sessions',
 		label: 'Sessions',
 		description: 'Every conversation, with its tokens and cost',
-		icon: Sessions,
-		component: SessionsView
+		icon: Sessions
 	},
 	{
-		key: 'cost',
+		href: '/cost',
 		label: 'Cost & Models',
 		description: 'What each model costs, and why',
-		icon: Cost,
-		component: CostView
+		icon: Cost
 	},
 	{
-		key: 'projects',
+		href: '/projects',
 		label: 'Projects',
 		description: 'Usage per project and branch',
-		icon: Projects,
-		component: ProjectsView
+		icon: Projects
 	},
 	{
-		key: 'activity',
+		href: '/activity',
 		label: 'Activity',
 		description: 'When the work actually happens',
-		icon: Activity,
-		component: ActivityView
+		icon: Activity
 	},
 	{
-		key: 'agents',
+		href: '/agents',
 		label: 'Agents',
 		description: 'Subagent runs and what they cost',
-		icon: Agents,
-		component: AgentsView
+		icon: Agents
 	},
 	{
-		key: 'tools',
+		href: '/tools',
 		label: 'Tools',
 		description: 'Which tools consume the tokens',
-		icon: Tools,
-		component: ToolsView
+		icon: Tools
 	},
 	{
-		key: 'assistant',
+		href: '/assistant',
 		label: 'Assistant',
 		description: 'Ask questions about your own usage',
-		icon: Assistant,
-		component: AssistantView
+		icon: Assistant
 	}
 ];
 
 export const SETTINGS_PAGE: PageDefinition = {
-	key: 'settings',
+	href: '/settings',
 	label: 'Settings',
 	description: 'Scan paths, appearance, API keys',
-	icon: Settings,
-	component: SettingsView
+	icon: Settings
 };
 
 export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, SETTINGS_PAGE];
 
-export function pageFor(key: PageKey): PageDefinition {
-	const page = ALL_PAGES.find((p) => p.key === key);
-	if (!page) throw new Error(`No page registered for '${key}'`);
-	return page;
+/** The rail highlights the deepest match, so /sessions/abc keeps Sessions active. */
+export function activeHref(pathname: string): Pathname {
+	const match = ALL_PAGES.filter(
+		(page) => pathname === page.href || (page.href !== '/' && pathname.startsWith(page.href))
+	).sort((a, b) => b.href.length - a.href.length)[0];
+	return match?.href ?? '/';
+}
+
+export function pageFor(pathname: string): PageDefinition {
+	const href = activeHref(pathname);
+	return ALL_PAGES.find((page) => page.href === href) ?? ALL_PAGES[0];
 }
