@@ -12,6 +12,13 @@
 
 use crate::error::{Error, Result};
 
+/// Windows refuses to recognise until the speech privacy policy is accepted.
+///
+/// It is the one failure the user can actually do something about, and the
+/// system message for it says nothing about where to go — so it is caught by
+/// code and answered with directions.
+pub const PRIVACY_NOT_ACCEPTED: i32 = 0x8004_5509_u32 as i32;
+
 #[cfg(windows)]
 mod imp {
     use super::*;
@@ -24,6 +31,19 @@ mod imp {
         Language::CreateLanguage(&HSTRING::from(locale)).ok()
     }
 
+    /// Turns a WinRT failure into something the window can act on.
+    fn failed(error: windows::core::Error) -> Error {
+        if error.code().0 == PRIVACY_NOT_ACCEPTED {
+            return Error::BadRequest("speech-privacy-not-accepted".to_owned());
+        }
+        Error::BadRequest(error.message())
+    }
+
+    /// Whether a recogniser can be constructed at all.
+    ///
+    /// Deliberately not a promise that dictation will work: the privacy policy
+    /// is only checked when recognition actually starts, so the setting stays
+    /// offered and the refusal is explained at the point it happens.
     pub fn available() -> bool {
         SpeechRecognizer::new().is_ok()
     }
@@ -33,27 +53,15 @@ mod imp {
             Some(language) => SpeechRecognizer::Create(&language),
             None => SpeechRecognizer::new(),
         }
-        .map_err(|error| Error::BadRequest(error.message()))?;
+        .map_err(failed)?;
 
         // WinRT hands back futures; the command already runs on a worker, so
         // blocking on them here is what keeps this function readable.
-        pollster::block_on(
-            recognizer
-                .CompileConstraintsAsync()
-                .map_err(|error| Error::BadRequest(error.message()))?,
-        )
-        .map_err(|error| Error::BadRequest(error.message()))?;
+        pollster::block_on(recognizer.CompileConstraintsAsync().map_err(failed)?).map_err(failed)?;
 
-        let result = pollster::block_on(
-            recognizer
-                .RecognizeAsync()
-                .map_err(|error| Error::BadRequest(error.message()))?,
-        )
-        .map_err(|error| Error::BadRequest(error.message()))?;
+        let result = pollster::block_on(recognizer.RecognizeAsync().map_err(failed)?).map_err(failed)?;
 
-        let status = result
-            .Status()
-            .map_err(|error| Error::BadRequest(error.message()))?;
+        let status = result.Status().map_err(failed)?;
 
         // Silence is an outcome, not a failure: the caller shows the box empty
         // rather than an error nobody caused.
@@ -61,10 +69,7 @@ mod imp {
             return Ok(String::new());
         }
 
-        Ok(result
-            .Text()
-            .map_err(|error| Error::BadRequest(error.message()))?
-            .to_string())
+        Ok(result.Text().map_err(failed)?.to_string())
     }
 }
 

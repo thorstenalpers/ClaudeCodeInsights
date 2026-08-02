@@ -384,7 +384,9 @@ export const en = {
 	'assistant.effort.default': 'default effort',
 	'assistant.answeredBy': 'Answered by {model}',
 	'assistant.answerCost': 'this answer cost {amount}',
-	'status.model.hint': 'The model and effort the last answer actually used.'
+	'status.model.hint': 'The model and effort the last answer actually used.',
+	'voice.privacy':
+		'Windows will not start recognition until its speech setting is on: Settings › Privacy & security › Speech. Recognition itself still runs on this machine.'
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -385,5 +385,7 @@ export const de: Messages = {
 	'assistant.effort.default': 'Standardaufwand',
 	'assistant.answeredBy': 'Beantwortet von {model}',
 	'assistant.answerCost': 'diese Antwort kostete {amount}',
-	'status.model.hint': 'Modell und Aufwand, die die letzte Antwort tatsächlich genutzt hat.'
+	'status.model.hint': 'Modell und Aufwand, die die letzte Antwort tatsächlich genutzt hat.',
+	'voice.privacy':
+		'Windows startet die Erkennung erst, wenn die Spracheinstellung an ist: Einstellungen › Datenschutz und Sicherheit › Spracherkennung. Die Erkennung selbst läuft weiter auf diesem Rechner.'
 };

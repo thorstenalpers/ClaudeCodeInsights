@@ -85,7 +85,11 @@
 						{answer}
 					</div>
 				{/if}
-				{#if voice.error}
+				{#if voice.needsPrivacy}
+					<p class="rounded-md border border-amber-500/40 p-2 text-xs">
+						{t('voice.privacy')}
+					</p>
+				{:else if voice.error}
 					<p class="text-xs text-destructive">{t('voice.failed', { message: voice.error })}</p>
 				{/if}
 			</div>

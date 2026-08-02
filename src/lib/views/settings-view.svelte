@@ -233,6 +233,8 @@
 				{/each}
 				{#if voice.available === false}
 					<p class="text-xs text-muted-foreground">{t('settings.voice.unavailable')}</p>
+				{:else if voice.needsPrivacy}
+					<p class="text-xs text-muted-foreground">{t('voice.privacy')}</p>
 				{/if}
 			</div>
 

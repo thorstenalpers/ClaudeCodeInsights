@@ -3,8 +3,9 @@
     Draws the app mark as a 1024x1024 PNG and hands it to the Tauri icon pipeline.
 
 .DESCRIPTION
-    The mark: a shield with a sun behind it on a rounded plate — the app guards
-    what Claude Code leaves behind, and the rays say the point is to see it.
+    The mark: an eight-pointed burst on a rounded plate. Seven spokes reach the
+    same distance and one stops short — the app is about looking at what a model
+    left behind, and the odd spoke is the reading that stands out.
 
     Black and white only, so the same source works on a light or a dark plate.
 
@@ -49,56 +50,47 @@ $paper = [System.Drawing.Color]::FromArgb(255, 250, 250, 250)
 $plateBrush = New-Object System.Drawing.SolidBrush $ink
 $g.FillPath($plateBrush, $plate)
 
-$inkPen = New-Object System.Drawing.Pen($paper, [float](1.0 * $u))
-$inkPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
-$inkPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
-$plateBrushAgain = New-Object System.Drawing.SolidBrush $ink
+$burstBrush = New-Object System.Drawing.SolidBrush $paper
 
 $cx = 16.0 * $u
-$sunY = 10.2 * $u
-$sunR = 4.6 * $u
+$cy = 16.0 * $u
+$inner = 2.9 * $u
+$half = 2.7 * $u
+$long = 13.4 * $u
+# The short spoke is two thirds rather than the half it started at: at 32 px a
+# half-length spoke reads as a rendering fault, at two thirds it reads as a
+# shorter bar.
+$short = 9.0 * $u
 
-# Rays first: the shield is painted over them, which is what keeps the two
-# shapes apart instead of merging into a blot at small sizes.
-# Only the rays above the horizon: the shield hides the lower ones anyway, and
-# drawing them left orphaned dashes floating beside it.
-foreach ($degrees in @(200, 235, 270, 305, 340)) {
-    $angle = $degrees * [Math]::PI / 180.0
-    $inner = $sunR + 1.5 * $u
-    $outer = $sunR + 3.4 * $u
-    $x1 = $cx + [Math]::Cos($angle) * $inner
-    $y1 = $sunY + [Math]::Sin($angle) * $inner
-    $x2 = $cx + [Math]::Cos($angle) * $outer
-    $y2 = $sunY + [Math]::Sin($angle) * $outer
-    $g.DrawLine($inkPen, [float]$x1, [float]$y1, [float]$x2, [float]$y2)
+for ($i = 0; $i -lt 8; $i++) {
+    $angle = ($i * 45.0 - 90.0) * [Math]::PI / 180.0
+    $outer = if ($i -eq 3) { $short } else { $long }
+
+    $nx = [Math]::Cos($angle)
+    $ny = [Math]::Sin($angle)
+    $px = -$ny
+    $py = $nx
+
+    # A wedge rather than a stroke: it keeps its taper when the whole mark is
+    # scaled down, which a round-capped line does not.
+    $spoke = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $spoke.AddPolygon(@(
+        (New-Object System.Drawing.PointF([float]($cx + $nx * $inner + $px * $half), [float]($cy + $ny * $inner + $py * $half))),
+        (New-Object System.Drawing.PointF([float]($cx + $nx * $inner - $px * $half), [float]($cy + $ny * $inner - $py * $half))),
+        (New-Object System.Drawing.PointF([float]($cx + $nx * $outer - $px * $half * 0.34), [float]($cy + $ny * $outer - $py * $half * 0.34))),
+        (New-Object System.Drawing.PointF([float]($cx + $nx * $outer + $px * $half * 0.34), [float]($cy + $ny * $outer + $py * $half * 0.34)))
+    ))
+    $g.FillPath($burstBrush, $spoke)
+    $spoke.Dispose()
 }
 
-$g.DrawEllipse($inkPen, [float]($cx - $sunR), [float]($sunY - $sunR), [float]($sunR * 2), [float]($sunR * 2))
+# The eye of the burst, cut back out of the plate so the centre stays open at
+# every size instead of filling in.
+$eye = 2.0 * $u
+$eyeBrush = New-Object System.Drawing.SolidBrush $ink
+$g.FillEllipse($eyeBrush, [float]($cx - $eye), [float]($cy - $eye), [float]($eye * 2), [float]($eye * 2))
 
-# The shield, filled in the plate colour so it masks the rays behind it.
-$shield = New-Object System.Drawing.Drawing2D.GraphicsPath
-$top = 13.0 * $u
-$halfW = 7.8 * $u
-$shoulder = 19.0 * $u
-$tip = 27.0 * $u
-$shield.AddLine([float]($cx - $halfW), [float]$top, [float]($cx + $halfW), [float]$top)
-$shield.AddBezier(
-    [float]($cx + $halfW), [float]$top,
-    [float]($cx + $halfW), [float]$shoulder,
-    [float]($cx + $halfW * 0.75), [float](($shoulder + $tip) / 2),
-    [float]$cx, [float]$tip)
-$shield.AddBezier(
-    [float]$cx, [float]$tip,
-    [float]($cx - $halfW * 0.75), [float](($shoulder + $tip) / 2),
-    [float]($cx - $halfW), [float]$shoulder,
-    [float]($cx - $halfW), [float]$top)
-$shield.CloseFigure()
-
-$g.FillPath($plateBrushAgain, $shield)
-$g.DrawPath($inkPen, $shield)
-
-$shield.Dispose(); $inkPen.Dispose(); $plateBrushAgain.Dispose()
-
+$eyeBrush.Dispose(); $burstBrush.Dispose()
 $g.Dispose(); $plate.Dispose(); $plateBrush.Dispose()
 
 New-Item -ItemType Directory -Force -Path (Split-Path $source -Parent) | Out-Null

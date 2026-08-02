@@ -30,6 +30,8 @@ class Voice {
 	error = $state<string | null>(null);
 	/** null until the host has been asked; false when Windows has no recogniser. */
 	available = $state<boolean | null>(null);
+	/** Windows will not listen until its speech privacy setting is on. */
+	needsPrivacy = $state(false);
 
 	setMode(next: InputMode): void {
 		this.mode = next;
@@ -59,7 +61,11 @@ class Voice {
 			const heard = await api.recognizeSpeech(i18n.intlLocale);
 			return heard.trim() === '' ? null : heard;
 		} catch (cause) {
-			this.error = cause instanceof Error ? cause.message : String(cause);
+			// The host marks the one refusal the user can undo; everything else
+			// is passed through as Windows worded it.
+			const message = cause instanceof Error ? cause.message : String(cause);
+			this.needsPrivacy = message.includes('speech-privacy-not-accepted');
+			this.error = this.needsPrivacy ? null : message;
 			return null;
 		} finally {
 			this.listening = false;
