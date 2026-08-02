@@ -3,6 +3,9 @@ use crate::analysis::sessions::{SessionFacets, SessionPage, SessionQuery};
 use crate::analysis::transcript::{self, TranscriptPage};
 use crate::analysis::{activity, sessions};
 use crate::ingest::scanner::{self, ScanProgress, ScanStats};
+use crate::projects::{
+    self, DeleteOutcome, ProjectsReport, TranscriptFile, WriteOutcome,
+};
 use crate::{paths, storage};
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -169,6 +172,39 @@ pub fn scan_on_first_launch(app: &AppHandle) {
             }
         }
     });
+}
+
+#[tauri::command]
+pub fn list_projects() -> Result<ProjectsReport, String> {
+    let conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
+    projects::list(&conn).map_err(|e| format!("{e:#}"))
+}
+
+/// The exact files a deletion would remove, for the confirmation dialog.
+#[tauri::command]
+pub fn preview_project_transcripts(path: String) -> Result<Vec<TranscriptFile>, String> {
+    projects::transcript_files(&path).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+pub fn delete_project_transcripts(path: String) -> Result<DeleteOutcome, String> {
+    let mut conn = storage::open(&paths::database_path()).map_err(|e| format!("{e:#}"))?;
+    projects::delete_transcripts(&mut conn, &path).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+pub fn get_project_settings(path: String) -> Result<String, String> {
+    projects::settings_json(&path).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+pub fn update_project_settings(path: String, settings: String) -> Result<WriteOutcome, String> {
+    projects::update_settings(&path, &settings).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+pub fn remove_project_registration(path: String) -> Result<WriteOutcome, String> {
+    projects::remove_registration(&path).map_err(|e| format!("{e:#}"))
 }
 
 #[tauri::command]

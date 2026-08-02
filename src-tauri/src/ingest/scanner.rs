@@ -354,7 +354,7 @@ fn write_parse(
 /// message_id conflict corrects a value rather than adding one, so a running
 /// total would drift; recomputing is the only version that stays right after a
 /// partial rescan.
-fn recompute_derived(conn: &Connection) -> Result<()> {
+pub(crate) fn recompute_derived(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         r#"
         UPDATE sessions SET

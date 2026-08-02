@@ -2,6 +2,7 @@ pub mod analysis;
 pub mod commands;
 pub mod ingest;
 pub mod paths;
+pub mod projects;
 pub mod storage;
 
 use std::sync::Mutex;
@@ -115,6 +116,12 @@ pub fn run() {
             commands::list_sessions,
             commands::get_session_facets,
             commands::get_transcript,
+            commands::list_projects,
+            commands::preview_project_transcripts,
+            commands::delete_project_transcripts,
+            commands::get_project_settings,
+            commands::update_project_settings,
+            commands::remove_project_registration,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

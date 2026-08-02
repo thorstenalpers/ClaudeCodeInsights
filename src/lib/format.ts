@@ -15,6 +15,18 @@ export function exact(value: number): string {
 	return EXACT.format(value);
 }
 
+export function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	const units = ['KB', 'MB', 'GB'];
+	let value = bytes;
+	let unit = -1;
+	do {
+		value /= 1024;
+		unit += 1;
+	} while (value >= 1024 && unit < units.length - 1);
+	return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
+}
+
 export function formatDate(iso: string | null): string {
 	if (!iso) return '—';
 	const date = new Date(iso);

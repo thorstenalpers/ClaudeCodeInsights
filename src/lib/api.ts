@@ -104,6 +104,45 @@ export type TranscriptPage = {
 	path: string | null;
 };
 
+export type ProjectRow = {
+	path: string;
+	registered: boolean;
+	dirExists: boolean;
+	duplicateGroup: string | null;
+	transcriptDir: string | null;
+	transcriptFiles: number;
+	transcriptBytes: number;
+	sessions: number;
+	turns: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	lastTs: string | null;
+};
+
+export type ProjectsReport = {
+	configPath: string;
+	configExists: boolean;
+	projects: ProjectRow[];
+};
+
+export type TranscriptFile = {
+	path: string;
+	name: string;
+	sizeBytes: number;
+};
+
+export type DeleteOutcome = {
+	filesDeleted: number;
+	bytesFreed: number;
+	failed: string[];
+};
+
+export type WriteOutcome = {
+	backupPath: string;
+};
+
 export const api = {
 	getOverview: () => invoke<Overview>('get_overview'),
 	getTranscript: (sessionId: string, offset: number, limit: number) =>
@@ -111,5 +150,15 @@ export const api = {
 	getScanState: () => invoke<ScanState>('get_scan_state'),
 	startScan: () => invoke<boolean>('start_scan'),
 	listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),
-	getSessionFacets: () => invoke<SessionFacets>('get_session_facets')
+	getSessionFacets: () => invoke<SessionFacets>('get_session_facets'),
+	listProjects: () => invoke<ProjectsReport>('list_projects'),
+	previewProjectTranscripts: (path: string) =>
+		invoke<TranscriptFile[]>('preview_project_transcripts', { path }),
+	deleteProjectTranscripts: (path: string) =>
+		invoke<DeleteOutcome>('delete_project_transcripts', { path }),
+	getProjectSettings: (path: string) => invoke<string>('get_project_settings', { path }),
+	updateProjectSettings: (path: string, settings: string) =>
+		invoke<WriteOutcome>('update_project_settings', { path, settings }),
+	removeProjectRegistration: (path: string) =>
+		invoke<WriteOutcome>('remove_project_registration', { path })
 };
