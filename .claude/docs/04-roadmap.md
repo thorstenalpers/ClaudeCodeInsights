@@ -57,6 +57,5 @@ old name.
   passes the blocks through; only the display is missing.
 - Subagent transcripts from `subagents/agent-*.jsonl`.
 - The assistant, and with it the credential store and provider switching.
-- Storybook. Planned, never set up.
 - Installer, auto-update, CSV export, `win-arm64`.
 - Cowork sessions — they live server-side and leave no local JSONL.
