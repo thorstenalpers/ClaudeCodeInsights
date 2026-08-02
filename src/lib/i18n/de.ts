@@ -256,6 +256,19 @@ export const de: Messages = {
 	'settings.cli.found': 'Gefunden: {path}',
 	'settings.cli.missing': 'Nicht gefunden. Der Assistent bleibt nicht verfügbar.',
 
+	'settings.keys': 'API-Schlüssel',
+	'settings.keys.description':
+		'Der Assistent kann statt der lokalen Claude Code auch ein gehostetes Modell fragen. Ein Schlüssel wird im Anmeldeinformations-Speicher des Betriebssystems abgelegt und kehrt nie in dieses Fenster zurück.',
+	'settings.keys.placeholder': 'Schlüssel einfügen zum Setzen',
+	'settings.keys.stored': 'Ein Schlüssel ist hinterlegt',
+	'settings.keys.none': 'Kein Schlüssel',
+	'settings.keys.free': 'Kostenloser Schlüssel',
+	'settings.keys.saved': 'Gespeichert',
+	'assistant.source': 'Quelle',
+	'assistant.source.local': 'Claude Code (lokal)',
+	'assistant.sendsData':
+		'Ein gehostetes Modell erhält die Zusammenfassung unten über das Netz. Die lokale Quelle nicht.',
+
 	'activity.coding': 'Programmieren',
 	'activity.debugging': 'Fehlersuche',
 	'activity.exploration': 'Erkundung',

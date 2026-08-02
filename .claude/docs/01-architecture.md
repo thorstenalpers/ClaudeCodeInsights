@@ -42,6 +42,8 @@ questions; it holds no domain logic and no rates.
     ├── paths.rs        every path the app reads or writes
     ├── projects.rs     ~/.claude.json registrations: list, delete transcripts,
     │                   edit settings — writes go backup-first, then atomic
+    ├── assistant/      where an answer comes from: the local CLI, or a hosted
+    │                   model called from here so the key stays out of the window
     ├── storage/        connection, pragmas, forward-only migrations
     ├── ingest/         transcript reading and the incremental scan
     └── analysis/       categories, activity, session queries, transcript replay

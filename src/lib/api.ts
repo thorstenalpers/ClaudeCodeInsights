@@ -224,6 +224,13 @@ export type Rhythm = {
 
 export type CliStatus = { found: boolean; path: string | null };
 
+export type ProviderInfo = {
+	id: string;
+	model: string;
+	/** Set for providers that hand out a key for nothing. */
+	freeKeyUrl: string | null;
+};
+
 export const api = {
 	getOverview: () => invoke<Overview>('get_overview'),
 	getTranscript: (sessionId: string, offset: number, limit: number) =>
@@ -249,5 +256,9 @@ export const api = {
 	getSeries: (query: SeriesQuery) => invoke<Series>('get_series', { query }),
 	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets'),
 	getCliStatus: (path: string | null) => invoke<CliStatus>('get_cli_status', { path }),
-	askClaude: (path: string | null, prompt: string) => invoke<string>('ask_claude', { path, prompt })
+	askClaude: (source: string, path: string | null, prompt: string) =>
+		invoke<string>('ask_claude', { source, path, prompt }),
+	listProviders: () => invoke<ProviderInfo[]>('list_providers'),
+	hasApiKey: (provider: string) => invoke<boolean>('has_api_key', { provider }),
+	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key })
 };

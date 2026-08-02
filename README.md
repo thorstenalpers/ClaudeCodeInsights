@@ -5,8 +5,15 @@ transcripts under `~/.claude/`, works out where your tokens and money went, lets
 you replay any past conversation, and manages the projects registered in Claude
 Code's settings.
 
-**Everything stays local.** The app reads `~/.claude/` and writes only to
-`%LocalAppData%\ClaudeAdmin`. Nothing is uploaded, and there is no telemetry.
+**Everything stays local, unless you ask otherwise.** The app reads `~/.claude/`
+and writes only to `%LocalAppData%\ClaudeAdmin`. There is no telemetry, and
+nothing is sent anywhere on its own.
+
+The one exception is the Assistant, and only when you point it at a hosted
+model: then the summary shown on that page — token counts and totals, never a
+transcript — is sent to the provider you chose. Its default source is the Claude
+Code binary already on this machine, which sends nothing from this app at all.
+API keys live in the Windows credential store and never reach the window.
 
 ## What it does
 

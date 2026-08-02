@@ -71,6 +71,7 @@ async fn set_complete(app: AppHandle, task: String) -> Result<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .manage(Mutex::new(SetupState::default()))
         .manage(state::ScanGuard::default())
         .invoke_handler(tauri::generate_handler![
@@ -95,6 +96,9 @@ pub fn run() {
             commands::usage::get_series_facets,
             commands::assistant::get_cli_status,
             commands::assistant::ask_claude,
+            commands::assistant::list_providers,
+            commands::assistant::has_api_key,
+            commands::assistant::set_api_key,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -8,6 +8,7 @@
 	import { LOCALES, i18n, t, type LocaleSetting } from '$lib/i18n/index.svelte';
 	import { billing, type BillingMode } from '$lib/pricing.svelte';
 	import { api, type CliStatus } from '$lib/api';
+	import ApiKeys from '$lib/components/api-keys.svelte';
 	import { cli } from '$lib/cli.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
 	import { CURRENCIES, region, type CurrencySetting } from '$lib/region.svelte';
@@ -179,6 +180,16 @@
 						: t('settings.cli.missing')}
 				</p>
 			{/if}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root data-size="sm" class="shrink-0">
+		<Card.Header>
+			<Card.Title>{t('settings.keys')}</Card.Title>
+			<Card.Description>{t('settings.keys.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<ApiKeys />
 		</Card.Content>
 	</Card.Root>
 

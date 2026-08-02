@@ -1,7 +1,18 @@
 <script lang="ts">
 	import Send from '@lucide/svelte/icons/send';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
-	import { api, type CliStatus, type ModelRow, type Rhythm, type ToolRow } from '$lib/api';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import {
+		api,
+		type CliStatus,
+		type ModelRow,
+		type ProviderInfo,
+		type Rhythm,
+		type ToolRow
+	} from '$lib/api';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { assistant, LOCAL_SOURCE } from '$lib/assistant.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -13,6 +24,7 @@
 	import { scan } from '$lib/scan.svelte';
 
 	let status = $state<CliStatus | null>(null);
+	let providers = $state<ProviderInfo[]>([]);
 	let models = $state<ModelRow[]>([]);
 	let tools = $state<ToolRow[]>([]);
 	let rhythm = $state<Rhythm | null>(null);
@@ -26,7 +38,16 @@
 		if (!isHosted) return;
 		void cli.path;
 		void api.getCliStatus(cli.configured).then((value) => (status = value));
+		void api.listProviders().then((value) => (providers = value));
 	});
+
+	const usingLocal = $derived(assistant.source === LOCAL_SOURCE);
+
+	const sourceLabel = $derived(
+		usingLocal
+			? t('assistant.source.local')
+			: (providers.find((entry) => entry.id === assistant.source)?.id ?? assistant.source)
+	);
 
 	$effect(() => {
 		void scan.dataVersion;
@@ -89,6 +110,7 @@
 		answer = null;
 		try {
 			answer = await api.askClaude(
+				assistant.source,
 				cli.configured,
 				`${context}\n\nQuestion: ${question.trim()}\n\nAnswer briefly, using only the figures above.`
 			);
@@ -103,7 +125,7 @@
 <div class="flex h-full flex-col gap-4 overflow-auto p-6">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
-	{:else if status && !status.found}
+	{:else if usingLocal && status && !status.found}
 		<Card.Root>
 			<Card.Header>
 				<Card.Title>{t('assistant.missing')}</Card.Title>
@@ -112,10 +134,44 @@
 		</Card.Root>
 	{:else}
 		<div class="flex flex-wrap items-center gap-2">
-			<Sparkles class="size-4 text-muted-foreground" />
+			<Sparkles class="size-4 shrink-0 text-muted-foreground" />
+
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="outline" size="sm" class="h-8 gap-1 font-normal capitalize">
+							{sourceLabel}
+							<ChevronDown class="size-3.5 opacity-60" />
+						</Button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="start" class="w-56">
+					<DropdownMenu.Item onSelect={() => assistant.set(LOCAL_SOURCE)}>
+						<span class="flex-1">{t('assistant.source.local')}</span>
+						{#if usingLocal}
+							<Check class="size-4" />
+						{/if}
+					</DropdownMenu.Item>
+					<DropdownMenu.Separator />
+					{#each providers as provider (provider.id)}
+						<DropdownMenu.Item onSelect={() => assistant.set(provider.id)}>
+							<span class="flex flex-1 flex-col">
+								<span class="capitalize">{provider.id}</span>
+								<span class="text-xs text-muted-foreground">{provider.model}</span>
+							</span>
+							{#if assistant.source === provider.id}
+								<Check class="size-4" />
+							{/if}
+						</DropdownMenu.Item>
+					{/each}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+
 			<span class="text-xs text-muted-foreground">
-				{#if status?.path}
+				{#if usingLocal && status?.path}
 					{t('assistant.found', { path: status.path })}
+				{:else if !usingLocal}
+					{t('assistant.sendsData')}
 				{/if}
 			</span>
 		</div>

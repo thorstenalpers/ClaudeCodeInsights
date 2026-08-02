@@ -248,6 +248,19 @@ export const zh: Messages = {
 	'settings.cli.found': '已找到：{path}',
 	'settings.cli.missing': '未找到。助手将不可用。',
 
+	'settings.keys': 'API keys',
+	'settings.keys.description':
+		'The Assistant can ask a hosted model instead of the local Claude Code. A key is stored in the operating system’s credential store and never returns to this window.',
+	'settings.keys.placeholder': 'Paste a key to set it',
+	'settings.keys.stored': 'A key is stored',
+	'settings.keys.none': 'No key',
+	'settings.keys.free': 'Free key',
+	'settings.keys.saved': 'Saved',
+	'assistant.source': 'Source',
+	'assistant.source.local': 'Claude Code (local)',
+	'assistant.sendsData':
+		'A hosted model receives the summary below over the network. The local source does not.',
+
 	'activity.coding': '编码',
 	'activity.debugging': '调试',
 	'activity.exploration': '探索',

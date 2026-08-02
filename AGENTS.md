@@ -48,7 +48,10 @@ a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 6. **Sort columns come from an allowlist, and `IN` placeholders from the number
    of bound values.** Neither may be built from caller text.
 7. **The API key never crosses to the frontend**, never appears in a log, never
-   in an exception message.
+   in an exception message. Keys live in the OS credential store; the window may
+   ask whether one is set and may replace it, never read it back. Every hosted
+   call is made in Rust for the same reason — and it is the only thing in this
+   app that opens a network connection.
 8. **`src/lib/components/ui/**` is generated** by `shadcn-svelte add`. Changes
    there are lost on the next update; it is excluded from lint and format.
 9. Components take props and emit events. Route pages read stores and call the

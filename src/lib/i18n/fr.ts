@@ -257,6 +257,19 @@ export const fr: Messages = {
 	'settings.cli.found': 'Trouvé : {path}',
 	'settings.cli.missing': "Introuvable. L'assistant reste indisponible.",
 
+	'settings.keys': 'API keys',
+	'settings.keys.description':
+		'The Assistant can ask a hosted model instead of the local Claude Code. A key is stored in the operating system’s credential store and never returns to this window.',
+	'settings.keys.placeholder': 'Paste a key to set it',
+	'settings.keys.stored': 'A key is stored',
+	'settings.keys.none': 'No key',
+	'settings.keys.free': 'Free key',
+	'settings.keys.saved': 'Saved',
+	'assistant.source': 'Source',
+	'assistant.source.local': 'Claude Code (local)',
+	'assistant.sendsData':
+		'A hosted model receives the summary below over the network. The local source does not.',
+
 	'activity.coding': 'Codage',
 	'activity.debugging': 'Débogage',
 	'activity.exploration': 'Exploration',

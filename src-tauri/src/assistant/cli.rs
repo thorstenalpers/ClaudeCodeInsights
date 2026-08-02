@@ -1,10 +1,8 @@
-//! Asking the local Claude Code CLI about the figures on screen.
+//! Asking the local Claude Code CLI, which is the one source that needs no key.
 //!
-//! This is the one place the app runs another program, and it stays within the
-//! app's promise: the prompt goes to a binary on this machine, the answer comes
-//! back on its stdout, and nothing here opens a socket. Whether that binary
-//! reaches the network is Claude Code's business, under the user's own account
-//! — there is no API key in this app to leak.
+//! The prompt goes to a binary on this machine and the answer comes back on its
+//! stdout. Whether that binary reaches the network is Claude Code's business,
+//! under the user's own account.
 
 use crate::error::{Error, Result};
 use serde::Serialize;
