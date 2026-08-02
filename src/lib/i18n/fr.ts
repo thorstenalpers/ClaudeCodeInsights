@@ -35,6 +35,7 @@ export const fr: Messages = {
 	'common.clearFilter': 'Effacer',
 	'common.from': 'De',
 	'common.to': 'À',
+	'common.multiSortHint': 'Cliquer pour trier · maj+clic ajoute une colonne',
 	'common.filter': 'Filtrer',
 	'common.noMatch': 'Rien ne correspond à la recherche.',
 	'common.cancel': 'Annuler',

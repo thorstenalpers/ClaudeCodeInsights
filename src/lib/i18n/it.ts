@@ -35,6 +35,7 @@ export const it: Messages = {
 	'common.clearFilter': 'Cancella',
 	'common.from': 'Da',
 	'common.to': 'A',
+	'common.multiSortHint': 'Clic per ordinare · maiusc+clic aggiunge una colonna',
 	'common.filter': 'Filtra',
 	'common.noMatch': 'Nessun risultato per la ricerca.',
 	'common.cancel': 'Annulla',

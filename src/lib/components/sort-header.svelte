@@ -23,7 +23,7 @@
 		range: { min: string; max: string };
 		numeric?: boolean;
 		class?: string;
-		onsort: (id: string) => void;
+		onsort: (id: string, additive: boolean) => void;
 		ontoggle: (id: string, value: string) => void;
 		ontext: (id: string, value: string) => void;
 		onrange: (id: string, bound: 'min' | 'max', value: string) => void;
@@ -56,12 +56,13 @@
 	}
 </script>
 
-<Table.Head class={className}>
+<Table.Head class={[className, 'h-8']}>
 	<div class={['flex items-center gap-1', numeric && 'justify-end']}>
 		<button
 			type="button"
 			class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-			onclick={() => onsort(id)}
+			title={t('common.multiSortHint')}
+			onclick={(event) => onsort(id, event.shiftKey)}
 		>
 			{label}
 			{#if direction === 'desc'}

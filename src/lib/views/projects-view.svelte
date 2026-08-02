@@ -24,11 +24,31 @@
 		{ id: 'path', label: 'projects.column.project' as const },
 		{ id: 'status', label: 'projects.column.status' as const },
 		{ id: 'sessions', label: 'projects.column.sessions' as const, numeric: true },
-		{ id: 'turns', label: 'projects.column.turns' as const, numeric: true },
-		{ id: 'inputTokens', label: 'projects.column.input' as const, numeric: true },
-		{ id: 'outputTokens', label: 'projects.column.output' as const, numeric: true },
-		{ id: 'transcriptBytes', label: 'projects.column.transcripts' as const, numeric: true },
-		{ id: 'lastTs', label: 'projects.column.lastActive' as const }
+		{
+			id: 'turns',
+			label: 'projects.column.turns' as const,
+			numeric: true,
+			class: 'hidden @4xl:table-cell'
+		},
+		{
+			id: 'inputTokens',
+			label: 'projects.column.input' as const,
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{
+			id: 'outputTokens',
+			label: 'projects.column.output' as const,
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{
+			id: 'transcriptBytes',
+			label: 'projects.column.transcripts' as const,
+			numeric: true,
+			class: 'hidden @2xl:table-cell'
+		},
+		{ id: 'lastTs', label: 'projects.column.lastActive' as const, class: 'hidden @2xl:table-cell' }
 	];
 
 	let report = $state<ProjectsReport | null>(null);
@@ -184,7 +204,7 @@
 	);
 </script>
 
-<div class="flex h-full flex-col gap-4 p-6">
+<div class="flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
 			{t('common.noHost')}
@@ -230,7 +250,7 @@
 			</Card.Root>
 		{:else}
 			<div
-				class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+				class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 			>
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
@@ -247,7 +267,7 @@
 								chosen={table.chosen('path')}
 								text={table.textFilter('path')}
 								range={table.range('path')}
-								onsort={(id: string) => table.toggle(id)}
+								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
 								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
 								ontext={(id: string, value: string) => table.setText(id, value)}
 								onrange={(id: string, bound: 'min' | 'max', value: string) =>
@@ -267,7 +287,7 @@
 									chosen={table.chosen(column.id)}
 									text={table.textFilter(column.id)}
 									range={table.range(column.id)}
-									onsort={(id: string) => table.toggle(id)}
+									onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
 									ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
 									ontext={(id: string, value: string) => table.setText(id, value)}
 									onrange={(id: string, bound: 'min' | 'max', value: string) =>
@@ -298,21 +318,25 @@
 									</div>
 								</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">{exact(project.sessions)}</Table.Cell>
-								<Table.Cell class="text-right tabular-nums">{exact(project.turns)}</Table.Cell>
-								<Table.Cell class="text-right tabular-nums">
+								<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
+									>{exact(project.turns)}</Table.Cell
+								>
+								<Table.Cell class="hidden text-right tabular-nums xl:table-cell">
 									{compact(project.inputTokens)}
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums">
+								<Table.Cell class="hidden text-right tabular-nums xl:table-cell">
 									{compact(project.outputTokens)}
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums">
+								<Table.Cell class="hidden text-right tabular-nums md:table-cell">
 									{#if project.transcriptFiles > 0}
 										{exact(project.transcriptFiles)} · {formatBytes(project.transcriptBytes)}
 									{:else}
 										—
 									{/if}
 								</Table.Cell>
-								<Table.Cell class="whitespace-nowrap">{formatWhen(project.lastTs)}</Table.Cell>
+								<Table.Cell class="hidden whitespace-nowrap md:table-cell"
+									>{formatWhen(project.lastTs)}</Table.Cell
+								>
 								<Table.Cell>
 									<div class="flex justify-end gap-1">
 										{#if project.registered}
@@ -409,7 +433,7 @@
 			<Skeleton class="h-24 w-full" />
 		{:else if deleteFiles}
 			<div
-				class="max-h-64 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+				class="max-h-64 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 			>
 				<Table.Root>
 					<Table.Body>

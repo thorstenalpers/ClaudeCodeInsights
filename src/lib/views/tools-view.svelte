@@ -14,7 +14,12 @@
 	const COLUMNS = [
 		{ id: 'name', label: 'tools.column.name' as const },
 		{ id: 'calls', label: 'tools.column.calls' as const, numeric: true },
-		{ id: 'sessions', label: 'tools.column.sessions' as const, numeric: true }
+		{
+			id: 'sessions',
+			label: 'tools.column.sessions' as const,
+			numeric: true,
+			class: 'hidden @2xl:table-cell'
+		}
 	];
 
 	let rows = $state<ToolRow[] | null>(null);
@@ -63,7 +68,7 @@
 	const totalCalls = $derived(rows?.reduce((sum, row) => sum + row.calls, 0) ?? 0);
 </script>
 
-<div class="flex h-full flex-col gap-4 p-6">
+<div class="flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -98,7 +103,7 @@
 		</div>
 
 		<div
-			class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 		>
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
@@ -116,7 +121,7 @@
 								chosen={table.chosen(column.id)}
 								text={table.textFilter(column.id)}
 								range={table.range(column.id)}
-								onsort={(id: string) => table.toggle(id)}
+								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
 								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
 								ontext={(id: string, value: string) => table.setText(id, value)}
 								onrange={(id: string, bound: 'min' | 'max', value: string) =>
@@ -124,7 +129,7 @@
 								onclear={(id: string) => table.clearFilter(id)}
 							/>
 						{/each}
-						<Table.Head class="w-64">{t('tools.column.share')}</Table.Head>
+						<Table.Head class="hidden w-64 lg:table-cell">{t('tools.column.share')}</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
@@ -132,8 +137,10 @@
 						<Table.Row>
 							<Table.Cell class="font-medium">{row.name}</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">{exact(row.sessions)}</Table.Cell>
-							<Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums md:table-cell"
+								>{exact(row.sessions)}</Table.Cell
+							>
+							<Table.Cell class="hidden @4xl:table-cell">
 								<div class="flex items-center gap-2">
 									<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
 										<div

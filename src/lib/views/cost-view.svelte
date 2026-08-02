@@ -29,12 +29,32 @@
 
 	const COLUMNS = [
 		{ id: 'model', label: 'cost.column.model' as const },
-		{ id: 'turns', label: 'cost.column.turns' as const, numeric: true },
-		{ id: 'sessions', label: 'cost.column.sessions' as const, numeric: true },
+		{
+			id: 'turns',
+			label: 'cost.column.turns' as const,
+			numeric: true,
+			class: 'hidden @4xl:table-cell'
+		},
+		{
+			id: 'sessions',
+			label: 'cost.column.sessions' as const,
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
 		{ id: 'inputTokens', label: 'cost.column.input' as const, numeric: true },
 		{ id: 'outputTokens', label: 'cost.column.output' as const, numeric: true },
-		{ id: 'cacheReadTokens', label: 'cost.column.cacheRead' as const, numeric: true },
-		{ id: 'cacheWriteTokens', label: 'cost.column.cacheWrite' as const, numeric: true },
+		{
+			id: 'cacheReadTokens',
+			label: 'cost.column.cacheRead' as const,
+			numeric: true,
+			class: 'hidden @4xl:table-cell'
+		},
+		{
+			id: 'cacheWriteTokens',
+			label: 'cost.column.cacheWrite' as const,
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
 		{ id: 'cost', label: 'cost.column.cost' as const, numeric: true }
 	];
 
@@ -181,7 +201,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-4 overflow-auto p-6">
+<div class="flex h-full flex-col gap-3 overflow-auto p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -249,7 +269,7 @@
 		</div>
 
 		{#if history.labels.length > 0}
-			<Card.Root class="shrink-0">
+			<Card.Root data-size="sm" class="shrink-0">
 				<Card.Header class="gap-1">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<Card.Title class="text-base">{t('cost.history')}</Card.Title>
@@ -300,7 +320,7 @@
 				</Card.Content>
 			</Card.Root>
 
-			<Card.Root class="shrink-0">
+			<Card.Root data-size="sm" class="shrink-0">
 				<Card.Header class="gap-2">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<Card.Title class="text-base">{t('cost.plan')}</Card.Title>
@@ -356,7 +376,7 @@
 		{/if}
 
 		<div
-			class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 		>
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
@@ -374,7 +394,7 @@
 								chosen={table.chosen(column.id)}
 								text={table.textFilter(column.id)}
 								range={table.range(column.id)}
-								onsort={(id: string) => table.toggle(id)}
+								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
 								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
 								ontext={(id: string, value: string) => table.setText(id, value)}
 								onrange={(id: string, bound: 'min' | 'max', value: string) =>
@@ -395,18 +415,28 @@
 									{/if}
 								</div>
 							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">{exact(entry.row.turns)}</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">{exact(entry.row.sessions)}</Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
+								>{exact(entry.row.turns)}</Table.Cell
+							>
+							<Table.Cell class="hidden text-right tabular-nums xl:table-cell"
+								>{exact(entry.row.sessions)}</Table.Cell
+							>
 							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.inputTokens)}>
 								{compact(entry.row.inputTokens)}
 							</Table.Cell>
 							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.outputTokens)}>
 								{compact(entry.row.outputTokens)}
 							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.cacheReadTokens)}>
+							<Table.Cell
+								class="hidden text-right tabular-nums lg:table-cell"
+								title={exact(entry.row.cacheReadTokens)}
+							>
 								{compact(entry.row.cacheReadTokens)}
 							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.cacheWriteTokens)}>
+							<Table.Cell
+								class="hidden text-right tabular-nums xl:table-cell"
+								title={exact(entry.row.cacheWriteTokens)}
+							>
 								{compact(entry.row.cacheWriteTokens)}
 							</Table.Cell>
 							<Table.Cell class="text-right font-medium tabular-nums">

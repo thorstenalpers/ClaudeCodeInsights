@@ -19,7 +19,7 @@ export type SortEntry = { id: string; descending: boolean };
 export type FilterKind = 'range' | 'list' | 'text';
 
 /** Above this many distinct values a checkbox list stops being a list. */
-const LIST_LIMIT = 40;
+const LIST_LIMIT = 150;
 
 function compare(a: Cell, b: Cell): number {
 	if (a === null && b === null) return 0;
@@ -205,12 +205,25 @@ export function createTable<T>(
 		/**
 		 * Cycles one column: descending, ascending, then out of the sort.
 		 *
-		 * Columns accumulate in the order they were clicked, so a second column
-		 * breaks the first one's ties rather than replacing it. Dropping out on
-		 * the third click is what keeps that from becoming a one-way ratchet.
+		 * A plain click sorts by that column alone. Holding shift adds it to the
+		 * existing order instead, so a second column breaks the first one's ties
+		 * — the same gesture a spreadsheet uses, and the reason a stray click no
+		 * longer silently stacks a third sort nobody asked for.
 		 */
-		toggle(id: string) {
+		toggle(id: string, additive = false) {
 			const index = sorts.findIndex((entry) => entry.id === id);
+
+			if (!additive) {
+				if (index === -1 || sorts.length > 1) {
+					sorts = [{ id, descending: true }];
+				} else if (sorts[index].descending) {
+					sorts = [{ id, descending: false }];
+				} else {
+					sorts = [];
+				}
+				return;
+			}
+
 			if (index === -1) {
 				sorts = [...sorts, { id, descending: true }];
 			} else if (sorts[index].descending) {

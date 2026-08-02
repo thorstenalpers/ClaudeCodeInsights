@@ -39,6 +39,7 @@ export const en = {
 	'common.clearFilter': 'Clear',
 	'common.from': 'From',
 	'common.to': 'To',
+	'common.multiSortHint': 'Click to sort · shift-click to add a column',
 	'common.filter': 'Filter',
 	'common.noMatch': 'Nothing matches the search.',
 	'common.cancel': 'Cancel',

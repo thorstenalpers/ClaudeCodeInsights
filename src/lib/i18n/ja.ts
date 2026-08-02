@@ -35,6 +35,7 @@ export const ja: Messages = {
 	'common.clearFilter': 'クリア',
 	'common.from': '下限',
 	'common.to': '上限',
+	'common.multiSortHint': 'クリックで並べ替え · Shift+クリックで列を追加',
 	'common.filter': '絞り込み',
 	'common.noMatch': '検索に一致するものがありません。',
 	'common.cancel': 'キャンセル',

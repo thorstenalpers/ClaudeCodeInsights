@@ -35,6 +35,7 @@ export const hi: Messages = {
 	'common.clearFilter': 'साफ़ करें',
 	'common.from': 'से',
 	'common.to': 'तक',
+	'common.multiSortHint': 'क्रमबद्ध करने के लिए क्लिक · कॉलम जोड़ने के लिए शिफ़्ट+क्लिक',
 	'common.filter': 'फ़िल्टर',
 	'common.noMatch': 'खोज से कुछ मेल नहीं खाता।',
 	'common.cancel': 'रद्द करें',

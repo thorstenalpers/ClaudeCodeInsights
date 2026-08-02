@@ -35,6 +35,7 @@ export const zh: Messages = {
 	'common.clearFilter': '清除',
 	'common.from': '最小',
 	'common.to': '最大',
+	'common.multiSortHint': '点击排序 · Shift+点击添加列',
 	'common.filter': '筛选',
 	'common.noMatch': '没有匹配的搜索结果。',
 	'common.cancel': '取消',

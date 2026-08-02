@@ -73,11 +73,11 @@
 	);
 </script>
 
-<div class="flex flex-col gap-6 p-6">
+<div class="@container flex flex-col gap-4 overflow-auto p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if loading}
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
+		<div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2 @5xl:grid-cols-3">
 			{#each [...Array(6).keys()] as index (index)}
 				<Skeleton class="h-28 w-full" />
 			{/each}
@@ -97,12 +97,12 @@
 			</Card.Header>
 		</Card.Root>
 	{:else if overview}
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
+		<div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2 @5xl:grid-cols-3">
 			{#each cards as card (card.id)}
-				<Card.Root>
-					<Card.Header class="gap-1">
+				<Card.Root data-size="sm">
+					<Card.Header class="gap-0.5">
 						<Card.Description>{card.label}</Card.Description>
-						<Card.Title class="text-2xl tabular-nums" title={exact(card.value)}>
+						<Card.Title class="text-xl tabular-nums" title={exact(card.value)}>
 							{compact(card.value)}
 						</Card.Title>
 						<p class="text-xs text-muted-foreground">{card.hint}</p>

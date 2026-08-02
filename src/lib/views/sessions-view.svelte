@@ -37,15 +37,50 @@
 
 	const COLUMNS: Column[] = [
 		{ id: 'topic', label: 'sessions.column.topic', sort: 'topic' },
-		{ id: 'project', label: 'sessions.column.project', sort: 'project' },
+		{
+			id: 'project',
+			label: 'sessions.column.project',
+			sort: 'project',
+			class: 'hidden @4xl:table-cell'
+		},
 		{ id: 'activity', label: 'sessions.column.activity', sort: 'activity', class: 'w-40' },
 		{ id: 'last', label: 'sessions.column.last', sort: 'last' },
-		{ id: 'duration', label: 'sessions.column.duration', sort: 'duration', numeric: true },
-		{ id: 'turns', label: 'sessions.column.turns', sort: 'turns', numeric: true },
-		{ id: 'input', label: 'sessions.column.input', sort: 'input', numeric: true },
-		{ id: 'output', label: 'sessions.column.output', sort: 'output', numeric: true },
-		{ id: 'cacheRead', label: 'sessions.column.cache', sort: 'cacheRead', numeric: true },
-		{ id: 'model', label: 'sessions.column.model', sort: 'model' }
+		{
+			id: 'duration',
+			label: 'sessions.column.duration',
+			sort: 'duration',
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{
+			id: 'turns',
+			label: 'sessions.column.turns',
+			sort: 'turns',
+			numeric: true,
+			class: 'hidden @4xl:table-cell'
+		},
+		{
+			id: 'input',
+			label: 'sessions.column.input',
+			sort: 'input',
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{
+			id: 'output',
+			label: 'sessions.column.output',
+			sort: 'output',
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{
+			id: 'cacheRead',
+			label: 'sessions.column.cache',
+			sort: 'cacheRead',
+			numeric: true,
+			class: 'hidden @5xl:table-cell'
+		},
+		{ id: 'model', label: 'sessions.column.model', sort: 'model', class: 'hidden @2xl:table-cell' }
 	];
 
 	const PAGE_SIZE = 25;
@@ -212,7 +247,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-4 p-6">
+<div class="flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
 			{t('common.noHost')}
@@ -324,7 +359,7 @@
 			</Card.Root>
 		{:else if result}
 			<div
-				class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+				class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 			>
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
@@ -336,6 +371,7 @@
 											<button
 												type="button"
 												class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+												title={t('common.multiSortHint')}
 												onclick={() => toggleSort(column)}
 											>
 												{t(column.label)}

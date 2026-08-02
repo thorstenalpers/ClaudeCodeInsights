@@ -16,9 +16,19 @@
 		{ id: 'agentType', label: 'agents.column.type' as const },
 		{ id: 'runs', label: 'agents.column.runs' as const, numeric: true },
 		{ id: 'totalTokens', label: 'agents.column.tokens' as const, numeric: true },
-		{ id: 'totalDurationMs', label: 'agents.column.duration' as const, numeric: true },
-		{ id: 'toolUseCount', label: 'agents.column.toolCalls' as const, numeric: true },
-		{ id: 'lastTs', label: 'agents.column.last' as const }
+		{
+			id: 'totalDurationMs',
+			label: 'agents.column.duration' as const,
+			numeric: true,
+			class: 'hidden @2xl:table-cell'
+		},
+		{
+			id: 'toolUseCount',
+			label: 'agents.column.toolCalls' as const,
+			numeric: true,
+			class: 'hidden @4xl:table-cell'
+		},
+		{ id: 'lastTs', label: 'agents.column.last' as const, class: 'hidden @2xl:table-cell' }
 	];
 
 	let rows = $state<AgentRow[] | null>(null);
@@ -76,7 +86,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col gap-4 p-6">
+<div class="flex h-full flex-col gap-3 p-4">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 	{:else if error}
@@ -108,7 +118,7 @@
 		</div>
 
 		<div
-			class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
 		>
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
@@ -126,7 +136,7 @@
 								chosen={table.chosen(column.id)}
 								text={table.textFilter(column.id)}
 								range={table.range(column.id)}
-								onsort={(id: string) => table.toggle(id)}
+								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
 								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
 								ontext={(id: string, value: string) => table.setText(id, value)}
 								onrange={(id: string, bound: 'min' | 'max', value: string) =>
@@ -144,11 +154,15 @@
 							<Table.Cell class="text-right tabular-nums" title={exact(row.totalTokens)}>
 								{compact(row.totalTokens)}
 							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">
+							<Table.Cell class="hidden text-right tabular-nums md:table-cell">
 								{duration(row.totalDurationMs)}
 							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums">{exact(row.toolUseCount)}</Table.Cell>
-							<Table.Cell class="whitespace-nowrap">{formatWhen(row.lastTs)}</Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
+								>{exact(row.toolUseCount)}</Table.Cell
+							>
+							<Table.Cell class="hidden whitespace-nowrap md:table-cell"
+								>{formatWhen(row.lastTs)}</Table.Cell
+							>
 						</Table.Row>
 					{/each}
 				</Table.Body>

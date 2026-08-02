@@ -52,15 +52,15 @@
 	);
 </script>
 
-<div class="flex h-full flex-col gap-4 overflow-auto p-6">
-	<Card.Root>
+<div class="flex h-full flex-col gap-3 overflow-auto p-4">
+	<Card.Root data-size="sm" class="shrink-0">
 		<Card.Header>
 			<Card.Title>{t('settings.appearance')}</Card.Title>
 			<Card.Description>{t('settings.appearance.description')}</Card.Description>
 		</Card.Header>
-		<Card.Content class="flex flex-col gap-4">
+		<Card.Content class="flex flex-col gap-3">
 			<div class="flex items-center gap-2">
-				<span class="w-24 text-sm text-muted-foreground">{t('settings.mode')}</span>
+				<span class="w-24 shrink-0 text-xs text-muted-foreground">{t('settings.mode')}</span>
 				{#each MODES as m (m)}
 					<Button
 						variant={theme.mode === m ? 'default' : 'outline'}
@@ -72,7 +72,7 @@
 				{/each}
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
-				<span class="w-24 text-sm text-muted-foreground">{t('settings.preset')}</span>
+				<span class="w-24 shrink-0 text-xs text-muted-foreground">{t('settings.preset')}</span>
 				{#each PRESETS as preset (preset.id)}
 					<Button
 						variant={theme.preset === preset.id ? 'default' : 'outline'}
@@ -86,7 +86,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root>
+	<Card.Root data-size="sm" class="shrink-0">
 		<Card.Header>
 			<Card.Title>{t('settings.language')}</Card.Title>
 			<Card.Description>{t('settings.language.description')}</Card.Description>
@@ -115,7 +115,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root>
+	<Card.Root data-size="sm" class="shrink-0">
 		<Card.Header>
 			<Card.Title>{t('settings.region')}</Card.Title>
 			<Card.Description>{t('settings.region.description')}</Card.Description>
@@ -160,7 +160,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root>
+	<Card.Root data-size="sm" class="shrink-0">
 		<Card.Header>
 			<Card.Title>{t('settings.cli')}</Card.Title>
 			<Card.Description>{t('settings.cli.description')}</Card.Description>
@@ -182,16 +182,16 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root>
+	<Card.Root data-size="sm" class="shrink-0">
 		<Card.Header>
 			<Card.Title>{t('settings.billing')}</Card.Title>
 			<Card.Description>{t('settings.billing.description')}</Card.Description>
 		</Card.Header>
-		<Card.Content class="flex flex-col gap-3">
+		<Card.Content class="flex flex-col gap-2">
 			{#each BILLING as option (option)}
 				<button
 					type="button"
-					class="flex items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-accent"
+					class="flex items-start gap-2 rounded-md border p-2 text-left transition-colors hover:bg-accent"
 					class:border-primary={billing.mode === option}
 					onclick={() => billing.set(option)}
 				>

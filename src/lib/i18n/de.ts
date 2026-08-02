@@ -35,6 +35,7 @@ export const de: Messages = {
 	'common.clearFilter': 'Zurücksetzen',
 	'common.from': 'Von',
 	'common.to': 'Bis',
+	'common.multiSortHint': 'Klicken zum Sortieren · Umschalt+Klick fügt eine Spalte hinzu',
 	'common.filter': 'Filter',
 	'common.noMatch': 'Nichts passt zur Suche.',
 	'common.cancel': 'Abbrechen',

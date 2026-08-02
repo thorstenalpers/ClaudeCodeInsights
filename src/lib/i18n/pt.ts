@@ -35,6 +35,7 @@ export const pt: Messages = {
 	'common.clearFilter': 'Limpar',
 	'common.from': 'De',
 	'common.to': 'Até',
+	'common.multiSortHint': 'Clique para ordenar · shift+clique adiciona uma coluna',
 	'common.filter': 'Filtrar',
 	'common.noMatch': 'Nada corresponde à pesquisa.',
 	'common.cancel': 'Cancelar',

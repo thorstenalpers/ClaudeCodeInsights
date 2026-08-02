@@ -35,6 +35,7 @@ export const ru: Messages = {
 	'common.clearFilter': 'Сбросить',
 	'common.from': 'От',
 	'common.to': 'До',
+	'common.multiSortHint': 'Клик — сортировка · Shift+клик добавляет столбец',
 	'common.filter': 'Фильтр',
 	'common.noMatch': 'Ничего не найдено.',
 	'common.cancel': 'Отмена',

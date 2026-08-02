@@ -35,6 +35,7 @@ export const ar: Messages = {
 	'common.clearFilter': 'مسح',
 	'common.from': 'من',
 	'common.to': 'إلى',
+	'common.multiSortHint': 'انقر للفرز · Shift+نقر لإضافة عمود',
 	'common.filter': 'تصفية',
 	'common.noMatch': 'لا شيء يطابق البحث.',
 	'common.cancel': 'إلغاء',
