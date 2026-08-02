@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import AppMark from '$lib/components/app-mark.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { PageDefinition } from '$lib/pages';
@@ -16,16 +17,11 @@
 <Sidebar.Root collapsible="icon">
 	<Sidebar.Header>
 		<div class="flex h-8 items-center gap-2 px-1">
-			<!-- The app mark: the same three ascending bars as the icon and the splash. -->
-			<div class="flex h-5 shrink-0 items-end gap-[3px]" aria-hidden="true">
-				<span class="h-2 w-[3px] rounded-[1px] bg-foreground"></span>
-				<span class="h-3.5 w-[3px] rounded-[1px] bg-foreground"></span>
-				<span class="h-5 w-[3px] rounded-[1px] bg-foreground"></span>
-			</div>
+			<AppMark class="size-5 shrink-0 text-foreground" />
 			<span
 				class="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
 			>
-				ClaudeAdmin
+				Claude Admin
 			</span>
 		</div>
 	</Sidebar.Header>

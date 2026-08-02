@@ -1,6 +1,6 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-	"productName": "ClaudeAdmin",
+	"productName": "Claude Admin",
 	"version": "0.1.0",
 	"identifier": "dev.thor.claudeadmin",
 	"build": {
@@ -13,7 +13,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "ClaudeAdmin",
+				"title": "Claude Admin",
 				"width": 1280,
 				"height": 840,
 				"minWidth": 900,
