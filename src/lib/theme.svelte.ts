@@ -106,6 +106,16 @@ class Theme {
 		return mode.current ?? 'system';
 	}
 
+	/**
+	 * What is actually on screen, with 'system' already resolved.
+	 *
+	 * Reading `mode.current` is not just a query: mode-watcher applies the class
+	 * to <html> inside that derived, so it only runs while something reads it.
+	 */
+	get resolvedMode(): 'light' | 'dark' {
+		return mode.current === 'dark' ? 'dark' : 'light';
+	}
+
 	setPreset(id: PresetId): void {
 		applyThemeChange(() => {
 			const root = document.documentElement;

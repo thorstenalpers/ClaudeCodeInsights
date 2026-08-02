@@ -9,11 +9,15 @@
  * Light/dark is a separate axis: `.dark` and `.theme-x` both sit on <html>, so
  * the dark variants are written as `.dark.theme-x`, not nested.
  *
+ * Every selector is anchored to `:root`. app.css declares its base tokens on
+ * `:root` after importing this file, and a bare `.theme-x` carries the same
+ * specificity — so source order won and a preset changed nothing in light mode.
+ *
  * Values from tweakcn (https://tweakcn.com), retrieved 2026-08-01.
  */
 
 /* Claude — warm terracotta */
-.theme-claude {
+:root.theme-claude {
 	--primary: #c96442;
 	--primary-foreground: #ffffff;
 	--ring: #c96442;
@@ -29,7 +33,7 @@
 	--chart-5: #b4552d;
 }
 
-.dark.theme-claude {
+:root.dark.theme-claude {
 	--primary: #d97757;
 	--primary-foreground: #ffffff;
 	--ring: #d97757;
@@ -46,7 +50,7 @@
 }
 
 /* Cosmic — violet */
-.theme-cosmic {
+:root.theme-cosmic {
 	--primary: #6e56cf;
 	--primary-foreground: #ffffff;
 	--ring: #6e56cf;
@@ -62,7 +66,7 @@
 	--chart-5: #4740b3;
 }
 
-.dark.theme-cosmic {
+:root.dark.theme-cosmic {
 	--primary: #a48fff;
 	--primary-foreground: #0f0f1a;
 	--ring: #a48fff;
@@ -79,7 +83,7 @@
 }
 
 /* Supabase — green */
-.theme-supabase {
+:root.theme-supabase {
 	--primary: #3ecf8e;
 	--primary-foreground: #10281d;
 	--ring: #3ecf8e;
@@ -95,7 +99,7 @@
 	--chart-5: #10b981;
 }
 
-.dark.theme-supabase {
+:root.dark.theme-supabase {
 	--primary: #4ade80;
 	--primary-foreground: #06110b;
 	--ring: #4ade80;
@@ -112,7 +116,7 @@
 }
 
 /* Graphite — cool steel, the quietest of the set */
-.theme-graphite {
+:root.theme-graphite {
 	--primary: #4a5a5a;
 	--primary-foreground: #ffffff;
 	--ring: #4a5a5a;
@@ -128,7 +132,7 @@
 	--chart-5: #c0c0c0;
 }
 
-.dark.theme-graphite {
+:root.dark.theme-graphite {
 	--primary: #8fb0b0;
 	--primary-foreground: #141c1c;
 	--ring: #8fb0b0;

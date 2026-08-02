@@ -8,7 +8,7 @@
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import ScanButton from '$lib/components/scan-button.svelte';
-	import ThemeMenu from '$lib/components/theme-menu.svelte';
+	import ModeToggle from '$lib/components/mode-toggle.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Separator } from '$lib/components/ui/separator';
 	import { isHosted, reportReady } from '$lib/ipc.svelte';
@@ -88,7 +88,7 @@
 			{/if}
 			<div class="ml-auto flex items-center gap-1">
 				<ScanButton />
-				<ThemeMenu />
+				<ModeToggle />
 			</div>
 		</header>
 
