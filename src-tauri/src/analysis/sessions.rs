@@ -22,6 +22,15 @@ pub struct SessionQuery {
     pub models: Vec<String>,
     #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub projects: Vec<String>,
+    #[serde(default)]
+    pub branches: Vec<String>,
+    /// Inclusive local dates, `YYYY-MM-DD`.
+    #[serde(default)]
+    pub from: Option<String>,
+    #[serde(default)]
+    pub to: Option<String>,
 }
 
 fn default_page_size() -> u32 {
@@ -39,6 +48,10 @@ impl Default for SessionQuery {
             activities: Vec::new(),
             models: Vec::new(),
             tags: Vec::new(),
+            projects: Vec::new(),
+            branches: Vec::new(),
+            from: None,
+            to: None,
         }
     }
 }
@@ -160,6 +173,37 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
         for value in &request.tags {
             params.push(Box::new(value.clone()));
         }
+    }
+
+    if !request.projects.is_empty() {
+        where_parts.push(format!(
+            "COALESCE(s.project_name, '') IN ({})",
+            placeholders(request.projects.len())
+        ));
+        for value in &request.projects {
+            params.push(Box::new(value.clone()));
+        }
+    }
+
+    if !request.branches.is_empty() {
+        where_parts.push(format!(
+            "COALESCE(s.git_branch, '') IN ({})",
+            placeholders(request.branches.len())
+        ));
+        for value in &request.branches {
+            params.push(Box::new(value.clone()));
+        }
+    }
+
+    // The window is on last activity, which is what the column shows and what
+    // "the past seven days" means to someone reading the table.
+    if let Some(from) = request.from.as_deref().filter(|value| !value.is_empty()) {
+        where_parts.push("date(s.last_ts, 'localtime') >= ?".to_owned());
+        params.push(Box::new(from.to_owned()));
+    }
+    if let Some(to) = request.to.as_deref().filter(|value| !value.is_empty()) {
+        where_parts.push("date(s.last_ts, 'localtime') <= ?".to_owned());
+        params.push(Box::new(to.to_owned()));
     }
 
     let where_sql = format!("WHERE {}", where_parts.join(" AND "));
@@ -288,6 +332,8 @@ pub struct SessionFacets {
     pub models: Vec<String>,
     pub activities: Vec<String>,
     pub tags: Vec<String>,
+    pub projects: Vec<String>,
+    pub branches: Vec<String>,
 }
 
 pub fn facets(conn: &Connection) -> Result<SessionFacets> {
@@ -303,5 +349,15 @@ pub fn facets(conn: &Connection) -> Result<SessionFacets> {
         )?,
         activities: collect("SELECT DISTINCT activity FROM session_activity ORDER BY activity")?,
         tags: collect("SELECT name FROM tags ORDER BY name")?,
+        projects: collect(
+            "SELECT DISTINCT project_name FROM sessions
+             WHERE project_name IS NOT NULL AND project_name <> '' AND turn_count > 0
+             ORDER BY project_name",
+        )?,
+        branches: collect(
+            "SELECT DISTINCT git_branch FROM sessions
+             WHERE git_branch IS NOT NULL AND git_branch <> '' AND turn_count > 0
+             ORDER BY git_branch",
+        )?,
     })
 }

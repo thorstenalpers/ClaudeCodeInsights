@@ -6,6 +6,8 @@
 	import Users from '@lucide/svelte/icons/users';
 	import { api, type SessionFacets, type SessionPage } from '$lib/api';
 	import ActivityBadge from '$lib/components/activity-badge.svelte';
+	import DateRangeMenu from '$lib/components/date-range-menu.svelte';
+	import FilterMenu from '$lib/components/filter-menu.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -52,6 +54,12 @@
 	let searchInput = $state('');
 	let search = $state('');
 	let activities = $state<string[]>([]);
+	let models = $state<string[]>([]);
+	let tags = $state<string[]>([]);
+	let projects = $state<string[]>([]);
+	let branches = $state<string[]>([]);
+	let from = $state<string | null>(null);
+	let to = $state<string | null>(null);
 
 	let result = $state<SessionPage | null>(null);
 	let facets = $state<SessionFacets | null>(null);
@@ -80,11 +88,10 @@
 		page = 0;
 	}
 
-	function toggleActivity(value: string) {
-		activities = activities.includes(value)
-			? activities.filter((entry) => entry !== value)
-			: [...activities, value];
+	/** Every filter resets paging: page 4 of a narrower list is rarely page 4. */
+	function toggle(list: string[], value: string): string[] {
 		page = 0;
+		return list.includes(value) ? list.filter((entry) => entry !== value) : [...list, value];
 	}
 
 	$effect(() => {
@@ -94,7 +101,13 @@
 			sort,
 			descending,
 			search: search || null,
-			activities
+			activities,
+			models,
+			tags,
+			projects,
+			branches,
+			from,
+			to
 		};
 		void scan.dataVersion;
 
@@ -127,6 +140,12 @@
 		if (isHosted) void api.getSessionFacets().then((value) => (facets = value));
 	});
 
+	const hasFilters = $derived(
+		Boolean(search) ||
+			activities.length + models.length + tags.length + projects.length + branches.length > 0 ||
+			Boolean(from || to)
+	);
+
 	const totalPages = $derived(result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1);
 
 	function formatDuration(minutes: number): string {
@@ -139,6 +158,10 @@
 	function openSession(sessionId: string, label: string) {
 		nav.detailLabel = label;
 		void goto(resolve('/sessions/[id]', { id: sessionId }));
+	}
+
+	function activityLabel(value: string): string {
+		return t(`activity.${value}` as MessageKey);
 	}
 
 	function shortModel(model: string | null): string {
@@ -161,19 +184,71 @@
 			/>
 
 			{#if facets}
-				<div class="flex flex-wrap items-center gap-1">
-					{#each facets.activities as value (value)}
-						<Button
-							variant={activities.includes(value) ? 'default' : 'outline'}
-							size="sm"
-							class="h-7 px-2 text-xs font-normal capitalize"
-							onclick={() => toggleActivity(value)}
-						>
-							{value}
-						</Button>
-					{/each}
-				</div>
+				<FilterMenu
+					label={t('filter.project')}
+					options={facets.projects}
+					chosen={projects}
+					onToggle={(value: string) => (projects = toggle(projects, value))}
+					onClear={() => {
+						projects = [];
+						page = 0;
+					}}
+				/>
+				<FilterMenu
+					label={t('filter.branch')}
+					options={facets.branches}
+					chosen={branches}
+					onToggle={(value: string) => (branches = toggle(branches, value))}
+					onClear={() => {
+						branches = [];
+						page = 0;
+					}}
+				/>
+				<FilterMenu
+					label={t('filter.model')}
+					options={facets.models}
+					chosen={models}
+					display={shortModel}
+					onToggle={(value: string) => (models = toggle(models, value))}
+					onClear={() => {
+						models = [];
+						page = 0;
+					}}
+				/>
+				<FilterMenu
+					label={t('filter.activity')}
+					options={facets.activities}
+					chosen={activities}
+					display={activityLabel}
+					onToggle={(value: string) => (activities = toggle(activities, value))}
+					onClear={() => {
+						activities = [];
+						page = 0;
+					}}
+				/>
+				{#if facets.tags.length > 0}
+					<FilterMenu
+						label={t('filter.tag')}
+						options={facets.tags}
+						chosen={tags}
+						onToggle={(value: string) => (tags = toggle(tags, value))}
+						onClear={() => {
+							tags = [];
+							page = 0;
+						}}
+					/>
+				{/if}
 			{/if}
+
+			<DateRangeMenu
+				{from}
+				{to}
+				onChange={(nextFrom: string | null, nextTo: string | null) => {
+					from = nextFrom;
+					to = nextTo;
+					page = 0;
+				}}
+			/>
 
 			{#if result}
 				<span class="ml-auto text-xs text-muted-foreground tabular-nums">
@@ -200,9 +275,7 @@
 				<Card.Header>
 					<Card.Title>{t('sessions.emptyTitle')}</Card.Title>
 					<Card.Description>
-						{search || activities.length > 0
-							? t('sessions.emptyFiltered')
-							: t('sessions.emptyScan')}
+						{hasFilters ? t('sessions.emptyFiltered') : t('sessions.emptyScan')}
 					</Card.Description>
 				</Card.Header>
 			</Card.Root>

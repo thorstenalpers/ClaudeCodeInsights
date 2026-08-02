@@ -71,12 +71,19 @@ export type SessionQuery = {
 	activities?: string[];
 	models?: string[];
 	tags?: string[];
+	projects?: string[];
+	branches?: string[];
+	/** Inclusive local dates, `YYYY-MM-DD`. */
+	from?: string | null;
+	to?: string | null;
 };
 
 export type SessionFacets = {
 	models: string[];
 	activities: string[];
 	tags: string[];
+	projects: string[];
+	branches: string[];
 };
 
 export type ToolCall = {

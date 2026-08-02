@@ -22,6 +22,8 @@ pub struct SeriesQuery {
     pub tools: Vec<String>,
     #[serde(default)]
     pub projects: Vec<String>,
+    #[serde(default)]
+    pub branches: Vec<String>,
     /// Inclusive local dates, `YYYY-MM-DD`.
     #[serde(default)]
     pub from: Option<String>,
@@ -60,6 +62,7 @@ pub struct SeriesFacets {
     pub activities: Vec<String>,
     pub tools: Vec<String>,
     pub projects: Vec<String>,
+    pub branches: Vec<String>,
 }
 
 /// The grouping expression per dimension. An allowlist, never caller text.
@@ -69,6 +72,7 @@ fn group_expression(group_by: &str) -> Result<&'static str> {
         "activity" => "COALESCE(sa.activity, 'unknown')",
         "tool" => "COALESCE(tt.tool_name, 'none')",
         "project" => "COALESCE(s.project_name, 'unknown')",
+        "branch" => "COALESCE(s.git_branch, 'none')",
         "none" => "'all'",
         other => bail!("unknown grouping '{other}'"),
     })
@@ -100,6 +104,7 @@ pub fn load(conn: &Connection, query: &SeriesQuery) -> Result<Series> {
         (&query.models, "COALESCE(t.model, 'unknown')"),
         (&query.activities, "COALESCE(sa.activity, 'unknown')"),
         (&query.projects, "COALESCE(s.project_name, 'unknown')"),
+        (&query.branches, "COALESCE(s.git_branch, 'none')"),
         (&query.tools, "tt.tool_name"),
     ] {
         if values.is_empty() {
@@ -180,6 +185,9 @@ pub fn facets(conn: &Connection) -> Result<SeriesFacets> {
         projects: column(
             "SELECT DISTINCT project_name FROM sessions WHERE project_name IS NOT NULL ORDER BY project_name",
         )?,
+        branches: column(
+            "SELECT DISTINCT git_branch FROM sessions WHERE git_branch IS NOT NULL AND git_branch <> '' ORDER BY git_branch",
+        )?,
     })
 }
 
@@ -224,6 +232,7 @@ mod tests {
             activities: Vec::new(),
             tools: Vec::new(),
             projects: Vec::new(),
+            branches: Vec::new(),
             from: None,
             to: None,
         }
@@ -241,6 +250,25 @@ mod tests {
             .unwrap();
         assert_eq!(opus.turns, 2, "both opus turns fall on the same day");
         assert_eq!(opus.input_tokens, 300);
+    }
+
+    #[test]
+    fn a_branch_can_be_costed_on_its_own() {
+        let conn = seeded();
+        conn.execute_batch(
+            "UPDATE sessions SET git_branch = 'feature/i18n' WHERE session_id = 's1';
+             UPDATE sessions SET git_branch = 'main' WHERE session_id = 's2';",
+        )
+        .unwrap();
+
+        let mut q = query("branch");
+        let series = load(&conn, &q).unwrap();
+        assert_eq!(series.keys, ["feature/i18n", "main"]);
+
+        q.branches = vec!["feature/i18n".to_owned()];
+        let only = load(&conn, &q).unwrap();
+        assert_eq!(only.keys, ["feature/i18n"]);
+        assert_eq!(only.points.iter().map(|p| p.turns).sum::<i64>(), 2);
     }
 
     #[test]
