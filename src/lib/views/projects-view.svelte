@@ -202,7 +202,9 @@
 				</Card.Header>
 			</Card.Root>
 		{:else}
-			<div class="min-h-0 flex-1 overflow-auto rounded-md border">
+			<div
+				class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			>
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
 						<Table.Row>
@@ -342,7 +344,9 @@
 		{#if deleteFiles === null && !deleteError}
 			<Skeleton class="h-24 w-full" />
 		{:else if deleteFiles}
-			<div class="max-h-64 overflow-auto rounded-md border">
+			<div
+				class="max-h-64 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			>
 				<Table.Root>
 					<Table.Body>
 						{#each deleteFiles as file (file.path)}

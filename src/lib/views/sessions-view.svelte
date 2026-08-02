@@ -217,7 +217,9 @@
 				</Card.Header>
 			</Card.Root>
 		{:else if result}
-			<div class="min-h-0 flex-1 overflow-auto rounded-md border">
+			<div
+				class="min-h-0 flex-1 overflow-auto rounded-md border [&>[data-slot=table-container]]:overflow-visible"
+			>
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
 						<Table.Row>
