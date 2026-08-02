@@ -1,14 +1,28 @@
 <script lang="ts">
 	import { api, type AgentRow } from '$lib/api';
+	import SortHeader from '$lib/components/sort-header.svelte';
 	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Input } from '$lib/components/ui/input';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import { compact, exact, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { createTable } from '$lib/table.svelte';
+
+	const COLUMNS = [
+		{ id: 'agentType', label: 'agents.column.type' as const },
+		{ id: 'runs', label: 'agents.column.runs' as const, numeric: true },
+		{ id: 'totalTokens', label: 'agents.column.tokens' as const, numeric: true },
+		{ id: 'totalDurationMs', label: 'agents.column.duration' as const, numeric: true },
+		{ id: 'toolUseCount', label: 'agents.column.toolCalls' as const, numeric: true },
+		{ id: 'lastTs', label: 'agents.column.last' as const }
+	];
 
 	let rows = $state<AgentRow[] | null>(null);
+	let selected = $state<AgentRow | null>(null);
 	let error = $state<string | null>(null);
 	let loading = $state(true);
 
@@ -37,6 +51,19 @@
 			cancelled = true;
 		};
 	});
+
+	const table = createTable<AgentRow>(
+		() => rows ?? [],
+		{
+			agentType: (row) => row.agentType,
+			runs: (row) => row.runs,
+			totalTokens: (row) => row.totalTokens,
+			totalDurationMs: (row) => row.totalDurationMs,
+			toolUseCount: (row) => row.toolUseCount,
+			lastTs: (row) => row.lastTs
+		},
+		{ sort: 'runs' }
+	);
 
 	function duration(ms: number): string {
 		if (ms < 1000) return `${ms} ms`;
@@ -73,7 +100,8 @@
 			</Card.Header>
 		</Card.Root>
 	{:else if rows}
-		<div class="flex shrink-0 items-center">
+		<div class="flex shrink-0 flex-wrap items-center gap-2">
+			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
 				{t('agents.count', { count: exact(rows.length) })}
 			</span>
@@ -85,17 +113,32 @@
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
 					<Table.Row>
-						<Table.Head>{t('agents.column.type')}</Table.Head>
-						<Table.Head class="text-right">{t('agents.column.runs')}</Table.Head>
-						<Table.Head class="text-right">{t('agents.column.tokens')}</Table.Head>
-						<Table.Head class="text-right">{t('agents.column.duration')}</Table.Head>
-						<Table.Head class="text-right">{t('agents.column.toolCalls')}</Table.Head>
-						<Table.Head>{t('agents.column.last')}</Table.Head>
+						{#each COLUMNS as column (column.id)}
+							<SortHeader
+								{...column}
+								label={t(column.label)}
+								direction={table.direction(column.id)}
+								rank={table.rank(column.id)}
+								multi={table.sorts.length > 1}
+								kind={table.kind(column.id)}
+								filtered={table.isFiltered(column.id)}
+								options={table.options(column.id)}
+								chosen={table.chosen(column.id)}
+								text={table.textFilter(column.id)}
+								range={table.range(column.id)}
+								onsort={(id: string) => table.toggle(id)}
+								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+								ontext={(id: string, value: string) => table.setText(id, value)}
+								onrange={(id: string, bound: 'min' | 'max', value: string) =>
+									table.setRange(id, bound, value)}
+								onclear={(id: string) => table.clearFilter(id)}
+							/>
+						{/each}
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each rows as row (row.agentType)}
-						<Table.Row>
+					{#each table.rows as row (row.agentType)}
+						<Table.Row class="cursor-pointer" onclick={() => (selected = row)}>
 							<Table.Cell class="font-medium">{row.agentType}</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">{exact(row.runs)}</Table.Cell>
 							<Table.Cell class="text-right tabular-nums" title={exact(row.totalTokens)}>
@@ -110,6 +153,58 @@
 					{/each}
 				</Table.Body>
 			</Table.Root>
+
+			{#if table.rows.length === 0}
+				<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+			{/if}
 		</div>
 	{/if}
 </div>
+
+<Dialog.Root
+	open={selected !== null}
+	onOpenChange={(open) => {
+		if (!open) selected = null;
+	}}
+>
+	<Dialog.Content class="max-w-lg">
+		<Dialog.Header>
+			<Dialog.Title>{selected?.agentType}</Dialog.Title>
+			<Dialog.Description>{t('nav.agents.description')}</Dialog.Description>
+		</Dialog.Header>
+
+		{#if selected}
+			<dl class="grid grid-cols-2 gap-3 text-sm">
+				<dt class="text-muted-foreground">{t('agents.column.runs')}</dt>
+				<dd class="text-right tabular-nums">{exact(selected.runs)}</dd>
+
+				<dt class="text-muted-foreground">{t('agents.column.tokens')}</dt>
+				<dd class="text-right tabular-nums">{exact(selected.totalTokens)}</dd>
+
+				<dt class="text-muted-foreground">{t('agents.detail.perRun')}</dt>
+				<dd class="text-right tabular-nums">
+					{exact(Math.round(selected.totalTokens / Math.max(1, selected.runs)))}
+				</dd>
+
+				<dt class="text-muted-foreground">{t('agents.column.duration')}</dt>
+				<dd class="text-right tabular-nums">{duration(selected.totalDurationMs)}</dd>
+
+				<dt class="text-muted-foreground">{t('agents.detail.avgDuration')}</dt>
+				<dd class="text-right tabular-nums">
+					{duration(Math.round(selected.totalDurationMs / Math.max(1, selected.runs)))}
+				</dd>
+
+				<dt class="text-muted-foreground">{t('agents.column.toolCalls')}</dt>
+				<dd class="text-right tabular-nums">{exact(selected.toolUseCount)}</dd>
+
+				<dt class="text-muted-foreground">{t('agents.detail.toolsPerRun')}</dt>
+				<dd class="text-right tabular-nums">
+					{(selected.toolUseCount / Math.max(1, selected.runs)).toFixed(1)}
+				</dd>
+
+				<dt class="text-muted-foreground">{t('agents.column.last')}</dt>
+				<dd class="text-right">{formatWhen(selected.lastTs)}</dd>
+			</dl>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>

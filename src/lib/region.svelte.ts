@@ -8,55 +8,51 @@
  */
 import { i18n, type Locale } from '$lib/i18n/index.svelte';
 
-export const REGIONS = [
-	{ id: 'US', currency: 'USD' },
-	{ id: 'GB', currency: 'GBP' },
-	{ id: 'DE', currency: 'EUR' },
-	{ id: 'AT', currency: 'EUR' },
-	{ id: 'CH', currency: 'CHF' },
-	{ id: 'FR', currency: 'EUR' },
-	{ id: 'ES', currency: 'EUR' },
-	{ id: 'IT', currency: 'EUR' },
-	{ id: 'CA', currency: 'CAD' },
-	{ id: 'AU', currency: 'AUD' },
-	{ id: 'BR', currency: 'BRL' },
-	{ id: 'PT', currency: 'EUR' },
-	{ id: 'IN', currency: 'INR' },
-	{ id: 'CN', currency: 'CNY' },
-	{ id: 'JP', currency: 'JPY' },
-	{ id: 'RU', currency: 'RUB' },
-	{ id: 'AE', currency: 'AED' }
+/** The currency is the choice; a country would only be a longer way to say it. */
+export const CURRENCIES = [
+	'USD',
+	'EUR',
+	'GBP',
+	'CHF',
+	'CAD',
+	'AUD',
+	'BRL',
+	'INR',
+	'CNY',
+	'JPY',
+	'RUB',
+	'AED'
 ] as const;
 
-export type RegionId = (typeof REGIONS)[number]['id'];
-export type RegionSetting = RegionId | 'system';
+export type Currency = (typeof CURRENCIES)[number];
+export type CurrencySetting = Currency | 'system';
 
 /** Where a language points when the user has not said otherwise. */
-const DEFAULT_REGION: Record<Locale, RegionId> = {
-	en: 'US',
-	de: 'DE',
-	fr: 'FR',
-	es: 'ES',
-	it: 'IT',
-	ja: 'JP',
-	pt: 'PT',
-	zh: 'CN',
-	ru: 'RU',
-	hi: 'IN',
-	ar: 'AE'
+const DEFAULT_CURRENCY: Record<Locale, Currency> = {
+	en: 'USD',
+	de: 'EUR',
+	fr: 'EUR',
+	es: 'EUR',
+	it: 'EUR',
+	ja: 'JPY',
+	pt: 'EUR',
+	zh: 'CNY',
+	ru: 'RUB',
+	hi: 'INR',
+	ar: 'AED'
 };
 
-const REGION_KEY = 'claudeadmin.region';
+const CURRENCY_KEY = 'claudeadmin.currency';
 const RATE_KEY = 'claudeadmin.rate';
 
-function isRegion(value: unknown): value is RegionId {
-	return REGIONS.some((region) => region.id === value);
+function isCurrency(value: unknown): value is Currency {
+	return CURRENCIES.some((entry) => entry === value);
 }
 
-function readStoredRegion(): RegionSetting {
+function readStoredCurrency(): CurrencySetting {
 	if (typeof localStorage === 'undefined') return 'system';
-	const stored = localStorage.getItem(REGION_KEY);
-	return stored === 'system' || isRegion(stored) ? stored : 'system';
+	const stored = localStorage.getItem(CURRENCY_KEY);
+	return stored === 'system' || isCurrency(stored) ? stored : 'system';
 }
 
 function readStoredRates(): Record<string, number> {
@@ -75,16 +71,12 @@ function readStoredRates(): Record<string, number> {
 }
 
 class Region {
-	setting = $state<RegionSetting>(readStoredRegion());
+	setting = $state<CurrencySetting>(readStoredCurrency());
 	/** Target units per US dollar, per currency. */
 	rates = $state<Record<string, number>>(readStoredRates());
 
-	get id(): RegionId {
-		return this.setting === 'system' ? DEFAULT_REGION[i18n.locale] : this.setting;
-	}
-
-	get currency(): string {
-		return REGIONS.find((region) => region.id === this.id)?.currency ?? 'USD';
+	get currency(): Currency {
+		return this.setting === 'system' ? DEFAULT_CURRENCY[i18n.locale] : this.setting;
 	}
 
 	/** Dollars are the source, so they never need converting. */
@@ -97,12 +89,12 @@ class Region {
 		return this.currency !== 'USD' && this.rates[this.currency] === undefined;
 	}
 
-	set(next: RegionSetting): void {
+	set(next: CurrencySetting): void {
 		this.setting = next;
 		if (next === 'system') {
-			localStorage.removeItem(REGION_KEY);
+			localStorage.removeItem(CURRENCY_KEY);
 		} else {
-			localStorage.setItem(REGION_KEY, next);
+			localStorage.setItem(CURRENCY_KEY, next);
 		}
 	}
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { ModeWatcher } from 'mode-watcher';
 	import { tick, type Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -75,22 +76,37 @@
 				>
 					<ArrowLeft />
 				</Button>
-				<div class="flex min-w-0 flex-col">
-					<h1 class="truncate text-sm leading-tight font-semibold">
-						{nav.detailLabel || t('header.session')}
-					</h1>
-					<p class="truncate font-mono text-xs leading-tight text-muted-foreground">
-						{detailSessionId}
-					</p>
-				</div>
-			{:else}
-				<div class="flex min-w-0 flex-col">
-					<h1 class="truncate text-sm leading-tight font-semibold">{t(current.label)}</h1>
-					<p class="truncate text-xs leading-tight text-muted-foreground">
-						{t(current.description)}
-					</p>
-				</div>
 			{/if}
+
+			<!-- The trail says where you are and walks back up. Every step but the
+			     last is a link, which is what makes it navigation rather than a label. -->
+			<nav class="flex min-w-0 flex-col" aria-label={t('nav.breadcrumb')}>
+				<div class="flex min-w-0 items-center gap-1.5 text-sm leading-tight">
+					<a
+						href={resolve('/')}
+						class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+					>
+						{t('app.name')}
+					</a>
+					<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
+
+					{#if detailSessionId}
+						<a
+							href={resolve('/sessions')}
+							class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							{t('nav.sessions')}
+						</a>
+						<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
+						<span class="truncate font-semibold">{nav.detailLabel || t('header.session')}</span>
+					{:else}
+						<span class="truncate font-semibold">{t(current.label)}</span>
+					{/if}
+				</div>
+				<p class="truncate text-xs leading-tight text-muted-foreground">
+					{detailSessionId ?? t(current.description)}
+				</p>
+			</nav>
 			<div class="ml-auto flex items-center gap-1">
 				<ScanButton />
 				<LanguageMenu />

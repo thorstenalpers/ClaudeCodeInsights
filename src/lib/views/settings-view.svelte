@@ -7,7 +7,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { LOCALES, i18n, t, type LocaleSetting } from '$lib/i18n/index.svelte';
 	import { billing, type BillingMode } from '$lib/pricing.svelte';
-	import { REGIONS, region, type RegionSetting } from '$lib/region.svelte';
+	import { CURRENCIES, region, type CurrencySetting } from '$lib/region.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
@@ -18,13 +18,13 @@
 		...LOCALES.map((entry) => ({ id: entry.id, label: entry.label }))
 	]);
 
-	const REGION_OPTIONS: { id: RegionSetting; label: string }[] = $derived([
+	const CURRENCY_OPTIONS: { id: CurrencySetting; label: string }[] = $derived([
 		{ id: 'system', label: t('settings.region.system') },
-		...REGIONS.map((entry) => ({ id: entry.id, label: `${entry.id} · ${entry.currency}` }))
+		...CURRENCIES.map((entry) => ({ id: entry, label: entry }))
 	]);
 
-	const currentRegion = $derived(
-		REGION_OPTIONS.find((entry) => entry.id === region.setting)?.label ??
+	const currentCurrency = $derived(
+		CURRENCY_OPTIONS.find((entry) => entry.id === region.setting)?.label ??
 			t('settings.region.system')
 	);
 
@@ -111,13 +111,13 @@
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
 						<Button {...props} variant="outline" class="w-56 justify-between">
-							{currentRegion}
+							{currentCurrency}
 							<ChevronDown class="size-4 opacity-60" />
 						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content class="max-h-80 w-56 overflow-y-auto">
-					{#each REGION_OPTIONS as option (option.id)}
+					{#each CURRENCY_OPTIONS as option (option.id)}
 						<DropdownMenu.Item onSelect={() => region.set(option.id)}>
 							<span class="flex-1">{option.label}</span>
 							{#if region.setting === option.id}

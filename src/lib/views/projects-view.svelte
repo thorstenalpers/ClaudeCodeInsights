@@ -5,7 +5,9 @@
 	import { api, type ProjectRow, type ProjectsReport, type TranscriptFile } from '$lib/api';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
+	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import * as Card from '$lib/components/ui/card';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -16,6 +18,18 @@
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { createTable } from '$lib/table.svelte';
+
+	const COLUMNS = [
+		{ id: 'path', label: 'projects.column.project' as const },
+		{ id: 'status', label: 'projects.column.status' as const },
+		{ id: 'sessions', label: 'projects.column.sessions' as const, numeric: true },
+		{ id: 'turns', label: 'projects.column.turns' as const, numeric: true },
+		{ id: 'inputTokens', label: 'projects.column.input' as const, numeric: true },
+		{ id: 'outputTokens', label: 'projects.column.output' as const, numeric: true },
+		{ id: 'transcriptBytes', label: 'projects.column.transcripts' as const, numeric: true },
+		{ id: 'lastTs', label: 'projects.column.lastActive' as const }
+	];
 
 	let report = $state<ProjectsReport | null>(null);
 	let loading = $state(true);
@@ -140,6 +154,31 @@
 		}
 	}
 
+	/** The badges as one sortable, filterable value. */
+	function statusOf(row: ProjectRow): string {
+		const flags = [
+			!row.registered && t('projects.badge.unregistered'),
+			!row.dirExists && t('projects.badge.missingDir'),
+			row.duplicateGroup && t('projects.badge.duplicate')
+		].filter(Boolean);
+		return flags.length > 0 ? flags.join(', ') : t('projects.badge.ok');
+	}
+
+	const table = createTable<ProjectRow>(
+		() => report?.projects ?? [],
+		{
+			path: (row) => row.path,
+			status: (row) => statusOf(row),
+			sessions: (row) => row.sessions,
+			turns: (row) => row.turns,
+			inputTokens: (row) => row.inputTokens,
+			outputTokens: (row) => row.outputTokens,
+			transcriptBytes: (row) => row.transcriptBytes,
+			lastTs: (row) => row.lastTs
+		},
+		{ sort: 'lastTs' }
+	);
+
 	const deleteTotalBytes = $derived(
 		deleteFiles?.reduce((sum, file) => sum + file.sizeBytes, 0) ?? 0
 	);
@@ -165,6 +204,7 @@
 		</div>
 	{:else if report}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
+			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
 			<span class="text-xs text-muted-foreground">
 				{t('projects.source', { path: report.configPath })}
 			</span>
@@ -195,19 +235,51 @@
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
 						<Table.Row>
-							<Table.Head>{t('projects.column.project')}</Table.Head>
-							<Table.Head class="w-40">{t('projects.column.status')}</Table.Head>
-							<Table.Head class="text-right">{t('projects.column.sessions')}</Table.Head>
-							<Table.Head class="text-right">{t('projects.column.turns')}</Table.Head>
-							<Table.Head class="text-right">{t('projects.column.input')}</Table.Head>
-							<Table.Head class="text-right">{t('projects.column.output')}</Table.Head>
-							<Table.Head class="text-right">{t('projects.column.transcripts')}</Table.Head>
-							<Table.Head>{t('projects.column.lastActive')}</Table.Head>
+							<SortHeader
+								id="path"
+								label={t('projects.column.project')}
+								direction={table.direction('path')}
+								rank={table.rank('path')}
+								multi={table.sorts.length > 1}
+								kind={table.kind('path')}
+								filtered={table.isFiltered('path')}
+								options={table.options('path')}
+								chosen={table.chosen('path')}
+								text={table.textFilter('path')}
+								range={table.range('path')}
+								onsort={(id: string) => table.toggle(id)}
+								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+								ontext={(id: string, value: string) => table.setText(id, value)}
+								onrange={(id: string, bound: 'min' | 'max', value: string) =>
+									table.setRange(id, bound, value)}
+								onclear={(id: string) => table.clearFilter(id)}
+							/>
+							{#each COLUMNS.slice(1) as column (column.id)}
+								<SortHeader
+									{...column}
+									label={t(column.label)}
+									direction={table.direction(column.id)}
+									rank={table.rank(column.id)}
+									multi={table.sorts.length > 1}
+									kind={table.kind(column.id)}
+									filtered={table.isFiltered(column.id)}
+									options={table.options(column.id)}
+									chosen={table.chosen(column.id)}
+									text={table.textFilter(column.id)}
+									range={table.range(column.id)}
+									onsort={(id: string) => table.toggle(id)}
+									ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+									ontext={(id: string, value: string) => table.setText(id, value)}
+									onrange={(id: string, bound: 'min' | 'max', value: string) =>
+										table.setRange(id, bound, value)}
+									onclear={(id: string) => table.clearFilter(id)}
+								/>
+							{/each}
 							<Table.Head class="w-28"></Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#each report.projects as project (project.path + (project.transcriptDir ?? ''))}
+						{#each table.rows as project (project.path + (project.transcriptDir ?? ''))}
 							<Table.Row>
 								<Table.Cell class="max-w-96 truncate font-mono text-xs" title={project.path}>
 									{project.path}
@@ -310,6 +382,10 @@
 						{/each}
 					</Table.Body>
 				</Table.Root>
+
+				{#if table.rows.length === 0}
+					<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+				{/if}
 			</div>
 		{/if}
 	{/if}
@@ -347,6 +423,10 @@
 						{/each}
 					</Table.Body>
 				</Table.Root>
+
+				{#if table.rows.length === 0}
+					<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+				{/if}
 			</div>
 			<p class="text-xs text-muted-foreground tabular-nums">
 				{t('projects.delete.summary', {

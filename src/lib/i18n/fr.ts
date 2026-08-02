@@ -19,6 +19,7 @@ export const fr: Messages = {
 	'nav.tools.description': 'Quels outils consomment les jetons',
 	'nav.assistant': 'Assistant',
 	'nav.assistant.description': 'Posez des questions sur votre propre utilisation',
+	'nav.breadcrumb': "Fil d'Ariane",
 	'nav.settings': 'Paramètres',
 	'nav.settings.description': "Chemins d'analyse, apparence, clés API",
 
@@ -30,6 +31,12 @@ export const fr: Messages = {
 	'header.toDark': 'Passer en mode sombre',
 
 	'common.noHost': 'Exécution dans un navigateur sans hôte : aucune donnée à afficher.',
+	'common.search': 'Rechercher…',
+	'common.clearFilter': 'Effacer',
+	'common.from': 'De',
+	'common.to': 'À',
+	'common.filter': 'Filtrer',
+	'common.noMatch': 'Rien ne correspond à la recherche.',
 	'common.cancel': 'Annuler',
 	'common.none': '—',
 	'common.waitingOnScanner': "En attente de l'analyseur de transcriptions.",
@@ -101,6 +108,7 @@ export const fr: Messages = {
 	'projects.column.output': 'Sortie',
 	'projects.column.transcripts': 'Transcriptions',
 	'projects.column.lastActive': 'Dernière activité',
+	'projects.badge.ok': 'ok',
 	'projects.badge.unregistered': 'non enregistré',
 	'projects.badge.missingDir': 'dossier absent',
 	'projects.badge.duplicate': 'doublon',
@@ -137,7 +145,7 @@ export const fr: Messages = {
 	'settings.language.description':
 		"La fenêtre suit la langue de votre système jusqu'à ce que vous en choisissiez une.",
 	'settings.language.system': 'Système',
-	'settings.region': 'Pays et devise',
+	'settings.region': 'Devise',
 	'settings.region.description':
 		'Les tarifs sont publiés en dollars américains. Une autre devise exige un taux de conversion, et cette application ne le demande jamais au réseau.',
 	'settings.region.system': 'Selon la langue',
@@ -182,6 +190,9 @@ export const fr: Messages = {
 	'agents.column.duration': 'Durée',
 	'agents.column.toolCalls': "Appels d'outils",
 	'agents.column.last': 'Dernière exécution',
+	'agents.detail.perRun': 'Jetons par exécution',
+	'agents.detail.avgDuration': 'Durée moyenne',
+	'agents.detail.toolsPerRun': "Appels d'outils par exécution",
 	'agents.empty': 'Aucune exécution de sous-agent analysée pour le moment.',
 	'rhythm.busiest': 'Pic le {weekday} à {hour}',
 	'rhythm.activeDays': '{count} jours actifs',

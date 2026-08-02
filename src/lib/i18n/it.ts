@@ -19,6 +19,7 @@ export const it: Messages = {
 	'nav.tools.description': 'Quali strumenti consumano i token',
 	'nav.assistant': 'Assistente',
 	'nav.assistant.description': 'Fai domande sul tuo utilizzo',
+	'nav.breadcrumb': 'Percorso di navigazione',
 	'nav.settings': 'Impostazioni',
 	'nav.settings.description': 'Percorsi di scansione, aspetto, chiavi API',
 
@@ -30,6 +31,12 @@ export const it: Messages = {
 	'header.toDark': 'Passa alla modalità scura',
 
 	'common.noHost': 'In esecuzione in un browser senza host, quindi non ci sono dati da mostrare.',
+	'common.search': 'Cerca…',
+	'common.clearFilter': 'Cancella',
+	'common.from': 'Da',
+	'common.to': 'A',
+	'common.filter': 'Filtra',
+	'common.noMatch': 'Nessun risultato per la ricerca.',
 	'common.cancel': 'Annulla',
 	'common.none': '—',
 	'common.waitingOnScanner': 'In attesa dell’analizzatore di trascrizioni.',
@@ -101,6 +108,7 @@ export const it: Messages = {
 	'projects.column.output': 'Uscita',
 	'projects.column.transcripts': 'Trascrizioni',
 	'projects.column.lastActive': 'Ultima attività',
+	'projects.badge.ok': 'ok',
 	'projects.badge.unregistered': 'non registrato',
 	'projects.badge.missingDir': 'cartella mancante',
 	'projects.badge.duplicate': 'duplicato',
@@ -137,7 +145,7 @@ export const it: Messages = {
 	'settings.language.description':
 		'La finestra segue la lingua del sistema finché non ne scegli una.',
 	'settings.language.system': 'Sistema',
-	'settings.region': 'Paese e valuta',
+	'settings.region': 'Valuta',
 	'settings.region.description':
 		'Le tariffe sono pubblicate in dollari statunitensi. Un’altra valuta richiede un tasso di cambio, e questa app non lo chiede mai alla rete.',
 	'settings.region.system': 'Dalla lingua',
@@ -183,6 +191,9 @@ export const it: Messages = {
 	'agents.column.duration': 'Durata',
 	'agents.column.toolCalls': 'Chiamate agli strumenti',
 	'agents.column.last': 'Ultima esecuzione',
+	'agents.detail.perRun': 'Token per esecuzione',
+	'agents.detail.avgDuration': 'Durata media',
+	'agents.detail.toolsPerRun': 'Chiamate agli strumenti per esecuzione',
 	'agents.empty': 'Nessuna esecuzione di subagente analizzata finora.',
 	'rhythm.busiest': 'Picco il {weekday} alle {hour}',
 	'rhythm.activeDays': '{count} giorni attivi',

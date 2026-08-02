@@ -6,7 +6,9 @@
 	import * as Table from '$lib/components/ui/table';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Check from '@lucide/svelte/icons/check';
+	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { compact, exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
@@ -14,6 +16,18 @@
 	import { billing, costOf, isPriced, uncachedCostOf, type BillingMode } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { createTable } from '$lib/table.svelte';
+
+	const COLUMNS = [
+		{ id: 'model', label: 'cost.column.model' as const },
+		{ id: 'turns', label: 'cost.column.turns' as const, numeric: true },
+		{ id: 'sessions', label: 'cost.column.sessions' as const, numeric: true },
+		{ id: 'inputTokens', label: 'cost.column.input' as const, numeric: true },
+		{ id: 'outputTokens', label: 'cost.column.output' as const, numeric: true },
+		{ id: 'cacheReadTokens', label: 'cost.column.cacheRead' as const, numeric: true },
+		{ id: 'cacheWriteTokens', label: 'cost.column.cacheWrite' as const, numeric: true },
+		{ id: 'cost', label: 'cost.column.cost' as const, numeric: true }
+	];
 
 	let rows = $state<ModelRow[] | null>(null);
 	let error = $state<string | null>(null);
@@ -51,6 +65,21 @@
 			cost: costOf(row.model, row),
 			uncached: uncachedCostOf(row.model, row)
 		}))
+	);
+
+	const table = createTable<(typeof priced)[number]>(
+		() => priced,
+		{
+			model: (entry) => entry.row.model,
+			turns: (entry) => entry.row.turns,
+			sessions: (entry) => entry.row.sessions,
+			inputTokens: (entry) => entry.row.inputTokens,
+			outputTokens: (entry) => entry.row.outputTokens,
+			cacheReadTokens: (entry) => entry.row.cacheReadTokens,
+			cacheWriteTokens: (entry) => entry.row.cacheWriteTokens,
+			cost: (entry) => entry.cost
+		},
+		{ sort: 'cost' }
 	);
 
 	const totalCost = $derived(priced.reduce((sum, entry) => sum + entry.cost, 0));
@@ -94,6 +123,7 @@
 		</Card.Root>
 	{:else if rows}
 		<div class="flex shrink-0 flex-wrap items-center gap-3">
+			<Input placeholder={t('common.search')} class="max-w-48" bind:value={table.query} />
 			<span class="text-lg font-semibold tabular-nums">
 				{t(billing.mode === 'subscription' ? 'cost.totalEquivalent' : 'cost.total', {
 					amount: money(totalCost)
@@ -141,18 +171,31 @@
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
 					<Table.Row>
-						<Table.Head>{t('cost.column.model')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.turns')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.sessions')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.input')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.output')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.cacheRead')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.cacheWrite')}</Table.Head>
-						<Table.Head class="text-right">{t('cost.column.cost')}</Table.Head>
+						{#each COLUMNS as column (column.id)}
+							<SortHeader
+								{...column}
+								label={t(column.label)}
+								direction={table.direction(column.id)}
+								rank={table.rank(column.id)}
+								multi={table.sorts.length > 1}
+								kind={table.kind(column.id)}
+								filtered={table.isFiltered(column.id)}
+								options={table.options(column.id)}
+								chosen={table.chosen(column.id)}
+								text={table.textFilter(column.id)}
+								range={table.range(column.id)}
+								onsort={(id: string) => table.toggle(id)}
+								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+								ontext={(id: string, value: string) => table.setText(id, value)}
+								onrange={(id: string, bound: 'min' | 'max', value: string) =>
+									table.setRange(id, bound, value)}
+								onclear={(id: string) => table.clearFilter(id)}
+							/>
+						{/each}
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each priced as entry (entry.row.model)}
+					{#each table.rows as entry (entry.row.model)}
 						<Table.Row>
 							<Table.Cell class="font-medium">
 								<div class="flex items-center gap-2">
@@ -183,6 +226,10 @@
 					{/each}
 				</Table.Body>
 			</Table.Root>
+
+			{#if table.rows.length === 0}
+				<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+			{/if}
 		</div>
 
 		<p class="shrink-0 text-xs text-muted-foreground">

@@ -1,12 +1,21 @@
 <script lang="ts">
 	import { api, type ToolRow } from '$lib/api';
+	import SortHeader from '$lib/components/sort-header.svelte';
 	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import { exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { createTable } from '$lib/table.svelte';
+
+	const COLUMNS = [
+		{ id: 'name', label: 'tools.column.name' as const },
+		{ id: 'calls', label: 'tools.column.calls' as const, numeric: true },
+		{ id: 'sessions', label: 'tools.column.sessions' as const, numeric: true }
+	];
 
 	let rows = $state<ToolRow[] | null>(null);
 	let error = $state<string | null>(null);
@@ -38,6 +47,16 @@
 		};
 	});
 
+	const table = createTable<ToolRow>(
+		() => rows ?? [],
+		{
+			name: (row) => row.name,
+			calls: (row) => row.calls,
+			sessions: (row) => row.sessions
+		},
+		{ sort: 'calls' }
+	);
+
 	// The bar is relative to the busiest tool rather than to the total: with a
 	// long tail, shares against the total are all invisible slivers.
 	const busiest = $derived(rows?.[0]?.calls ?? 0);
@@ -68,7 +87,8 @@
 			</Card.Header>
 		</Card.Root>
 	{:else if rows}
-		<div class="flex shrink-0 items-center gap-2">
+		<div class="flex shrink-0 flex-wrap items-center gap-2">
+			<Input placeholder={t('common.search')} class="max-w-xs" bind:value={table.query} />
 			<span class="text-xs text-muted-foreground tabular-nums">
 				{t('tools.count', { count: exact(rows.length) })}
 			</span>
@@ -83,14 +103,32 @@
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-background">
 					<Table.Row>
-						<Table.Head>{t('tools.column.name')}</Table.Head>
-						<Table.Head class="text-right">{t('tools.column.calls')}</Table.Head>
-						<Table.Head class="text-right">{t('tools.column.sessions')}</Table.Head>
+						{#each COLUMNS as column (column.id)}
+							<SortHeader
+								{...column}
+								label={t(column.label)}
+								direction={table.direction(column.id)}
+								rank={table.rank(column.id)}
+								multi={table.sorts.length > 1}
+								kind={table.kind(column.id)}
+								filtered={table.isFiltered(column.id)}
+								options={table.options(column.id)}
+								chosen={table.chosen(column.id)}
+								text={table.textFilter(column.id)}
+								range={table.range(column.id)}
+								onsort={(id: string) => table.toggle(id)}
+								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+								ontext={(id: string, value: string) => table.setText(id, value)}
+								onrange={(id: string, bound: 'min' | 'max', value: string) =>
+									table.setRange(id, bound, value)}
+								onclear={(id: string) => table.clearFilter(id)}
+							/>
+						{/each}
 						<Table.Head class="w-64">{t('tools.column.share')}</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each rows as row (row.name)}
+					{#each table.rows as row (row.name)}
 						<Table.Row>
 							<Table.Cell class="font-medium">{row.name}</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
@@ -112,6 +150,10 @@
 					{/each}
 				</Table.Body>
 			</Table.Root>
+
+			{#if table.rows.length === 0}
+				<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+			{/if}
 		</div>
 	{/if}
 </div>
