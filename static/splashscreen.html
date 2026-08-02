@@ -54,53 +54,67 @@
 				overflow: hidden;
 			}
 
-			/* The same three ascending bars as the app icon. */
+			/* The same three sliders as the app icon. */
 			.mark {
 				display: flex;
-				align-items: flex-end;
-				gap: 0.5rem;
-				height: 3.5rem;
+				flex-direction: column;
+				gap: 0.75rem;
+				width: 4.5rem;
 			}
 
-			.bar {
-				width: 0.75rem;
+			.slider {
+				position: relative;
+				height: 0.2rem;
 				background: var(--foreground);
-				border-radius: 2px;
-				transform-origin: bottom;
+				border-radius: 999px;
+				opacity: 0.55;
 				/* Only transform and opacity animate, so this runs on the compositor
            and keeps moving while the main window's bundle is parsing. */
-				animation: pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+				animation: settle 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 			}
 
-			.bar:nth-child(1) {
-				height: 1.875rem;
+			.slider::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				width: 0.7rem;
+				height: 0.7rem;
+				margin-top: -0.35rem;
+				margin-left: -0.35rem;
+				background: var(--foreground);
+				border-radius: 50%;
 			}
-			.bar:nth-child(2) {
-				height: 2.75rem;
+
+			.slider:nth-child(1)::after {
+				left: 62%;
+			}
+			.slider:nth-child(2) {
 				animation-delay: 0.15s;
 			}
-			.bar:nth-child(3) {
-				height: 3.5rem;
+			.slider:nth-child(2)::after {
+				left: 78%;
+			}
+			.slider:nth-child(3) {
 				animation-delay: 0.3s;
 			}
+			.slider:nth-child(3)::after {
+				left: 38%;
+			}
 
-			@keyframes pulse {
+			@keyframes settle {
 				0%,
 				75%,
 				100% {
-					transform: scaleY(0.35);
 					opacity: 0.55;
 				}
 				28% {
-					transform: scaleY(1);
 					opacity: 1;
 				}
 			}
 
 			@media (prefers-reduced-motion: reduce) {
-				.bar {
+				.slider {
 					animation: none;
-					transform: scaleY(1);
 					opacity: 1;
 				}
 			}
@@ -120,9 +134,9 @@
 	</head>
 	<body>
 		<div class="mark">
-			<div class="bar"></div>
-			<div class="bar"></div>
-			<div class="bar"></div>
+			<div class="slider"></div>
+			<div class="slider"></div>
+			<div class="slider"></div>
 		</div>
 		<div class="title">Claude Admin</div>
 		<div class="status">Loadingâ€¦</div>

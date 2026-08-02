@@ -3,8 +3,8 @@
     Draws the app mark as a 1024x1024 PNG and hands it to the Tauri icon pipeline.
 
 .DESCRIPTION
-    The mark: three ascending bars (usage over time) on a rounded plate, with a
-    notch through the tallest bar for a session boundary.
+    The mark: three sliders on a rounded plate — the app administers what Claude
+    Code stores rather than only charting it, and a control surface says that.
 
     Only one source image is produced here — `tauri icon` derives every size and
     format (.ico, .icns, the Windows Store logos) from it.
@@ -47,25 +47,31 @@ $paper = [System.Drawing.Color]::FromArgb(255, 250, 250, 250)
 $plateBrush = New-Object System.Drawing.SolidBrush $ink
 $g.FillPath($plateBrush, $plate)
 
-$barBrush = New-Object System.Drawing.SolidBrush $paper
-$notchBrush = New-Object System.Drawing.SolidBrush $ink
+$trackBrush = New-Object System.Drawing.SolidBrush $paper
+$knobBrush = New-Object System.Drawing.SolidBrush $paper
+$knobRing = New-Object System.Drawing.Pen($ink, [float](1.6 * $u))
 
-$barW = 4.0 * $u
-$gap = 3.0 * $u
 $left = 7.0 * $u
-$bottom = 25.0 * $u
-$heights = @(7.0, 11.0, 16.0)
+$right = 25.0 * $u
+$track = 1.6 * $u
+$knob = 4.4 * $u
+
+# Rows at 11/16/21 and knobs at 60/75/40 percent: three settings that were
+# clearly set by hand, rather than a pattern that reads as a logo of nothing.
+$rows = @(11.0, 16.0, 21.0)
+$knobAt = @(0.62, 0.78, 0.38)
 
 for ($i = 0; $i -lt 3; $i++) {
-    $h = $heights[$i] * $u
-    $x = $left + $i * ($barW + $gap)
-    $g.FillRectangle($barBrush, $x, $bottom - $h, $barW, $h)
+    $y = $rows[$i] * $u
+    $g.FillRectangle($trackBrush, $left, $y - $track / 2, $right - $left, $track)
+
+    $cx = $left + ($right - $left) * $knobAt[$i]
+    $g.FillEllipse($knobBrush, $cx - $knob / 2, $y - $knob / 2, $knob, $knob)
+    $g.DrawEllipse($knobRing, $cx - $knob / 2, $y - $knob / 2, $knob, $knob)
 }
 
-$x = $left + 2 * ($barW + $gap)
-$g.FillRectangle($notchBrush, $x, $bottom - (10.0 * $u), $barW, 1.5 * $u)
-
-$g.Dispose(); $plate.Dispose(); $plateBrush.Dispose(); $barBrush.Dispose(); $notchBrush.Dispose()
+$g.Dispose(); $plate.Dispose(); $plateBrush.Dispose()
+$trackBrush.Dispose(); $knobBrush.Dispose(); $knobRing.Dispose()
 
 New-Item -ItemType Directory -Force -Path (Split-Path $source -Parent) | Out-Null
 $bmp.Save($source, [System.Drawing.Imaging.ImageFormat]::Png)
