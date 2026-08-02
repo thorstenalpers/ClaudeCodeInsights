@@ -24,6 +24,7 @@ rusqlite = { version = "0.40.1", features = ["bundled"] }
 walkdir = "2.5.0"
 dirs = "6.0.0"
 anyhow = "1.0.104"
+thiserror = "2"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 
 [profile.release]

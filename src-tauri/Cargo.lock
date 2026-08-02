@@ -352,6 +352,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-log",
+ "thiserror 2.0.19",
  "walkdir",
 ]
 

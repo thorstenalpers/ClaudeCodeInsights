@@ -1,13 +1,17 @@
 pub mod analysis;
 pub mod commands;
+pub mod error;
 pub mod ingest;
 pub mod paths;
 pub mod projects;
+pub mod state;
 pub mod storage;
 
+use crate::error::{Error, Result};
+use crate::state::{SetupState, SetupTask};
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager};
 
 /// How long the splash waits before showing the window regardless.
 ///
@@ -15,54 +19,18 @@ use tauri::{AppHandle, Manager, State};
 /// past, so this is a safety net, not a deadline.
 const READY_TIMEOUT: Duration = Duration::from_secs(15);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum SetupTask {
-    Frontend,
-    Backend,
-}
-
-impl SetupTask {
-    fn parse(value: &str) -> Option<Self> {
-        match value {
-            "frontend" => Some(Self::Frontend),
-            "backend" => Some(Self::Backend),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Default)]
-struct SetupState {
-    frontend_ready: bool,
-    backend_ready: bool,
-    revealed: bool,
-}
-
-/// Records that one half of the startup finished, and reveals the window once
-/// both have.
-///
-/// Both halves must go through here. An earlier version let the backend set its
-/// flag directly on the state: whichever half finished second never re-checked
-/// the condition, so a completed startup still sat on the splash until the
-/// timeout fired.
 fn mark_ready(app: &AppHandle, task: SetupTask) {
-    {
+    let both_ready = {
         let state = app.state::<Mutex<SetupState>>();
         let Ok(mut setup) = state.lock() else {
             return;
         };
+        setup.complete(task)
+    };
 
-        match task {
-            SetupTask::Frontend => setup.frontend_ready = true,
-            SetupTask::Backend => setup.backend_ready = true,
-        }
-
-        if !(setup.frontend_ready && setup.backend_ready) {
-            return;
-        }
+    if both_ready {
+        reveal_main_window(app);
     }
-
-    reveal_main_window(app);
 }
 
 /// Closes the splash and shows the main window. Safe to call more than once —
@@ -73,10 +41,9 @@ fn reveal_main_window(app: &AppHandle) {
         let Ok(mut setup) = state.lock() else {
             return;
         };
-        if setup.revealed {
+        if !setup.claim_reveal() {
             return;
         }
-        setup.revealed = true;
     }
 
     if let Some(splash) = app.get_webview_window("splashscreen") {
@@ -93,12 +60,9 @@ fn reveal_main_window(app: &AppHandle) {
 /// The frontend calls this only after its first real paint — a window that is
 /// visible but still blank looks broken, which is why the splash exists at all.
 #[tauri::command]
-async fn set_complete(
-    app: AppHandle,
-    _state: State<'_, Mutex<SetupState>>,
-    task: String,
-) -> Result<(), String> {
-    let task = SetupTask::parse(&task).ok_or_else(|| format!("unknown setup task '{task}'"))?;
+async fn set_complete(app: AppHandle, task: String) -> Result<()> {
+    let task = SetupTask::parse(&task)
+        .ok_or_else(|| Error::BadRequest(format!("unknown setup task '{task}'")))?;
     mark_ready(&app, task);
     Ok(())
 }
@@ -107,21 +71,21 @@ async fn set_complete(
 pub fn run() {
     tauri::Builder::default()
         .manage(Mutex::new(SetupState::default()))
-        .manage(commands::ScanGuard::default())
+        .manage(state::ScanGuard::default())
         .invoke_handler(tauri::generate_handler![
             set_complete,
-            commands::get_scan_state,
-            commands::start_scan,
-            commands::get_overview,
-            commands::list_sessions,
-            commands::get_session_facets,
-            commands::get_transcript,
-            commands::list_projects,
-            commands::preview_project_transcripts,
-            commands::delete_project_transcripts,
-            commands::get_project_settings,
-            commands::update_project_settings,
-            commands::remove_project_registration,
+            commands::scan::get_scan_state,
+            commands::scan::start_scan,
+            commands::overview::get_overview,
+            commands::sessions::list_sessions,
+            commands::sessions::get_session_facets,
+            commands::sessions::get_transcript,
+            commands::projects::list_projects,
+            commands::projects::preview_project_transcripts,
+            commands::projects::delete_project_transcripts,
+            commands::projects::get_project_settings,
+            commands::projects::update_project_settings,
+            commands::projects::remove_project_registration,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -145,7 +109,7 @@ pub fn run() {
                 reveal_main_window(&handle);
             });
 
-            commands::scan_on_first_launch(app.handle());
+            commands::scan::scan_on_first_launch(app.handle());
 
             Ok(())
         })
