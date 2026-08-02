@@ -1,11 +1,5 @@
 <script lang="ts">
-	import Icon from '@lucide/svelte/icons/sparkles';
-	import PlaceholderPanel from '$lib/components/placeholder-panel.svelte';
+	import AssistantView from '$lib/views/assistant-view.svelte';
 </script>
 
-<PlaceholderPanel
-	icon={Icon}
-	title="Assistant"
-	description="Ask questions about your own usage"
-	planned={['Streaming chat over the local database', 'Answers built from tools, never invented']}
-/>
+<AssistantView />
