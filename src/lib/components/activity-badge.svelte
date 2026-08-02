@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { t } from '$lib/i18n/index.svelte';
+	import type { MessageKey } from '$lib/i18n/en';
 
 	type Props = {
 		activity: string;
@@ -11,16 +13,10 @@
 
 	let { activity, profile }: Props = $props();
 
-	const LABELS: Record<string, string> = {
-		coding: 'Coding',
-		debugging: 'Debugging',
-		exploration: 'Exploration',
-		research: 'Research',
-		planning: 'Planning',
-		delegation: 'Delegation',
-		ops: 'Ops',
-		conversation: 'Conversation'
-	};
+	function labelFor(id: string): string {
+		const key = `activity.${id}` as MessageKey;
+		return t(key);
+	}
 
 	// Fixed order so the same category keeps the same colour across every row.
 	const CATEGORY_ORDER = [
@@ -55,7 +51,7 @@
 		{#snippet child({ props })}
 			<div {...props} class="flex w-full flex-col gap-1">
 				<Badge variant="secondary" class="w-fit font-normal">
-					{LABELS[activity] ?? activity}
+					{labelFor(activity)}
 				</Badge>
 				{#if segments.length > 0}
 					<div class="flex h-1 w-full overflow-hidden rounded-full bg-muted">

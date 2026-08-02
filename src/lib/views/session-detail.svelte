@@ -5,6 +5,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { formatTime } from '$lib/format';
+	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 
 	type Props = { sessionId: string };
@@ -54,14 +56,6 @@
 		page = { ...next, turns: [...page.turns, ...next.turns], offset: 0 };
 	}
 
-	function formatTime(iso: string | null): string {
-		if (!iso) return '';
-		const date = new Date(iso);
-		return Number.isNaN(date.getTime())
-			? ''
-			: date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-	}
-
 	// The condition must match what the markup actually renders. Testing
 	// `turn.thinking !== null` regardless of the toggle let thinking-only turns
 	// through as a bare timestamp with nothing under it.
@@ -85,7 +79,7 @@
 			class="h-7 px-2 text-xs font-normal"
 			onclick={() => (showTools = !showTools)}
 		>
-			Tools
+			{t('transcript.tools')}
 		</Button>
 		<Button
 			variant={showThinking ? 'default' : 'outline'}
@@ -93,12 +87,12 @@
 			class="h-7 px-2 text-xs font-normal"
 			onclick={() => (showThinking = !showThinking)}
 		>
-			Thinking
+			{t('transcript.thinking')}
 		</Button>
 
 		{#if page}
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-				{page.turns.length} of {page.total} turns
+				{t('transcript.turnCount', { shown: page.turns.length, total: page.total })}
 			</span>
 		{/if}
 	</div>
@@ -106,7 +100,7 @@
 	<div class="min-h-0 flex-1 overflow-auto">
 		<div class="mx-auto flex max-w-3xl flex-col gap-4 p-6">
 			{#if !isHosted}
-				<p class="text-sm text-muted-foreground">No host attached.</p>
+				<p class="text-sm text-muted-foreground">{t('common.noHost')}</p>
 			{:else if loading}
 				{#each [...Array(5).keys()] as index (index)}
 					<Skeleton class="h-20 w-full" />
@@ -114,27 +108,25 @@
 			{:else if error}
 				<Card.Root>
 					<Card.Header>
-						<Card.Title>Could not read the transcript</Card.Title>
+						<Card.Title>{t('transcript.loadFailed')}</Card.Title>
 						<Card.Description class="font-mono text-xs">{error}</Card.Description>
 					</Card.Header>
 				</Card.Root>
 			{:else if page && page.path === null}
 				<Card.Root>
 					<Card.Header>
-						<Card.Title>No transcript on disk</Card.Title>
-						<Card.Description>
-							This session has figures but its file is no longer where it was scanned from.
-						</Card.Description>
+						<Card.Title>{t('transcript.missingTitle')}</Card.Title>
+						<Card.Description>{t('transcript.missingBody')}</Card.Description>
 					</Card.Header>
 				</Card.Root>
 			{:else if visible.length === 0}
-				<p class="text-sm text-muted-foreground">Nothing to show with the current filters.</p>
+				<p class="text-sm text-muted-foreground">{t('transcript.filteredOut')}</p>
 			{:else}
 				{#each visible as turn (turn.index)}
 					<div class="flex flex-col gap-2">
 						<div class="flex items-center gap-2 text-xs text-muted-foreground">
 							<span class="font-medium {turn.role === 'user' ? 'text-foreground' : ''}">
-								{turn.role === 'user' ? 'You' : 'Claude'}
+								{turn.role === 'user' ? t('transcript.you') : t('transcript.claude')}
 							</span>
 							<span class="tabular-nums">{formatTime(turn.timestamp)}</span>
 						</div>
@@ -151,7 +143,7 @@
 										})}
 								>
 									<Brain class="size-3.5" />
-									Thinking
+									{t('transcript.thinking')}
 								</button>
 								{#if expandedThinking[turn.index]}
 									<p
@@ -185,7 +177,7 @@
 
 				{#if page && page.turns.length < page.total}
 					<Button variant="outline" size="sm" class="self-center" onclick={loadMore}>
-						Load {Math.min(PAGE, page.total - page.turns.length)} more
+						{t('transcript.loadMore', { count: Math.min(PAGE, page.total - page.turns.length) })}
 					</Button>
 				{/if}
 			{/if}

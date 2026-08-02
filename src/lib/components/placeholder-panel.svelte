@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
+	import { t } from '$lib/i18n/index.svelte';
 
 	type Props = {
 		icon: Component;
@@ -29,6 +30,6 @@
 			{/each}
 		</ul>
 
-		<p class="text-xs text-muted-foreground">Waiting on the transcript scanner.</p>
+		<p class="text-xs text-muted-foreground">{t('common.waitingOnScanner')}</p>
 	</div>
 </div>

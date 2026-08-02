@@ -13,7 +13,9 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { compact, exact } from '$lib/format';
+	import { compact, exact, formatWhen } from '$lib/format';
+	import { t } from '$lib/i18n/index.svelte';
+	import type { MessageKey } from '$lib/i18n/en';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -22,7 +24,7 @@
 
 	type Column = {
 		id: string;
-		label: string;
+		label: MessageKey;
 		/** Sortable columns name the key the host understands. */
 		sort?: string;
 		numeric?: boolean;
@@ -30,16 +32,16 @@
 	};
 
 	const COLUMNS: Column[] = [
-		{ id: 'topic', label: 'Session', sort: 'topic' },
-		{ id: 'project', label: 'Project', sort: 'project' },
-		{ id: 'activity', label: 'Activity', sort: 'activity', class: 'w-40' },
-		{ id: 'last', label: 'Last active', sort: 'last' },
-		{ id: 'duration', label: 'Duration', sort: 'duration', numeric: true },
-		{ id: 'turns', label: 'Turns', sort: 'turns', numeric: true },
-		{ id: 'input', label: 'Input', sort: 'input', numeric: true },
-		{ id: 'output', label: 'Output', sort: 'output', numeric: true },
-		{ id: 'cacheRead', label: 'Cache', sort: 'cacheRead', numeric: true },
-		{ id: 'model', label: 'Model', sort: 'model' }
+		{ id: 'topic', label: 'sessions.column.topic', sort: 'topic' },
+		{ id: 'project', label: 'sessions.column.project', sort: 'project' },
+		{ id: 'activity', label: 'sessions.column.activity', sort: 'activity', class: 'w-40' },
+		{ id: 'last', label: 'sessions.column.last', sort: 'last' },
+		{ id: 'duration', label: 'sessions.column.duration', sort: 'duration', numeric: true },
+		{ id: 'turns', label: 'sessions.column.turns', sort: 'turns', numeric: true },
+		{ id: 'input', label: 'sessions.column.input', sort: 'input', numeric: true },
+		{ id: 'output', label: 'sessions.column.output', sort: 'output', numeric: true },
+		{ id: 'cacheRead', label: 'sessions.column.cache', sort: 'cacheRead', numeric: true },
+		{ id: 'model', label: 'sessions.column.model', sort: 'model' }
 	];
 
 	const PAGE_SIZE = 25;
@@ -133,18 +135,6 @@
 		return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 	}
 
-	function formatWhen(iso: string | null): string {
-		if (!iso) return '—';
-		const date = new Date(iso);
-		if (Number.isNaN(date.getTime())) return '—';
-		return date.toLocaleString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	}
-
 	/** The table knows the topic; the header would otherwise show a bare UUID. */
 	function openSession(sessionId: string, label: string) {
 		nav.detailLabel = label;
@@ -159,12 +149,12 @@
 <div class="flex h-full flex-col gap-4 p-6">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
-			Running in a browser without the host, so there is no data to show.
+			{t('common.noHost')}
 		</p>
 	{:else}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
 			<Input
-				placeholder="Search topic, project or branch…"
+				placeholder={t('sessions.search')}
 				class="max-w-xs"
 				bind:value={searchInput}
 				oninput={onSearchInput}
@@ -187,7 +177,7 @@
 
 			{#if result}
 				<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-					{exact(result.total)} sessions
+					{t('sessions.count', { count: exact(result.total) })}
 				</span>
 			{/if}
 		</div>
@@ -195,7 +185,7 @@
 		{#if error}
 			<Card.Root>
 				<Card.Header>
-					<Card.Title>Could not load sessions</Card.Title>
+					<Card.Title>{t('sessions.loadFailed')}</Card.Title>
 					<Card.Description class="font-mono text-xs">{error}</Card.Description>
 				</Card.Header>
 			</Card.Root>
@@ -208,11 +198,11 @@
 		{:else if result && result.rows.length === 0}
 			<Card.Root>
 				<Card.Header>
-					<Card.Title>No sessions match</Card.Title>
+					<Card.Title>{t('sessions.emptyTitle')}</Card.Title>
 					<Card.Description>
 						{search || activities.length > 0
-							? 'Try clearing the search or the activity filters.'
-							: 'Run a scan to read your transcripts.'}
+							? t('sessions.emptyFiltered')
+							: t('sessions.emptyScan')}
 					</Card.Description>
 				</Card.Header>
 			</Card.Root>
@@ -231,7 +221,7 @@
 											class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
 											onclick={() => toggleSort(column)}
 										>
-											{column.label}
+											{t(column.label)}
 											{#if sort === column.sort}
 												{#if descending}
 													<ArrowDown class="size-3" />
@@ -241,7 +231,7 @@
 											{/if}
 										</button>
 									{:else}
-										{column.label}
+										{t(column.label)}
 									{/if}
 								</Table.Head>
 							{/each}
@@ -266,7 +256,7 @@
 														<Users {...props} class="size-3.5 shrink-0 text-muted-foreground" />
 													{/snippet}
 												</Tooltip.Trigger>
-												<Tooltip.Content>Dispatched subagents</Tooltip.Content>
+												<Tooltip.Content>{t('sessions.subagents')}</Tooltip.Content>
 											</Tooltip.Root>
 										{/if}
 									</div>
@@ -319,7 +309,7 @@
 
 			<div class="flex shrink-0 items-center justify-between">
 				<span class="text-xs text-muted-foreground tabular-nums">
-					Page {result.page + 1} of {totalPages}
+					{t('sessions.page', { page: result.page + 1, total: totalPages })}
 				</span>
 				<div class="flex gap-1">
 					<Button
@@ -328,7 +318,7 @@
 						class="size-7"
 						disabled={result.page === 0}
 						onclick={() => (page = Math.max(0, page - 1))}
-						aria-label="Previous page"
+						aria-label={t('sessions.previousPage')}
 					>
 						<ChevronLeft />
 					</Button>
@@ -338,7 +328,7 @@
 						class="size-7"
 						disabled={result.page + 1 >= totalPages}
 						onclick={() => (page = page + 1)}
-						aria-label="Next page"
+						aria-label={t('sessions.nextPage')}
 					>
 						<ChevronRight />
 					</Button>

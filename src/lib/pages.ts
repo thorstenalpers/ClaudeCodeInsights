@@ -1,5 +1,6 @@
 import type { Component } from 'svelte';
 import type { Pathname } from '$app/types';
+import type { MessageKey } from '$lib/i18n/en';
 import Activity from '@lucide/svelte/icons/calendar-clock';
 import Agents from '@lucide/svelte/icons/bot';
 import Assistant from '@lucide/svelte/icons/sparkles';
@@ -12,9 +13,10 @@ import Tools from '@lucide/svelte/icons/wrench';
 
 export type PageDefinition = {
 	href: Pathname;
-	label: string;
+	/** Resolved at render time so a language change re-labels the rail. */
+	label: MessageKey;
 	/** Shown under the page title; says what the page answers. */
-	description: string;
+	description: MessageKey;
 	icon: Component;
 };
 
@@ -22,58 +24,58 @@ export type PageDefinition = {
 export const PAGES: readonly PageDefinition[] = [
 	{
 		href: '/',
-		label: 'Overview',
-		description: 'Tokens, cost and activity at a glance',
+		label: 'nav.overview',
+		description: 'nav.overview.description',
 		icon: Overview
 	},
 	{
 		href: '/sessions',
-		label: 'Sessions',
-		description: 'Every conversation, with its tokens and cost',
+		label: 'nav.sessions',
+		description: 'nav.sessions.description',
 		icon: Sessions
 	},
 	{
 		href: '/cost',
-		label: 'Cost & Models',
-		description: 'What each model costs, and why',
+		label: 'nav.cost',
+		description: 'nav.cost.description',
 		icon: Cost
 	},
 	{
 		href: '/projects',
-		label: 'Projects',
-		description: 'Usage per project and branch',
+		label: 'nav.projects',
+		description: 'nav.projects.description',
 		icon: Projects
 	},
 	{
 		href: '/activity',
-		label: 'Activity',
-		description: 'When the work actually happens',
+		label: 'nav.activity',
+		description: 'nav.activity.description',
 		icon: Activity
 	},
 	{
 		href: '/agents',
-		label: 'Agents',
-		description: 'Subagent runs and what they cost',
+		label: 'nav.agents',
+		description: 'nav.agents.description',
 		icon: Agents
 	},
 	{
 		href: '/tools',
-		label: 'Tools',
-		description: 'Which tools consume the tokens',
+		label: 'nav.tools',
+		description: 'nav.tools.description',
 		icon: Tools
 	},
 	{
 		href: '/assistant',
-		label: 'Assistant',
-		description: 'Ask questions about your own usage',
+		label: 'nav.assistant',
+		description: 'nav.assistant.description',
 		icon: Assistant
 	}
 ];
 
 export const SETTINGS_PAGE: PageDefinition = {
 	href: '/settings',
-	label: 'Settings',
-	description: 'Scan paths, appearance, API keys',
+	label: 'nav.settings',
+	description: 'nav.settings.description',
 	icon: Settings
 };
 

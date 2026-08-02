@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import { Button } from '$lib/components/ui/button';
+	import { t } from '$lib/i18n/index.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
 </script>
@@ -13,14 +14,14 @@
 			</span>
 		{:else if scan.status === 'done' && scan.stats}
 			<span class="text-xs text-muted-foreground tabular-nums">
-				{scan.stats.sessionsSeen} sessions
+				{t('header.sessionsScanned', { count: scan.stats.sessionsSeen })}
 			</span>
 		{/if}
 
 		<Button
 			variant="ghost"
 			size="icon"
-			aria-label="Rescan transcripts"
+			aria-label={t('header.rescan')}
 			disabled={scan.status === 'running'}
 			onclick={() => scan.start()}
 		>

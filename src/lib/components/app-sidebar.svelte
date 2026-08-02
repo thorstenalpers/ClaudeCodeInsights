@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import AppMark from '$lib/components/app-mark.svelte';
+	import { t } from '$lib/i18n/index.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { PageDefinition } from '$lib/pages';
@@ -21,7 +22,7 @@
 			<span
 				class="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
 			>
-				Claude Admin
+				{t('app.name')}
 			</span>
 		</div>
 	</Sidebar.Header>
@@ -39,13 +40,13 @@
 											{#snippet child({ props: buttonProps })}
 												<a {...buttonProps} href={resolve(page.href)}>
 													<page.icon />
-													<span>{page.label}</span>
+													<span>{t(page.label)}</span>
 												</a>
 											{/snippet}
 										</Sidebar.MenuButton>
 									{/snippet}
 								</Tooltip.Trigger>
-								<Tooltip.Content side="right">{page.label}</Tooltip.Content>
+								<Tooltip.Content side="right">{t(page.label)}</Tooltip.Content>
 							</Tooltip.Root>
 						</Sidebar.MenuItem>
 					{/each}
@@ -64,13 +65,13 @@
 								{#snippet child({ props: buttonProps })}
 									<a {...buttonProps} href={resolve(settingsPage.href)}>
 										<settingsPage.icon />
-										<span>{settingsPage.label}</span>
+										<span>{t(settingsPage.label)}</span>
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>
 						{/snippet}
 					</Tooltip.Trigger>
-					<Tooltip.Content side="right">{settingsPage.label}</Tooltip.Content>
+					<Tooltip.Content side="right">{t(settingsPage.label)}</Tooltip.Content>
 				</Tooltip.Root>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>

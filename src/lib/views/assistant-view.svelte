@@ -1,11 +1,12 @@
 <script lang="ts">
 	import Icon from '@lucide/svelte/icons/sparkles';
 	import PlaceholderPanel from '$lib/components/placeholder-panel.svelte';
+	import { t } from '$lib/i18n/index.svelte';
 </script>
 
 <PlaceholderPanel
 	icon={Icon}
-	title="Assistant"
-	description="Ask questions about your own usage"
-	planned={['Streaming chat over the local database', 'Answers built from tools, never invented']}
+	title={t('nav.assistant')}
+	description={t('nav.assistant.description')}
+	planned={[t('placeholder.assistant.1'), t('placeholder.assistant.2')]}
 />

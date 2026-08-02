@@ -11,6 +11,7 @@
 	import ModeToggle from '$lib/components/mode-toggle.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Separator } from '$lib/components/ui/separator';
+	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { isHosted, reportReady } from '$lib/ipc.svelte';
 	import { nav } from '$lib/nav.svelte';
 	import { PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
@@ -21,6 +22,7 @@
 	let { children }: { children: Snippet } = $props();
 
 	theme.init();
+	i18n.init();
 	void scan.init();
 	void signalReady();
 
@@ -67,14 +69,14 @@
 				<Button
 					variant="ghost"
 					size="icon"
-					aria-label="Back"
+					aria-label={t('header.back')}
 					onclick={() => goto(resolve('/sessions'))}
 				>
 					<ArrowLeft />
 				</Button>
 				<div class="flex min-w-0 flex-col">
 					<h1 class="truncate text-sm leading-tight font-semibold">
-						{nav.detailLabel || 'Session'}
+						{nav.detailLabel || t('header.session')}
 					</h1>
 					<p class="truncate font-mono text-xs leading-tight text-muted-foreground">
 						{detailSessionId}
@@ -82,8 +84,10 @@
 				</div>
 			{:else}
 				<div class="flex min-w-0 flex-col">
-					<h1 class="truncate text-sm leading-tight font-semibold">{current.label}</h1>
-					<p class="truncate text-xs leading-tight text-muted-foreground">{current.description}</p>
+					<h1 class="truncate text-sm leading-tight font-semibold">{t(current.label)}</h1>
+					<p class="truncate text-xs leading-tight text-muted-foreground">
+						{t(current.description)}
+					</p>
 				</div>
 			{/if}
 			<div class="ml-auto flex items-center gap-1">

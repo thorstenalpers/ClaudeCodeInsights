@@ -12,7 +12,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { compact, exact, formatBytes } from '$lib/format';
+	import { compact, exact, formatBytes, formatWhen } from '$lib/format';
+	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { scan } from '$lib/scan.svelte';
 
@@ -84,7 +85,7 @@
 		try {
 			const outcome = await api.deleteProjectTranscripts(deleteTarget.path);
 			if (outcome.failed.length > 0) {
-				deleteError = `Not deleted: ${outcome.failed.join(', ')}`;
+				deleteError = t('projects.delete.failed', { files: outcome.failed.join(', ') });
 			} else {
 				deleteTarget = null;
 			}
@@ -139,18 +140,6 @@
 		}
 	}
 
-	function formatWhen(iso: string | null): string {
-		if (!iso) return '—';
-		const date = new Date(iso);
-		if (Number.isNaN(date.getTime())) return '—';
-		return date.toLocaleString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	}
-
 	const deleteTotalBytes = $derived(
 		deleteFiles?.reduce((sum, file) => sum + file.sizeBytes, 0) ?? 0
 	);
@@ -159,12 +148,12 @@
 <div class="flex h-full flex-col gap-4 p-6">
 	{#if !isHosted}
 		<p class="text-sm text-muted-foreground">
-			Running in a browser without the host, so there is no data to show.
+			{t('common.noHost')}
 		</p>
 	{:else if error}
 		<Card.Root>
 			<Card.Header>
-				<Card.Title>Could not load projects</Card.Title>
+				<Card.Title>{t('projects.loadFailed')}</Card.Title>
 				<Card.Description class="font-mono text-xs">{error}</Card.Description>
 			</Card.Header>
 		</Card.Root>
@@ -177,27 +166,25 @@
 	{:else if report}
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
 			<span class="text-xs text-muted-foreground">
-				Registrations from <span class="font-mono">{report.configPath}</span>
+				{t('projects.source', { path: report.configPath })}
 			</span>
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-				{exact(report.projects.length)} projects
+				{t('projects.count', { count: exact(report.projects.length) })}
 			</span>
 		</div>
 
 		{#if lastBackup}
 			<p class="shrink-0 text-xs text-muted-foreground">
-				Backup written to <span class="font-mono">{lastBackup}</span>
+				{t('projects.backupWritten', { path: lastBackup })}
 			</p>
 		{/if}
 
 		{#if report.projects.length === 0}
 			<Card.Root>
 				<Card.Header>
-					<Card.Title>No projects</Card.Title>
+					<Card.Title>{t('projects.emptyTitle')}</Card.Title>
 					<Card.Description>
-						{report.configExists
-							? 'The configuration lists no projects.'
-							: 'No ~/.claude.json was found.'}
+						{report.configExists ? t('projects.emptyRegistered') : t('projects.emptyNoConfig')}
 					</Card.Description>
 				</Card.Header>
 			</Card.Root>
@@ -208,14 +195,14 @@
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-background">
 						<Table.Row>
-							<Table.Head>Project</Table.Head>
-							<Table.Head class="w-40">Status</Table.Head>
-							<Table.Head class="text-right">Sessions</Table.Head>
-							<Table.Head class="text-right">Turns</Table.Head>
-							<Table.Head class="text-right">Input</Table.Head>
-							<Table.Head class="text-right">Output</Table.Head>
-							<Table.Head class="text-right">Transcripts</Table.Head>
-							<Table.Head>Last active</Table.Head>
+							<Table.Head>{t('projects.column.project')}</Table.Head>
+							<Table.Head class="w-40">{t('projects.column.status')}</Table.Head>
+							<Table.Head class="text-right">{t('projects.column.sessions')}</Table.Head>
+							<Table.Head class="text-right">{t('projects.column.turns')}</Table.Head>
+							<Table.Head class="text-right">{t('projects.column.input')}</Table.Head>
+							<Table.Head class="text-right">{t('projects.column.output')}</Table.Head>
+							<Table.Head class="text-right">{t('projects.column.transcripts')}</Table.Head>
+							<Table.Head>{t('projects.column.lastActive')}</Table.Head>
 							<Table.Head class="w-28"></Table.Head>
 						</Table.Row>
 					</Table.Header>
@@ -228,13 +215,13 @@
 								<Table.Cell>
 									<div class="flex flex-wrap gap-1">
 										{#if !project.registered}
-											<Badge variant="outline">unregistered</Badge>
+											<Badge variant="outline">{t('projects.badge.unregistered')}</Badge>
 										{/if}
 										{#if !project.dirExists}
-											<Badge variant="destructive">missing dir</Badge>
+											<Badge variant="destructive">{t('projects.badge.missingDir')}</Badge>
 										{/if}
 										{#if project.duplicateGroup}
-											<Badge variant="secondary">duplicate</Badge>
+											<Badge variant="secondary">{t('projects.badge.duplicate')}</Badge>
 										{/if}
 									</div>
 								</Table.Cell>
@@ -272,7 +259,7 @@
 															</Button>
 														{/snippet}
 													</Tooltip.Trigger>
-													<Tooltip.Content>Edit settings</Tooltip.Content>
+													<Tooltip.Content>{t('projects.action.editSettings')}</Tooltip.Content>
 												</Tooltip.Root>
 											</Tooltip.Provider>
 											<Tooltip.Provider>
@@ -290,7 +277,9 @@
 															</Button>
 														{/snippet}
 													</Tooltip.Trigger>
-													<Tooltip.Content>Remove registration</Tooltip.Content>
+													<Tooltip.Content
+														>{t('projects.action.removeRegistration')}</Tooltip.Content
+													>
 												</Tooltip.Root>
 											</Tooltip.Provider>
 										{/if}
@@ -310,7 +299,8 @@
 															</Button>
 														{/snippet}
 													</Tooltip.Trigger>
-													<Tooltip.Content>Delete transcripts</Tooltip.Content>
+													<Tooltip.Content>{t('projects.action.deleteTranscripts')}</Tooltip.Content
+													>
 												</Tooltip.Root>
 											</Tooltip.Provider>
 										{/if}
@@ -333,11 +323,9 @@
 >
 	<AlertDialog.Content class="max-w-xl">
 		<AlertDialog.Header>
-			<AlertDialog.Title>Delete transcripts</AlertDialog.Title>
+			<AlertDialog.Title>{t('projects.delete.title')}</AlertDialog.Title>
 			<AlertDialog.Description>
-				These files disappear from
-				<span class="font-mono text-xs">{deleteTarget?.transcriptDir}</span>. The scanned data is
-				removed with them. This cannot be undone.
+				{t('projects.delete.body', { path: deleteTarget?.transcriptDir ?? '' })}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 
@@ -361,7 +349,10 @@
 				</Table.Root>
 			</div>
 			<p class="text-xs text-muted-foreground tabular-nums">
-				{exact(deleteFiles.length)} files, {formatBytes(deleteTotalBytes)} in total
+				{t('projects.delete.summary', {
+					count: exact(deleteFiles.length),
+					size: formatBytes(deleteTotalBytes)
+				})}
 			</p>
 		{/if}
 
@@ -370,13 +361,13 @@
 		{/if}
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={deleteBusy}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel disabled={deleteBusy}>{t('common.cancel')}</AlertDialog.Cancel>
 			<Button
 				variant="destructive"
 				disabled={deleteBusy || !deleteFiles || deleteFiles.length === 0}
 				onclick={confirmDelete}
 			>
-				{deleteBusy ? 'Deleting…' : 'Delete these files'}
+				{deleteBusy ? t('projects.delete.busy') : t('projects.delete.confirm')}
 			</Button>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
@@ -390,11 +381,9 @@
 >
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Remove registration</AlertDialog.Title>
+			<AlertDialog.Title>{t('projects.remove.title')}</AlertDialog.Title>
 			<AlertDialog.Description>
-				Removes <span class="font-mono text-xs">{removeTarget?.path}</span> from
-				<span class="font-mono text-xs">~/.claude.json</span>. Transcripts stay on disk. A backup of
-				the configuration is written next to it first.
+				{t('projects.remove.body', { path: removeTarget?.path ?? '' })}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 
@@ -403,9 +392,9 @@
 		{/if}
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel disabled={removeBusy}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel disabled={removeBusy}>{t('common.cancel')}</AlertDialog.Cancel>
 			<Button variant="destructive" disabled={removeBusy} onclick={confirmRemove}>
-				{removeBusy ? 'Removing…' : 'Remove registration'}
+				{removeBusy ? t('projects.remove.busy') : t('projects.remove.confirm')}
 			</Button>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
@@ -419,10 +408,9 @@
 >
 	<Dialog.Content class="max-w-2xl">
 		<Dialog.Header>
-			<Dialog.Title>Project settings</Dialog.Title>
+			<Dialog.Title>{t('projects.settings.title')}</Dialog.Title>
 			<Dialog.Description>
-				The entry for <span class="font-mono text-xs">{settingsTarget?.path}</span> in
-				<span class="font-mono text-xs">~/.claude.json</span>. Saving writes a backup first.
+				{t('projects.settings.body', { path: settingsTarget?.path ?? '' })}
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -434,10 +422,10 @@
 
 		<Dialog.Footer>
 			<Button variant="outline" disabled={settingsBusy} onclick={() => (settingsTarget = null)}>
-				Cancel
+				{t('common.cancel')}
 			</Button>
 			<Button disabled={settingsBusy || !settingsText} onclick={saveSettings}>
-				{settingsBusy ? 'Saving…' : 'Save settings'}
+				{settingsBusy ? t('projects.settings.busy') : t('projects.settings.save')}
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
