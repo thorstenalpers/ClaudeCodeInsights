@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import AppMark from '$lib/components/app-mark.svelte';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import ScanButton from '$lib/components/scan-button.svelte';
@@ -64,7 +65,7 @@
 
 	<Sidebar.Inset class="flex h-screen min-w-0 flex-col overflow-hidden">
 		<header class="flex h-14 shrink-0 items-center gap-2 border-b px-3">
-			<Sidebar.Trigger />
+			<AppMark class="size-5 shrink-0 text-foreground" />
 			<Separator orientation="vertical" class="mr-1 h-4" />
 
 			{#if detailSessionId}

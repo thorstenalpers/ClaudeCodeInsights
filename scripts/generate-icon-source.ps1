@@ -3,8 +3,10 @@
     Draws the app mark as a 1024x1024 PNG and hands it to the Tauri icon pipeline.
 
 .DESCRIPTION
-    The mark: three sliders on a rounded plate — the app administers what Claude
-    Code stores rather than only charting it, and a control surface says that.
+    The mark: a shield with a sun behind it on a rounded plate — the app guards
+    what Claude Code leaves behind, and the rays say the point is to see it.
+
+    Black and white only, so the same source works on a light or a dark plate.
 
     Only one source image is produced here — `tauri icon` derives every size and
     format (.ico, .icns, the Windows Store logos) from it.
@@ -47,31 +49,57 @@ $paper = [System.Drawing.Color]::FromArgb(255, 250, 250, 250)
 $plateBrush = New-Object System.Drawing.SolidBrush $ink
 $g.FillPath($plateBrush, $plate)
 
-$trackBrush = New-Object System.Drawing.SolidBrush $paper
-$knobBrush = New-Object System.Drawing.SolidBrush $paper
-$knobRing = New-Object System.Drawing.Pen($ink, [float](1.6 * $u))
+$inkPen = New-Object System.Drawing.Pen($paper, [float](1.0 * $u))
+$inkPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+$inkPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+$plateBrushAgain = New-Object System.Drawing.SolidBrush $ink
 
-$left = 7.0 * $u
-$right = 25.0 * $u
-$track = 1.6 * $u
-$knob = 4.4 * $u
+$cx = 16.0 * $u
+$sunY = 10.2 * $u
+$sunR = 4.6 * $u
 
-# Rows at 11/16/21 and knobs at 60/75/40 percent: three settings that were
-# clearly set by hand, rather than a pattern that reads as a logo of nothing.
-$rows = @(11.0, 16.0, 21.0)
-$knobAt = @(0.62, 0.78, 0.38)
-
-for ($i = 0; $i -lt 3; $i++) {
-    $y = $rows[$i] * $u
-    $g.FillRectangle($trackBrush, $left, $y - $track / 2, $right - $left, $track)
-
-    $cx = $left + ($right - $left) * $knobAt[$i]
-    $g.FillEllipse($knobBrush, $cx - $knob / 2, $y - $knob / 2, $knob, $knob)
-    $g.DrawEllipse($knobRing, $cx - $knob / 2, $y - $knob / 2, $knob, $knob)
+# Rays first: the shield is painted over them, which is what keeps the two
+# shapes apart instead of merging into a blot at small sizes.
+# Only the rays above the horizon: the shield hides the lower ones anyway, and
+# drawing them left orphaned dashes floating beside it.
+foreach ($degrees in @(200, 235, 270, 305, 340)) {
+    $angle = $degrees * [Math]::PI / 180.0
+    $inner = $sunR + 1.5 * $u
+    $outer = $sunR + 3.4 * $u
+    $x1 = $cx + [Math]::Cos($angle) * $inner
+    $y1 = $sunY + [Math]::Sin($angle) * $inner
+    $x2 = $cx + [Math]::Cos($angle) * $outer
+    $y2 = $sunY + [Math]::Sin($angle) * $outer
+    $g.DrawLine($inkPen, [float]$x1, [float]$y1, [float]$x2, [float]$y2)
 }
 
+$g.DrawEllipse($inkPen, [float]($cx - $sunR), [float]($sunY - $sunR), [float]($sunR * 2), [float]($sunR * 2))
+
+# The shield, filled in the plate colour so it masks the rays behind it.
+$shield = New-Object System.Drawing.Drawing2D.GraphicsPath
+$top = 13.0 * $u
+$halfW = 7.8 * $u
+$shoulder = 19.0 * $u
+$tip = 27.0 * $u
+$shield.AddLine([float]($cx - $halfW), [float]$top, [float]($cx + $halfW), [float]$top)
+$shield.AddBezier(
+    [float]($cx + $halfW), [float]$top,
+    [float]($cx + $halfW), [float]$shoulder,
+    [float]($cx + $halfW * 0.75), [float](($shoulder + $tip) / 2),
+    [float]$cx, [float]$tip)
+$shield.AddBezier(
+    [float]$cx, [float]$tip,
+    [float]($cx - $halfW * 0.75), [float](($shoulder + $tip) / 2),
+    [float]($cx - $halfW), [float]$shoulder,
+    [float]($cx - $halfW), [float]$top)
+$shield.CloseFigure()
+
+$g.FillPath($plateBrushAgain, $shield)
+$g.DrawPath($inkPen, $shield)
+
+$shield.Dispose(); $inkPen.Dispose(); $plateBrushAgain.Dispose()
+
 $g.Dispose(); $plate.Dispose(); $plateBrush.Dispose()
-$trackBrush.Dispose(); $knobBrush.Dispose(); $knobRing.Dispose()
 
 New-Item -ItemType Directory -Force -Path (Split-Path $source -Parent) | Out-Null
 $bmp.Save($source, [System.Drawing.Imaging.ImageFormat]::Png)

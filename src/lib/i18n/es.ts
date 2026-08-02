@@ -233,6 +233,27 @@ export const es: Messages = {
 	'weekday.5': 'sáb',
 	'weekday.6': 'dom',
 
+	'assistant.missing': 'No se encontró Claude Code',
+	'assistant.missingBody':
+		'La respuesta viene de la CLI de Claude Code en esta máquina. Indica claude.exe en los ajustes o instálala.',
+	'assistant.found': 'Las respuestas vienen de {path}',
+	'assistant.placeholder': 'Pregunta sobre tu propio uso…',
+	'assistant.ask': 'Preguntar',
+	'assistant.asking': 'Preguntando…',
+	'assistant.context': 'Qué se envía',
+	'assistant.contextNote':
+		'Solo las cifras de abajo salen de esta ventana, como texto, hacia la CLI de esta máquina. No se envía ninguna transcripción.',
+	'assistant.failed': 'Claude Code no pudo responder',
+	'assistant.suggestion.1': '¿Qué modelo me cuesta más, y por qué?',
+	'assistant.suggestion.2': '¿A dónde fueron mis tokens el mes pasado?',
+	'assistant.suggestion.3': '¿Qué herramienta merece optimizarse?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'El asistente consulta este binario. Déjalo vacío para usar el encontrado en esta máquina.',
+	'settings.cli.placeholder': 'Ruta a claude.exe',
+	'settings.cli.found': 'Encontrado: {path}',
+	'settings.cli.missing': 'No encontrado. El asistente sigue sin estar disponible.',
+
 	'activity.coding': 'Programación',
 	'activity.debugging': 'Depuración',
 	'activity.exploration': 'Exploración',

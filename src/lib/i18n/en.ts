@@ -234,6 +234,27 @@ export const en = {
 	'weekday.5': 'Sat',
 	'weekday.6': 'Sun',
 
+	'assistant.missing': 'Claude Code was not found',
+	'assistant.missingBody':
+		'The answer comes from the Claude Code CLI on this machine. Point Settings at claude.exe, or install it.',
+	'assistant.found': 'Answers come from {path}',
+	'assistant.placeholder': 'Ask about your own usage…',
+	'assistant.ask': 'Ask',
+	'assistant.asking': 'Asking…',
+	'assistant.context': 'What gets sent',
+	'assistant.contextNote':
+		'Only the figures below leave this window, as text, to the CLI on this machine. No transcript is sent.',
+	'assistant.failed': 'Claude Code could not answer',
+	'assistant.suggestion.1': 'Which model costs me the most, and why?',
+	'assistant.suggestion.2': 'Where did my tokens go last month?',
+	'assistant.suggestion.3': 'Which tool is worth optimising?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'The Assistant asks this binary. Leave it empty to use the one found on this machine.',
+	'settings.cli.placeholder': 'Path to claude.exe',
+	'settings.cli.found': 'Found: {path}',
+	'settings.cli.missing': 'Not found. The Assistant stays unavailable.',
+
 	'activity.coding': 'Coding',
 	'activity.debugging': 'Debugging',
 	'activity.exploration': 'Exploration',

@@ -233,6 +233,27 @@ export const ja: Messages = {
 	'weekday.5': '土',
 	'weekday.6': '日',
 
+	'assistant.missing': 'Claude Code が見つかりません',
+	'assistant.missingBody':
+		'回答はこのマシンの Claude Code CLI から得られます。設定で claude.exe を指定するか、インストールしてください。',
+	'assistant.found': '回答元: {path}',
+	'assistant.placeholder': '自分の使用状況について質問…',
+	'assistant.ask': '質問する',
+	'assistant.asking': '問い合わせ中…',
+	'assistant.context': '送信される内容',
+	'assistant.contextNote':
+		'このウィンドウから出るのは下の数値だけで、テキストとしてこのマシンの CLI に渡されます。トランスクリプトは送信されません。',
+	'assistant.failed': 'Claude Code が回答できませんでした',
+	'assistant.suggestion.1': '最もコストがかかっているモデルはどれで、その理由は?',
+	'assistant.suggestion.2': '先月のトークンはどこに使われた?',
+	'assistant.suggestion.3': '最適化する価値があるツールはどれ?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'アシスタントはこの実行ファイルに問い合わせます。空欄にするとこのマシンで見つかったものを使います。',
+	'settings.cli.placeholder': 'claude.exe のパス',
+	'settings.cli.found': '検出: {path}',
+	'settings.cli.missing': '見つかりません。アシスタントは利用できません。',
+
 	'activity.coding': 'コーディング',
 	'activity.debugging': 'デバッグ',
 	'activity.exploration': '調査',

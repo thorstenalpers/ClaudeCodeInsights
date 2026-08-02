@@ -235,6 +235,27 @@ export const fr: Messages = {
 	'weekday.5': 'sam',
 	'weekday.6': 'dim',
 
+	'assistant.missing': 'Claude Code est introuvable',
+	'assistant.missingBody':
+		'La réponse vient de la CLI Claude Code de cette machine. Indiquez claude.exe dans les paramètres, ou installez-la.',
+	'assistant.found': 'Les réponses viennent de {path}',
+	'assistant.placeholder': 'Posez une question sur votre utilisation…',
+	'assistant.ask': 'Demander',
+	'assistant.asking': 'En cours…',
+	'assistant.context': 'Ce qui est envoyé',
+	'assistant.contextNote':
+		"Seuls les chiffres ci-dessous quittent cette fenêtre, en texte, vers la CLI de cette machine. Aucune transcription n'est envoyée.",
+	'assistant.failed': "Claude Code n'a pas pu répondre",
+	'assistant.suggestion.1': 'Quel modèle me coûte le plus, et pourquoi ?',
+	'assistant.suggestion.2': 'Où sont passés mes jetons le mois dernier ?',
+	'assistant.suggestion.3': "Quel outil vaut la peine d'être optimisé ?",
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		"L'assistant interroge ce binaire. Laissez vide pour utiliser celui trouvé sur cette machine.",
+	'settings.cli.placeholder': 'Chemin vers claude.exe',
+	'settings.cli.found': 'Trouvé : {path}',
+	'settings.cli.missing': "Introuvable. L'assistant reste indisponible.",
+
 	'activity.coding': 'Codage',
 	'activity.debugging': 'Débogage',
 	'activity.exploration': 'Exploration',

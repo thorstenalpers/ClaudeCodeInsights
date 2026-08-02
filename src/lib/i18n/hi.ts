@@ -231,6 +231,27 @@ export const hi: Messages = {
 	'weekday.5': 'शनि',
 	'weekday.6': 'रवि',
 
+	'assistant.missing': 'Claude Code नहीं मिला',
+	'assistant.missingBody':
+		'उत्तर इस मशीन की Claude Code CLI से आता है। सेटिंग्स में claude.exe का पथ दें, या उसे इंस्टॉल करें।',
+	'assistant.found': 'उत्तर {path} से आते हैं',
+	'assistant.placeholder': 'अपने उपयोग के बारे में पूछें…',
+	'assistant.ask': 'पूछें',
+	'assistant.asking': 'पूछा जा रहा है…',
+	'assistant.context': 'क्या भेजा जाता है',
+	'assistant.contextNote':
+		'केवल नीचे दिए आँकड़े इस विंडो से निकलते हैं, पाठ के रूप में, इस मशीन की CLI तक। कोई ट्रांसक्रिप्ट नहीं भेजा जाता।',
+	'assistant.failed': 'Claude Code उत्तर नहीं दे सका',
+	'assistant.suggestion.1': 'कौन सा मॉडल सबसे महँगा है, और क्यों?',
+	'assistant.suggestion.2': 'पिछले महीने मेरे टोकन कहाँ गए?',
+	'assistant.suggestion.3': 'किस उपकरण को अनुकूलित करना सार्थक है?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'सहायक इसी प्रोग्राम से पूछता है। खाली छोड़ें तो इस मशीन पर मिला हुआ उपयोग होगा।',
+	'settings.cli.placeholder': 'claude.exe का पथ',
+	'settings.cli.found': 'मिला: {path}',
+	'settings.cli.missing': 'नहीं मिला। सहायक अनुपलब्ध रहेगा।',
+
 	'activity.coding': 'कोडिंग',
 	'activity.debugging': 'डिबगिंग',
 	'activity.exploration': 'अन्वेषण',

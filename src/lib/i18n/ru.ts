@@ -232,6 +232,27 @@ export const ru: Messages = {
 	'weekday.5': 'Сб',
 	'weekday.6': 'Вс',
 
+	'assistant.missing': 'Claude Code не найден',
+	'assistant.missingBody':
+		'Ответ даёт Claude Code CLI на этом компьютере. Укажите claude.exe в настройках или установите его.',
+	'assistant.found': 'Ответы приходят от {path}',
+	'assistant.placeholder': 'Спросите о своём использовании…',
+	'assistant.ask': 'Спросить',
+	'assistant.asking': 'Запрос…',
+	'assistant.context': 'Что отправляется',
+	'assistant.contextNote':
+		'Окно покидают только цифры ниже, текстом, и уходят к CLI на этом компьютере. Расшифровки не отправляются.',
+	'assistant.failed': 'Claude Code не смог ответить',
+	'assistant.suggestion.1': 'Какая модель обходится дороже всего и почему?',
+	'assistant.suggestion.2': 'Куда ушли мои токены в прошлом месяце?',
+	'assistant.suggestion.3': 'Какой инструмент стоит оптимизировать?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'Ассистент обращается к этому файлу. Оставьте пустым, чтобы использовать найденный на этом компьютере.',
+	'settings.cli.placeholder': 'Путь к claude.exe',
+	'settings.cli.found': 'Найден: {path}',
+	'settings.cli.missing': 'Не найден. Ассистент остаётся недоступным.',
+
 	'activity.coding': 'Программирование',
 	'activity.debugging': 'Отладка',
 	'activity.exploration': 'Исследование кода',

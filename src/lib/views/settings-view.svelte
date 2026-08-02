@@ -7,6 +7,9 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { LOCALES, i18n, t, type LocaleSetting } from '$lib/i18n/index.svelte';
 	import { billing, type BillingMode } from '$lib/pricing.svelte';
+	import { api, type CliStatus } from '$lib/api';
+	import { cli } from '$lib/cli.svelte';
+	import { isHosted } from '$lib/ipc.svelte';
 	import { CURRENCIES, region, type CurrencySetting } from '$lib/region.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
 
@@ -27,6 +30,17 @@
 		CURRENCY_OPTIONS.find((entry) => entry.id === region.setting)?.label ??
 			t('settings.region.system')
 	);
+
+	let cliStatus = $state<CliStatus | null>(null);
+
+	$effect(() => {
+		void cli.path;
+		if (isHosted) void api.getCliStatus(cli.configured).then((value) => (cliStatus = value));
+	});
+
+	function onCliInput(event: Event) {
+		cli.set((event.currentTarget as HTMLInputElement).value);
+	}
 
 	function onRateInput(event: Event) {
 		const raw = (event.currentTarget as HTMLInputElement).value;
@@ -142,6 +156,28 @@
 						oninput={onRateInput}
 					/>
 				</div>
+			{/if}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>{t('settings.cli')}</Card.Title>
+			<Card.Description>{t('settings.cli.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-2">
+			<Input
+				class="max-w-lg font-mono text-xs"
+				placeholder={t('settings.cli.placeholder')}
+				value={cli.path}
+				oninput={onCliInput}
+			/>
+			{#if cliStatus}
+				<p class="text-xs text-muted-foreground">
+					{cliStatus.found && cliStatus.path
+						? t('settings.cli.found', { path: cliStatus.path })
+						: t('settings.cli.missing')}
+				</p>
 			{/if}
 		</Card.Content>
 	</Card.Root>

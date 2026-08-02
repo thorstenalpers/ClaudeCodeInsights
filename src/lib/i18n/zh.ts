@@ -227,6 +227,26 @@ export const zh: Messages = {
 	'weekday.5': '周六',
 	'weekday.6': '周日',
 
+	'assistant.missing': '未找到 Claude Code',
+	'assistant.missingBody':
+		'答案来自本机的 Claude Code CLI。请在设置中指向 claude.exe，或先安装它。',
+	'assistant.found': '答案来自 {path}',
+	'assistant.placeholder': '询问你自己的用量…',
+	'assistant.ask': '提问',
+	'assistant.asking': '正在提问…',
+	'assistant.context': '将发送的内容',
+	'assistant.contextNote':
+		'只有下面的数字会以文本形式离开本窗口，交给本机的 CLI。不会发送任何记录。',
+	'assistant.failed': 'Claude Code 无法回答',
+	'assistant.suggestion.1': '哪个模型花费最多，为什么？',
+	'assistant.suggestion.2': '上个月我的令牌都用到哪里了？',
+	'assistant.suggestion.3': '哪个工具值得优化？',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description': '助手会调用这个程序。留空则使用本机上找到的那个。',
+	'settings.cli.placeholder': 'claude.exe 的路径',
+	'settings.cli.found': '已找到：{path}',
+	'settings.cli.missing': '未找到。助手将不可用。',
+
 	'activity.coding': '编码',
 	'activity.debugging': '调试',
 	'activity.exploration': '探索',

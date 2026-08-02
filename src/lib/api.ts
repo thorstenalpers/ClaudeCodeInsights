@@ -222,6 +222,8 @@ export type Rhythm = {
 	currentStreak: number;
 };
 
+export type CliStatus = { found: boolean; path: string | null };
+
 export const api = {
 	getOverview: () => invoke<Overview>('get_overview'),
 	getTranscript: (sessionId: string, offset: number, limit: number) =>
@@ -245,5 +247,7 @@ export const api = {
 	listAgents: () => invoke<AgentRow[]>('list_agents'),
 	getRhythm: () => invoke<Rhythm>('get_rhythm'),
 	getSeries: (query: SeriesQuery) => invoke<Series>('get_series', { query }),
-	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets')
+	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets'),
+	getCliStatus: (path: string | null) => invoke<CliStatus>('get_cli_status', { path }),
+	askClaude: (path: string | null, prompt: string) => invoke<string>('ask_claude', { path, prompt })
 };

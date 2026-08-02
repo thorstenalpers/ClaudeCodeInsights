@@ -234,6 +234,27 @@ export const de: Messages = {
 	'weekday.5': 'Sa',
 	'weekday.6': 'So',
 
+	'assistant.missing': 'Claude Code wurde nicht gefunden',
+	'assistant.missingBody':
+		'Die Antwort kommt von der Claude-Code-CLI auf diesem Rechner. Zeige in den Einstellungen auf die claude.exe oder installiere sie.',
+	'assistant.found': 'Antworten kommen von {path}',
+	'assistant.placeholder': 'Frage zum eigenen Verbrauch…',
+	'assistant.ask': 'Fragen',
+	'assistant.asking': 'Wird gefragt…',
+	'assistant.context': 'Was gesendet wird',
+	'assistant.contextNote':
+		'Nur die Zahlen unten verlassen dieses Fenster, als Text, an die CLI auf diesem Rechner. Kein Transkript wird gesendet.',
+	'assistant.failed': 'Claude Code konnte nicht antworten',
+	'assistant.suggestion.1': 'Welches Modell kostet mich am meisten, und warum?',
+	'assistant.suggestion.2': 'Wohin sind meine Tokens im letzten Monat geflossen?',
+	'assistant.suggestion.3': 'Welches Werkzeug lohnt sich zu optimieren?',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'Der Assistent fragt diese Programmdatei. Leer lassen, um die auf diesem Rechner gefundene zu nutzen.',
+	'settings.cli.placeholder': 'Pfad zur claude.exe',
+	'settings.cli.found': 'Gefunden: {path}',
+	'settings.cli.missing': 'Nicht gefunden. Der Assistent bleibt nicht verfügbar.',
+
 	'activity.coding': 'Programmieren',
 	'activity.debugging': 'Fehlersuche',
 	'activity.exploration': 'Erkundung',

@@ -228,6 +228,27 @@ export const ar: Messages = {
 	'weekday.5': 'السبت',
 	'weekday.6': 'الأحد',
 
+	'assistant.missing': 'لم يُعثر على Claude Code',
+	'assistant.missingBody':
+		'تأتي الإجابة من واجهة Claude Code على هذا الجهاز. وجّه الإعدادات إلى claude.exe أو ثبّته.',
+	'assistant.found': 'تأتي الإجابات من {path}',
+	'assistant.placeholder': 'اسأل عن استخدامك…',
+	'assistant.ask': 'اسأل',
+	'assistant.asking': 'جارٍ السؤال…',
+	'assistant.context': 'ما الذي يُرسَل',
+	'assistant.contextNote':
+		'لا يغادر هذه النافذة سوى الأرقام أدناه، كنص، إلى الواجهة على هذا الجهاز. لا تُرسَل أي نصوص محادثة.',
+	'assistant.failed': 'تعذّر على Claude Code الإجابة',
+	'assistant.suggestion.1': 'أي نموذج يكلفني أكثر، ولماذا؟',
+	'assistant.suggestion.2': 'أين ذهبت رموزي الشهر الماضي؟',
+	'assistant.suggestion.3': 'أي أداة تستحق التحسين؟',
+	'settings.cli': 'Claude Code',
+	'settings.cli.description':
+		'يسأل المساعد هذا الملف التنفيذي. اتركه فارغاً لاستخدام الموجود على هذا الجهاز.',
+	'settings.cli.placeholder': 'مسار claude.exe',
+	'settings.cli.found': 'وُجد: {path}',
+	'settings.cli.missing': 'غير موجود. يبقى المساعد غير متاح.',
+
 	'activity.coding': 'البرمجة',
 	'activity.debugging': 'تصحيح الأخطاء',
 	'activity.exploration': 'الاستكشاف',

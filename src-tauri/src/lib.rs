@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod assistant;
 pub mod commands;
 pub mod error;
 pub mod ingest;
@@ -92,6 +93,8 @@ pub fn run() {
             commands::usage::get_rhythm,
             commands::usage::get_series,
             commands::usage::get_series_facets,
+            commands::assistant::get_cli_status,
+            commands::assistant::ask_claude,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

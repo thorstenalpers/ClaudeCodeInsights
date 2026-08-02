@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import AppMark from '$lib/components/app-mark.svelte';
 	import { t } from '$lib/i18n/index.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -17,8 +16,11 @@
 
 <Sidebar.Root collapsible="icon">
 	<Sidebar.Header>
-		<div class="flex h-8 items-center gap-2 px-1">
-			<AppMark class="size-5 shrink-0 text-foreground" />
+		<div class="flex h-8 items-center gap-1 px-1">
+			<!-- The collapse control sits where the eye lands first, and takes the
+			     place the mark used to occupy: a logo there was a target that did
+			     nothing. -->
+			<Sidebar.Trigger class="shrink-0" />
 			<span
 				class="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
 			>

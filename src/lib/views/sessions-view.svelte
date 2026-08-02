@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import Filter from '@lucide/svelte/icons/list-filter';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -11,6 +12,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
@@ -139,6 +141,47 @@
 		void scan.dataVersion;
 		if (isHosted) void api.getSessionFacets().then((value) => (facets = value));
 	});
+
+	function columnFilter(id: string) {
+		if (!facets) return null;
+		switch (id) {
+			case 'project':
+				return {
+					options: facets.projects,
+					chosen: projects,
+					display: (value: string) => value,
+					toggle: (value: string) => (projects = toggle(projects, value)),
+					clear: () => {
+						projects = [];
+						page = 0;
+					}
+				};
+			case 'model':
+				return {
+					options: facets.models,
+					chosen: models,
+					display: shortModel,
+					toggle: (value: string) => (models = toggle(models, value)),
+					clear: () => {
+						models = [];
+						page = 0;
+					}
+				};
+			case 'activity':
+				return {
+					options: facets.activities,
+					chosen: activities,
+					display: activityLabel,
+					toggle: (value: string) => (activities = toggle(activities, value)),
+					clear: () => {
+						activities = [];
+						page = 0;
+					}
+				};
+			default:
+				return null;
+		}
+	}
 
 	const hasFilters = $derived(
 		Boolean(search) ||
@@ -288,24 +331,75 @@
 						<Table.Row>
 							{#each COLUMNS as column (column.id)}
 								<Table.Head class={[column.class, column.numeric && 'text-right']}>
-									{#if column.sort}
-										<button
-											type="button"
-											class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-											onclick={() => toggleSort(column)}
-										>
-											{t(column.label)}
-											{#if sort === column.sort}
-												{#if descending}
-													<ArrowDown class="size-3" />
-												{:else}
-													<ArrowUp class="size-3" />
+									<div class={['flex items-center gap-1', column.numeric && 'justify-end']}>
+										{#if column.sort}
+											<button
+												type="button"
+												class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+												onclick={() => toggleSort(column)}
+											>
+												{t(column.label)}
+												{#if sort === column.sort}
+													{#if descending}
+														<ArrowDown class="size-3" />
+													{:else}
+														<ArrowUp class="size-3" />
+													{/if}
 												{/if}
-											{/if}
-										</button>
-									{:else}
-										{t(column.label)}
-									{/if}
+											</button>
+										{:else}
+											{t(column.label)}
+										{/if}
+
+										{#if facets && columnFilter(column.id)}
+											{@const filter = columnFilter(column.id)!}
+											<DropdownMenu.Root>
+												<DropdownMenu.Trigger>
+													{#snippet child({ props })}
+														<button
+															{...props}
+															type="button"
+															aria-label={`${t(column.label)} — ${t('common.filter')}`}
+															class={[
+																'rounded p-0.5 transition-colors hover:text-foreground',
+																filter.chosen.length > 0
+																	? 'text-primary'
+																	: 'text-muted-foreground/60'
+															]}
+														>
+															<Filter class="size-3" />
+														</button>
+													{/snippet}
+												</DropdownMenu.Trigger>
+
+												<DropdownMenu.Content class="max-h-80 w-56 overflow-y-auto">
+													<DropdownMenu.Label class="flex items-center justify-between gap-2">
+														{t('common.filter')}
+														{#if filter.chosen.length > 0}
+															<button
+																type="button"
+																class="text-xs font-normal text-muted-foreground hover:text-foreground"
+																onclick={filter.clear}
+															>
+																{t('common.clearFilter')}
+															</button>
+														{/if}
+													</DropdownMenu.Label>
+													<DropdownMenu.Separator />
+
+													{#each filter.options as option (option)}
+														<DropdownMenu.CheckboxItem
+															checked={filter.chosen.includes(option)}
+															onCheckedChange={() => filter.toggle(option)}
+															closeOnSelect={false}
+														>
+															<span class="truncate">{filter.display(option)}</span>
+														</DropdownMenu.CheckboxItem>
+													{/each}
+												</DropdownMenu.Content>
+											</DropdownMenu.Root>
+										{/if}
+									</div>
 								</Table.Head>
 							{/each}
 						</Table.Row>
