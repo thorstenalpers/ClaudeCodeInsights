@@ -1,9 +1,14 @@
 # Node
 node_modules/
 build/
+dist/
 .svelte-kit/
 *.tsbuildinfo
 .vite/
+
+# Test output
+coverage/
+test-results/
 
 # Rust
 /src-tauri/target/
