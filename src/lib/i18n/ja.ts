@@ -468,6 +468,12 @@ export const ja: Messages = {
 	'settings.voice.hub.blocked': 'ここでは話せません: {reason}',
 	'settings.voice.hub.hint':
 		'インストールできるのは sherpa-onnx 形式のリポジトリだけです（モデル、tokens.txt、espeak-ng-data フォルダ）。多くの Kokoro リポジトリは Python 用の .npz 音声を持つため、不足しているものを添えて一覧に出ます。',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows の音声',
 	'settings.voice.windows.hint':
 		'Windows 自身の音声は言語ごとにこのアプリの外で追加します: 設定 › 時刻と言語 › 音声認識 › 音声の管理 › 音声の追加。ここでのダウンロードは不要で、ウィンドウを再起動すると上の一覧に現れます。',

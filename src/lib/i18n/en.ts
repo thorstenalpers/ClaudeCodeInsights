@@ -473,6 +473,12 @@ export const en = {
 	'settings.voice.hub.blocked': 'Not speakable here: {reason}',
 	'settings.voice.hub.hint':
 		'Only repositories laid out for sherpa-onnx can be installed: a model, tokens.txt and an espeak-ng-data folder. Most Kokoro repositories carry .npz voices for the Python runtime instead, and are listed with what they lack.',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows voices',
 	'settings.voice.windows.hint':
 		'The voices Windows itself speaks with are installed per language, outside this app: Settings › Time & language › Speech › Manage voices › Add voices. They need no download here and appear in the list above after the window is restarted.',

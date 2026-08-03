@@ -468,6 +468,12 @@ export const ru: Messages = {
 	'settings.voice.hub.blocked': 'Здесь не озвучить: {reason}',
 	'settings.voice.hub.hint':
 		'Установить можно только репозитории в раскладке sherpa-onnx: модель, tokens.txt и папка espeak-ng-data. Большинство репозиториев Kokoro несут голоса .npz для среды Python и перечисляются с указанием того, чего им не хватает.',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Голоса Windows',
 	'settings.voice.windows.hint':
 		'Собственные голоса Windows ставятся по языкам вне этого приложения: Параметры › Время и язык › Речь › Управление голосами › Добавить голоса. Здесь ничего скачивать не нужно; после перезапуска окна они появятся в списке выше.',

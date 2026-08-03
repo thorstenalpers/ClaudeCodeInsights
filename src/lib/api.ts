@@ -314,6 +314,9 @@ export type AppInfo = {
 	logs: string;
 };
 
+/** One capture device, as Windows lists it. */
+export type Microphone = { name: string; isDefault: boolean };
+
 export type CliStatus = { found: boolean; path: string | null; version: string | null };
 
 export type ProviderInfo = {
@@ -365,6 +368,8 @@ export const api = {
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	openFreeKeyUrl: (provider: string) => invoke<void>('open_free_key_url', { provider }),
 	speechAvailable: () => invoke<boolean>('speech_available'),
+	listMicrophones: () => invoke<Microphone[]>('list_microphones'),
+	openSoundSettings: () => invoke<void>('open_sound_settings'),
 	startLive: (tail: number) => invoke<LiveTurn[]>('start_live', { tail }),
 	stopLive: () => invoke<void>('stop_live'),
 	listVoicePacks: () => invoke<VoicePack[]>('list_voice_packs'),

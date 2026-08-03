@@ -450,6 +450,12 @@ export const zh: Messages = {
 	'settings.voice.hub.blocked': '这里无法朗读：{reason}',
 	'settings.voice.hub.hint':
 		'只能安装符合 sherpa-onnx 布局的仓库：一个模型、tokens.txt 和 espeak-ng-data 文件夹。多数 Kokoro 仓库带的是给 Python 运行时用的 .npz 声音，会连同缺少的部分一起列出。',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows 语音',
 	'settings.voice.windows.hint':
 		'Windows 自带的语音按语言在本应用之外安装：设置 › 时间和语言 › 语音 › 管理语音 › 添加语音。这里无需下载，重启窗口后会出现在上面的列表中。',

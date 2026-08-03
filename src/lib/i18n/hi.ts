@@ -467,6 +467,12 @@ export const hi: Messages = {
 	'settings.voice.hub.blocked': 'यहाँ बोला नहीं जा सकता: {reason}',
 	'settings.voice.hub.hint':
 		'केवल sherpa-onnx लेआउट वाले रिपॉज़िटरी इंस्टॉल हो सकते हैं: एक मॉडल, tokens.txt और espeak-ng-data फ़ोल्डर। अधिकतर Kokoro रिपॉज़िटरी Python रनटाइम के लिए .npz आवाज़ें लाते हैं और उनकी कमी के साथ सूचीबद्ध होते हैं।',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows आवाज़ें',
 	'settings.voice.windows.hint':
 		'Windows की अपनी आवाज़ें इस ऐप के बाहर हर भाषा के लिए इंस्टॉल होती हैं: सेटिंग्स › समय और भाषा › वाक् › आवाज़ें प्रबंधित करें › आवाज़ें जोड़ें। यहाँ कोई डाउनलोड नहीं चाहिए; विंडो के पुनः प्रारंभ के बाद वे ऊपर दिखती हैं।',

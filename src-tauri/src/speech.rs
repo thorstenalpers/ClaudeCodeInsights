@@ -23,6 +23,62 @@ pub const PRIVACY_NOT_ACCEPTED: i32 = 0x8004_5509_u32 as i32;
 #[cfg(windows)]
 const SETTINGS_URI: &str = "ms-settings:speech";
 
+/// Where the default input device is chosen, which is the only way to change
+/// which microphone the recogniser hears.
+#[cfg(windows)]
+const SOUND_URI: &str = "ms-settings:sound";
+
+/// One capture device Windows knows about.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Microphone {
+    pub name: String,
+    /// True for the one Windows hands to anything that does not ask for a
+    /// device — which is every recogniser, this one included.
+    pub is_default: bool,
+}
+
+/// The capture devices, with the default marked.
+///
+/// Listed rather than chosen from: `Windows.Media.SpeechRecognition` takes no
+/// device, it listens to whatever is default. Naming them is still worth it —
+/// a microphone that does nothing is usually the wrong one being default, and
+/// this is how a reader finds that out.
+pub fn microphones() -> Vec<Microphone> {
+    use rodio::cpal::traits::{DeviceTrait, HostTrait};
+
+    let host = rodio::cpal::default_host();
+    let default = host
+        .default_input_device()
+        .and_then(|device| device.name().ok());
+
+    host.input_devices()
+        .map(|devices| {
+            devices
+                .filter_map(|device| device.name().ok())
+                .map(|name| Microphone {
+                    is_default: Some(&name) == default.as_ref(),
+                    name,
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Opens the page where the default input device is set.
+pub fn open_sound_settings() -> Result<()> {
+    #[cfg(windows)]
+    std::process::Command::new("explorer.exe")
+        .arg(SOUND_URI)
+        .spawn()?;
+
+    #[cfg(not(windows))]
+    return Err(Error::BadRequest("only Windows has this page".to_owned()));
+
+    #[cfg(windows)]
+    Ok(())
+}
+
 #[cfg(windows)]
 mod imp {
     use super::*;
@@ -120,6 +176,20 @@ mod tests {
         // Whichever way it goes, asking must not panic — the window calls this
         // on every start to decide whether to offer the setting at all.
         let _ = available();
+    }
+
+    #[test]
+    fn the_capture_devices_can_be_listed() {
+        // A machine without a microphone answers with an empty list; what must
+        // not happen is a panic, because the settings page asks on every visit.
+        let found = microphones();
+        assert!(
+            found.iter().filter(|entry| entry.is_default).count() <= 1,
+            "Windows hands out one default, not several"
+        );
+        for entry in &found {
+            println!("microphone {:40} default={}", entry.name, entry.is_default);
+        }
     }
 
     #[test]

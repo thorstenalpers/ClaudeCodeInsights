@@ -12,7 +12,7 @@
  * chosen in the same place, because to a reader they are one setting.
  */
 import { toast } from 'svelte-sonner';
-import { api, type HubVoice, type VoicePack } from '$lib/api';
+import { api, type HubVoice, type Microphone, type VoicePack } from '$lib/api';
 import { i18n, t } from '$lib/i18n/index.svelte';
 import { isHosted } from '$lib/ipc.svelte';
 import { logs } from '$lib/logs.svelte';
@@ -52,6 +52,20 @@ class Voice {
 	available = $state<boolean | null>(null);
 	/** Windows will not listen until its speech privacy setting is on. */
 	needsPrivacy = $state(false);
+
+	/**
+	 * The capture devices Windows knows.
+	 *
+	 * Listed, not chosen from: the recogniser takes no device and always hears
+	 * the default one. Seeing which that is answers most of "the microphone
+	 * does nothing" on its own.
+	 */
+	microphones = $state<Microphone[]>([]);
+
+	async loadMicrophones(): Promise<void> {
+		if (!isHosted) return;
+		this.microphones = await api.listMicrophones().catch(() => []);
+	}
 
 	/** The installed Windows voices, once the engine has listed them. */
 	voices = $state<SpeechSynthesisVoice[]>([]);

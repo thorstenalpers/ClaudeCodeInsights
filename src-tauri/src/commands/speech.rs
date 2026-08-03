@@ -17,3 +17,14 @@ pub fn recognize_speech(locale: String) -> Result<String> {
 pub fn open_speech_settings() -> Result<()> {
     speech::open_settings()
 }
+
+/// The capture devices, with the one the recogniser will actually hear marked.
+#[tauri::command]
+pub fn list_microphones() -> Vec<speech::Microphone> {
+    speech::microphones()
+}
+
+#[tauri::command]
+pub fn open_sound_settings() -> Result<()> {
+    speech::open_sound_settings()
+}

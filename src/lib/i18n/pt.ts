@@ -471,6 +471,12 @@ export const pt: Messages = {
 	'settings.voice.hub.blocked': 'Aqui não se consegue falar: {reason}',
 	'settings.voice.hub.hint':
 		'Só se instalam repositórios com a disposição do sherpa-onnx: um modelo, tokens.txt e uma pasta espeak-ng-data. A maioria dos repositórios Kokoro traz vozes .npz para o runtime de Python e é listada com o que lhes falta.',
+	'settings.voice.mic': 'Microphone',
+	'settings.voice.mic.hint':
+		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
+	'settings.voice.mic.default': 'Default',
+	'settings.voice.mic.none': 'Windows lists no capture device at all.',
+	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Vozes do Windows',
 	'settings.voice.windows.hint':
 		'As vozes do próprio Windows instalam-se por língua fora desta aplicação: Definições › Hora e idioma › Voz › Gerir vozes › Adicionar vozes. Não precisam de transferência aqui e aparecem acima depois de reiniciar a janela.',

@@ -10,6 +10,7 @@
 	import Download from '@lucide/svelte/icons/download';
 	import Volume2 from '@lucide/svelte/icons/volume-2';
 	import Square from '@lucide/svelte/icons/square';
+	import Mic from '@lucide/svelte/icons/mic';
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api';
 	import { displayPath } from '$lib/format';
@@ -29,6 +30,7 @@
 	$effect(() => {
 		void voice.check();
 		void voice.loadPacks();
+		void voice.loadMicrophones();
 	});
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
@@ -379,6 +381,37 @@
 					<p class="max-w-md text-xs text-muted-foreground">{voice.hubNote}</p>
 				{/if}
 				<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.hub.hint')}</p>
+			</div>
+
+			<div class="flex flex-col gap-2 border-t pt-3">
+				<span class="text-xs text-muted-foreground">{t('settings.voice.mic')}</span>
+				<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.mic.hint')}</p>
+				{#each voice.microphones as microphone (microphone.name)}
+					<div class="flex flex-wrap items-center gap-2">
+						<Mic class="size-3.5 shrink-0 text-muted-foreground" />
+						<span class="min-w-0 flex-1 truncate text-sm" title={microphone.name}>
+							{microphone.name}
+						</span>
+						{#if microphone.isDefault}
+							<Badge variant="secondary" class="font-normal">
+								{t('settings.voice.mic.default')}
+							</Badge>
+						{/if}
+					</div>
+				{/each}
+				{#if voice.microphones.length === 0}
+					<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.mic.none')}</p>
+				{/if}
+				<div>
+					<Button
+						variant="outline"
+						size="sm"
+						class="h-8 font-normal"
+						onclick={() => void api.openSoundSettings()}
+					>
+						{t('settings.voice.mic.open')}
+					</Button>
+				</div>
 			</div>
 
 			<div class="flex flex-col gap-2 border-t pt-3">
