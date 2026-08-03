@@ -20,6 +20,7 @@
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { Separator } from '$lib/components/ui/separator';
 	import { displayPath } from '$lib/format';
+	import type { MessageKey } from '$lib/i18n/en';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
 	import { cli } from '$lib/cli.svelte';
@@ -82,12 +83,21 @@
 	const railPages = $derived(logs.enabled ? [...PAGES, LOG_PAGE] : PAGES);
 	const current = $derived(pageFor(page.url.pathname));
 	const detailSessionId = $derived(page.params.id ?? null);
+	/** The activity a detail page is about, taken from the URL like the rest. */
+	const detailActivity = $derived(page.params.name ?? null);
 	/** The project a sub-page is about, which the URL carries but no page said. */
 	const detailProject = $derived(page.params.path ?? null);
 	/** The folder alone: the whole path is already on the line below. */
 	const projectName = $derived(
 		detailProject?.split(/[\\/]/).filter(Boolean).at(-1) ?? detailProject
 	);
+
+	/** The activity's own name where there is one, the raw id where there is not. */
+	function activityLabel(activity: string): string {
+		const key = `activity.${activity}` as MessageKey;
+		const named = t(key);
+		return named === key ? activity : named;
+	}
 </script>
 
 <svelte:window bind:innerWidth={viewport} />
@@ -127,12 +137,19 @@
 			<AppMark class="hidden size-5 shrink-0 text-foreground @md:block" />
 			<Separator orientation="vertical" class="mr-1 hidden h-4 @md:block" />
 
-			{#if detailSessionId || detailProject}
+			{#if detailSessionId || detailProject || detailActivity}
 				<Button
 					variant="ghost"
 					size="icon"
 					aria-label={t('header.back')}
-					onclick={() => goto(detailSessionId ? resolve('/sessions') : resolve('/projects'))}
+					onclick={() =>
+						goto(
+							detailSessionId
+								? resolve('/sessions')
+								: detailActivity
+									? resolve('/activity')
+									: resolve('/projects')
+						)}
 				>
 					<ArrowLeft />
 				</Button>
@@ -159,6 +176,15 @@
 						</a>
 						<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
 						<span class="truncate font-semibold">{nav.detailLabel || t('header.session')}</span>
+					{:else if detailActivity}
+						<a
+							href={resolve('/activity')}
+							class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							{t('nav.activity')}
+						</a>
+						<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
+						<span class="truncate font-semibold">{activityLabel(detailActivity)}</span>
 					{:else if detailProject}
 						<a
 							href={resolve('/projects')}

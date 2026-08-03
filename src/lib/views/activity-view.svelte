@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { api, type ActivityRow, type Rhythm } from '$lib/api';
-	import { nav } from '$lib/nav.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -118,10 +117,9 @@
 
 	const cacheOf = (row: ActivityRow) => row.cacheReadTokens + row.cacheWriteTokens;
 
-	/** Opens the sessions behind a row, with the activity already filtered. */
-	function openSessions(activity: string): void {
-		nav.sessionActivity = activity;
-		void goto(resolve('/sessions'));
+	/** Opens the activity's own page. */
+	function openActivity(activity: string): void {
+		void goto(resolve('/activity/[name]', { name: activity }));
 	}
 
 	const table = createTable<ActivityRow>(
@@ -237,7 +235,7 @@
 						{#each table.rows as row (row.activity)}
 							<!-- Into the sessions behind the number: the sessions page
 							     takes the filter from the URL. -->
-							<Table.Row class="cursor-pointer" onclick={() => openSessions(row.activity)}>
+							<Table.Row class="cursor-pointer" onclick={() => openActivity(row.activity)}>
 								<Table.Cell class="font-medium">{label(row.activity)}</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">{exact(row.sessions)}</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">{exact(row.turns)}</Table.Cell>
