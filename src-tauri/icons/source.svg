@@ -1,18 +1,15 @@
-<script lang="ts">
-	type Props = { class?: string };
-	let { class: className = 'size-5' }: Props = $props();
-</script>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1024" height="1024">
+	<!--
+	  The editable master of the app mark. Keep it in step with
+	  src/lib/components/app-mark.svelte, which is the same drawing inline in the
+	  window; nothing reads this file at build time.
 
-<!--
-  The burst, and what it adds up to: three bars rising out of the corner.
-  Insights is the counting, not the conversation.
-
-  Black on its own white plate in both themes — the mark is the app's face,
-  and a face that inverts with the rail is not one. The bars sit on a white
-  patch punched out of the burst: at 16px two shapes that touch become one
-  blob, and that gap is what keeps them apart.
--->
-<svg class={className} viewBox="0 0 24 24" aria-hidden="true">
+	  To make the exe icon from it: export a 1024x1024 PNG over
+	  src-tauri/icons/source.png, then run the Tauri icon pipeline on it
+	  directly — `npx @tauri-apps/cli icon src-tauri/icons/source.png`.
+	  generate-icon-source.ps1 always redraws source.png from its own code, so
+	  running it would overwrite a hand-edited export.
+	-->
 	<rect width="24" height="24" rx="5.25" fill="#FFFFFF" />
 
 	<g fill="#000000" transform="translate(-1.5 -2.2) scale(0.8)">
