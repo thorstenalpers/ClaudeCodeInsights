@@ -202,8 +202,12 @@ export const PLANS = [
 
 export type PlanId = (typeof PLANS)[number]['id'];
 
+/** What is actually being paid for, as opposed to what the plan costs at all. */
+export const SUBSCRIPTIONS = PLANS.filter((entry) => entry.monthly > 0);
+
 const PLAN_KEY = 'claudeadmin.plan';
 const PLAN_HISTORY_KEY = 'claudeadmin.planHistory';
+const PLAN_PRICE_KEY = 'claudeadmin.planPrices';
 
 function readStoredPlan(): PlanId {
 	if (typeof localStorage === 'undefined') return 'pro';
@@ -216,6 +220,23 @@ export type PlanPeriod = { from: string; id: PlanId };
 
 function isMonth(value: unknown): value is string {
 	return typeof value === 'string' && /^\d{4}-\d{2}$/.test(value);
+}
+
+function readStoredPrices(): Partial<Record<PlanId, number>> {
+	if (typeof localStorage === 'undefined') return {};
+	try {
+		const raw: unknown = JSON.parse(localStorage.getItem(PLAN_PRICE_KEY) ?? '{}');
+		if (typeof raw !== 'object' || raw === null) return {};
+		const result: Partial<Record<PlanId, number>> = {};
+		for (const entry of PLANS) {
+			const value = (raw as Record<string, unknown>)[entry.id];
+			if (typeof value === 'number' && Number.isFinite(value) && value >= 0)
+				result[entry.id] = value;
+		}
+		return result;
+	} catch {
+		return {};
+	}
 }
 
 function readStoredHistory(): PlanPeriod[] {
@@ -247,9 +268,31 @@ class Plan {
 	id = $state<PlanId>(readStoredPlan());
 	/** Sorted by start month, oldest first. */
 	periods = $state<PlanPeriod[]>(readStoredHistory());
+	/** What the plan actually costs here; the published figure is USD, and a
+	 *  subscription bought elsewhere is billed in another currency at another
+	 *  rate. */
+	prices = $state<Partial<Record<PlanId, number>>>(readStoredPrices());
+
+	monthlyOf(id: PlanId): number {
+		return this.prices[id] ?? PLANS.find((plan) => plan.id === id)?.monthly ?? 0;
+	}
 
 	get monthly(): number {
-		return PLANS.find((plan) => plan.id === this.id)?.monthly ?? 0;
+		return this.monthlyOf(this.id);
+	}
+
+	isPriced(id: PlanId): boolean {
+		return this.prices[id] !== undefined;
+	}
+
+	setPrice(id: PlanId, value: number): void {
+		this.prices = { ...this.prices, [id]: value };
+		localStorage.setItem(PLAN_PRICE_KEY, JSON.stringify(this.prices));
+	}
+
+	resetPrices(): void {
+		this.prices = {};
+		localStorage.removeItem(PLAN_PRICE_KEY);
 	}
 
 	set(next: PlanId): void {
@@ -268,8 +311,7 @@ class Plan {
 	}
 
 	monthlyAt(month: string): number {
-		const id = this.at(month);
-		return PLANS.find((plan) => plan.id === id)?.monthly ?? 0;
+		return this.monthlyOf(this.at(month));
 	}
 
 	/** One plan per start month: setting the same month again corrects it. */

@@ -10,8 +10,11 @@
  * would be a second thing to keep true.
  */
 import { api, type Answer, type ModelRow, type Rhythm, type ToolRow } from '$lib/api';
+import { toast } from 'svelte-sonner';
 import { cli } from '$lib/cli.svelte';
+import { commandCatalog, commandFor, type Command } from '$lib/commands.svelte';
 import { exact } from '$lib/format';
+import { i18n, t } from '$lib/i18n/index.svelte';
 import { isHosted } from '$lib/ipc.svelte';
 import { costOf } from '$lib/pricing.svelte';
 
@@ -23,6 +26,46 @@ const EFFORT_KEY = 'claudeadmin.assistantEffort';
 
 function stored(key: string): string {
 	return typeof localStorage === 'undefined' ? '' : (localStorage.getItem(key) ?? '');
+}
+
+export type Routed =
+	| { kind: 'command'; command: Command }
+	| { kind: 'question' }
+	| { kind: 'clarify'; question: string };
+
+/** The language to answer in, named in English because the prompt is. */
+function languageName(): string {
+	return new Intl.DisplayNames(['en'], { type: 'language' }).of(i18n.intlLocale) ?? 'English';
+}
+
+/**
+ * The router's line, whatever it is wrapped in.
+ *
+ * Models fence JSON in markdown often enough that insisting on a bare line
+ * would fail on a technicality; the first brace to the last is what counts.
+ */
+function parseRouted(
+	text: string
+): { kind: 'command'; id: string } | { kind: 'clarify'; question: string } | null {
+	const start = text.indexOf('{');
+	const end = text.lastIndexOf('}');
+	if (start === -1 || end <= start) return null;
+
+	try {
+		const value: unknown = JSON.parse(text.slice(start, end + 1));
+		if (typeof value !== 'object' || value === null) return null;
+		const record = value as Record<string, unknown>;
+
+		if (record.kind === 'command' && typeof record.id === 'string') {
+			return { kind: 'command', id: record.id };
+		}
+		if (record.kind === 'clarify' && typeof record.question === 'string') {
+			return { kind: 'clarify', question: record.question };
+		}
+	} catch {
+		return null;
+	}
+	return null;
 }
 
 class Assistant {
@@ -110,11 +153,84 @@ class Assistant {
 		return lines.join('\n');
 	}
 
+	/**
+	 * What a spoken sentence turns out to be: a command, a question about the
+	 * figures, or too vague to act on.
+	 *
+	 * The model only ever picks an id from `COMMANDS`; anything it invents is
+	 * dropped and treated as a question, so a hallucinated action cannot run.
+	 */
+	async route(heard: string): Promise<Routed> {
+		const prompt =
+			'Decide what the user wants from a desktop app that shows Claude Code usage.\n' +
+			'Answer with one line of JSON and nothing else:\n' +
+			'{"kind":"command","id":"<id from the list>"} to carry a command out,\n' +
+			'{"kind":"question"} if it is a question about the usage figures,\n' +
+			`{"kind":"clarify","question":"<one short question, written in ${languageName()}>"} ` +
+			'if it could be several of them.\n\nCommands:\n' +
+			`${commandCatalog()}\n\nThe user said: ${JSON.stringify(heard)}`;
+
+		let text: string;
+		try {
+			const answer = await api.askClaude(
+				this.source,
+				cli.configured,
+				prompt,
+				this.model || null,
+				this.effort || null
+			);
+			text = answer.text;
+		} catch {
+			// A router that cannot be reached must not swallow the sentence: the
+			// question path still has something to say about it.
+			return { kind: 'question' };
+		}
+
+		const parsed = parseRouted(text);
+		if (!parsed) return { kind: 'question' };
+		if (parsed.kind === 'command') {
+			const command = commandFor(parsed.id);
+			return command ? { kind: 'command', command } : { kind: 'question' };
+		}
+		return parsed.kind === 'clarify' && parsed.question.trim() !== ''
+			? { kind: 'clarify', question: parsed.question }
+			: { kind: 'question' };
+	}
+
+	/**
+	 * Acts on what was heard, and says what it did.
+	 *
+	 * Returns false when the sentence was a question after all, which is the
+	 * caller's cue to run its normal ask-and-show flow.
+	 */
+	async obey(heard: string): Promise<{ handled: boolean; clarify?: string }> {
+		const routed = await this.route(heard);
+
+		if (routed.kind === 'command') {
+			const name = t(routed.command.label);
+			toast(t('voice.command.ask', { command: name }), {
+				description: heard,
+				duration: 15000,
+				action: { label: t('voice.command.run'), onClick: () => routed.command.run() }
+			});
+			return { handled: true };
+		}
+
+		if (routed.kind === 'clarify') return { handled: true, clarify: routed.question };
+		return { handled: false };
+	}
+
 	async ask(question: string): Promise<string> {
+		// The window is translated, the prompt is not: without this the answer
+		// comes back in English and a German voice reads English words.
+		const language =
+			new Intl.DisplayNames(['en'], { type: 'language' }).of(i18n.intlLocale) ?? 'English';
+
 		const answer = await api.askClaude(
 			this.source,
 			cli.configured,
-			`${this.context}\n\nQuestion: ${question.trim()}\n\nAnswer briefly, using only the figures above.`,
+			`${this.context}\n\nQuestion: ${question.trim()}\n\n` +
+				`Answer briefly, using only the figures above. Write the answer in ${language}.`,
 			this.model || null,
 			this.effort || null
 		);

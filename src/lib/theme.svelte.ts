@@ -3,6 +3,7 @@ import { applyThemeChange } from './theme/apply-theme-change';
 
 export const PRESETS = [
 	{ id: 'default', label: 'Neutral' },
+	{ id: 'tech', label: 'Tech' },
 	{ id: 'claude', label: 'Claude' },
 	{ id: 'cosmic', label: 'Cosmic' },
 	{ id: 'supabase', label: 'Supabase' },

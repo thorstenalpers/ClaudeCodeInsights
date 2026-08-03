@@ -60,3 +60,15 @@ export function formatTime(iso: string | null): string {
 		? ''
 		: date.toLocaleTimeString(i18n.intlLocale, { hour: '2-digit', minute: '2-digit' });
 }
+
+/**
+ * One spelling for every Windows path on screen.
+ *
+ * Both separators reach the same directory, and a list that mixes them reads
+ * like two different places. Only paths that name a drive are rewritten: a
+ * POSIX path is a path on another system, and turning its slashes round would
+ * make it wrong rather than tidy.
+ */
+export function displayPath(path: string): string {
+	return /^[a-zA-Z]:/.test(path) ? path.replace(/\//g, '\\') : path;
+}

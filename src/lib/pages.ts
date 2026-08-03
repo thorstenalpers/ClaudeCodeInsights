@@ -2,6 +2,7 @@ import type { Component } from 'svelte';
 import type { Pathname } from '$app/types';
 import type { MessageKey } from '$lib/i18n/en';
 import Activity from '@lucide/svelte/icons/calendar-clock';
+import Live from '@lucide/svelte/icons/radio';
 import Agents from '@lucide/svelte/icons/bot';
 import Assistant from '@lucide/svelte/icons/sparkles';
 import Cost from '@lucide/svelte/icons/circle-dollar-sign';
@@ -9,6 +10,7 @@ import Overview from '@lucide/svelte/icons/layout-dashboard';
 import Projects from '@lucide/svelte/icons/folder-git-2';
 import Sessions from '@lucide/svelte/icons/messages-square';
 import Settings from '@lucide/svelte/icons/settings';
+import Logs from '@lucide/svelte/icons/scroll-text';
 import Tools from '@lucide/svelte/icons/wrench';
 
 export type PageDefinition = {
@@ -27,6 +29,12 @@ export const PAGES: readonly PageDefinition[] = [
 		label: 'nav.overview',
 		description: 'nav.overview.description',
 		icon: Overview
+	},
+	{
+		href: '/live',
+		label: 'nav.live',
+		description: 'nav.live.description',
+		icon: Live
 	},
 	{
 		href: '/sessions',
@@ -72,6 +80,14 @@ export const PAGES: readonly PageDefinition[] = [
 	}
 ];
 
+/** Shown in the rail only while the log view is switched on in settings. */
+export const LOG_PAGE: PageDefinition = {
+	href: '/logs',
+	label: 'nav.logs',
+	description: 'nav.logs.description',
+	icon: Logs
+};
+
 export const SETTINGS_PAGE: PageDefinition = {
 	href: '/settings',
 	label: 'nav.settings',
@@ -79,7 +95,9 @@ export const SETTINGS_PAGE: PageDefinition = {
 	icon: Settings
 };
 
-export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, SETTINGS_PAGE];
+// The log page is in here even while the rail hides it: the breadcrumb has
+// to be able to name a page the user reached by its address.
+export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, LOG_PAGE, SETTINGS_PAGE];
 
 /** The rail highlights the deepest match, so /sessions/abc keeps Sessions active. */
 export function activeHref(pathname: string): Pathname {

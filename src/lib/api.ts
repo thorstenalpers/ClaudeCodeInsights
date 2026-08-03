@@ -76,6 +76,14 @@ export type SessionQuery = {
 	/** Inclusive local dates, `YYYY-MM-DD`. */
 	from?: string | null;
 	to?: string | null;
+	/** The price table, sent only so the host can order by cost. */
+	rates?: {
+		family: string;
+		input: number;
+		output: number;
+		cacheRead: number;
+		cacheWrite: number;
+	}[];
 };
 
 export type SessionFacets = {
@@ -188,6 +196,9 @@ export type Answer = {
 	costUsd: number | null;
 };
 
+/** A name and how many runs fell under it. */
+export type Tally = { name: string; runs: number };
+
 export type AgentRow = {
 	agentType: string;
 	runs: number;
@@ -195,7 +206,27 @@ export type AgentRow = {
 	totalDurationMs: number;
 	toolUseCount: number;
 	lastTs: string | null;
+	/** The sessions that started runs of this type. */
+	sessions: number;
+	/** Where it ran and what those sessions were doing, busiest first. */
+	projects: Tally[];
+	activities: Tally[];
 	/** Empty when no turn carries the agent's id, which is not the same as free. */
+	byModel: ModelTokens[];
+};
+
+/** One derived activity, with everything the sessions behind it add up to. */
+export type ActivityRow = {
+	activity: string;
+	sessions: number;
+	turns: number;
+	projects: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	firstTs: string | null;
+	lastTs: string | null;
 	byModel: ModelTokens[];
 };
 
@@ -244,7 +275,37 @@ export type Rhythm = {
 	currentStreak: number;
 };
 
-export type CliStatus = { found: boolean; path: string | null };
+export type LiveTurn = {
+	sessionId: string;
+	project: string | null;
+	role: string;
+	timestamp: string | null;
+	text: string | null;
+	tools: string[];
+};
+
+export type VoicePack = {
+	id: string;
+	language: string;
+	label: string;
+	megabytes: number;
+	installed: boolean;
+	voices: number;
+};
+
+/** A Hugging Face model, with the verdict on whether this app can speak it. */
+export type HubVoice = {
+	repo: string;
+	likes: number;
+	downloads: number;
+	languages: string[];
+	kind: 'kokoro' | 'vits' | null;
+	megabytes: number;
+	/** Null when installable; otherwise what the repository is missing. */
+	blocked: string | null;
+};
+
+export type CliStatus = { found: boolean; path: string | null; version: string | null };
 
 export type ProviderInfo = {
 	id: string;
@@ -262,6 +323,7 @@ export const api = {
 	listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),
 	getSessionFacets: () => invoke<SessionFacets>('get_session_facets'),
 	listProjects: () => invoke<ProjectsReport>('list_projects'),
+	openClaudeConfig: () => invoke<void>('open_claude_config'),
 	previewProjectTranscripts: (path: string) =>
 		invoke<TranscriptFile[]>('preview_project_transcripts', { path }),
 	deleteProjectTranscripts: (path: string) =>
@@ -272,6 +334,7 @@ export const api = {
 	removeProjectRegistration: (path: string) =>
 		invoke<WriteOutcome>('remove_project_registration', { path }),
 	listTools: () => invoke<ToolRow[]>('list_tools'),
+	listActivities: () => invoke<ActivityRow[]>('list_activities'),
 	listModels: () => invoke<ModelRow[]>('list_models'),
 	listAgents: () => invoke<AgentRow[]>('list_agents'),
 	getRhythm: () => invoke<Rhythm>('get_rhythm'),
@@ -291,5 +354,18 @@ export const api = {
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	openFreeKeyUrl: (provider: string) => invoke<void>('open_free_key_url', { provider }),
 	speechAvailable: () => invoke<boolean>('speech_available'),
+	startLive: (tail: number) => invoke<LiveTurn[]>('start_live', { tail }),
+	stopLive: () => invoke<void>('stop_live'),
+	listVoicePacks: () => invoke<VoicePack[]>('list_voice_packs'),
+	voicePacksFolder: () => invoke<string>('voice_packs_folder'),
+	installVoicePack: (id: string) => invoke<VoicePack>('install_voice_pack', { id }),
+	searchVoiceHub: (query: string) => invoke<HubVoice[]>('search_voice_hub', { query }),
+	installHubVoice: (repo: string) => invoke<VoicePack>('install_hub_voice', { repo }),
+	cancelVoicePack: () => invoke<void>('cancel_voice_pack'),
+	removeVoicePack: (id: string) => invoke<void>('remove_voice_pack', { id }),
+	speakText: (id: string, speaker: number, text: string) =>
+		invoke<void>('speak_text', { id, speaker, text }),
+	stopSpeaking: () => invoke<void>('stop_speaking'),
+	openSpeechSettings: () => invoke<void>('open_speech_settings'),
 	recognizeSpeech: (locale: string) => invoke<string>('recognize_speech', { locale })
 };
