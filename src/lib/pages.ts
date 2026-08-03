@@ -13,6 +13,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Logs from '@lucide/svelte/icons/scroll-text';
 import Tools from '@lucide/svelte/icons/wrench';
 import Info from '@lucide/svelte/icons/info';
+import Orchestration from '@lucide/svelte/icons/list-checks';
 
 export type PageDefinition = {
 	href: Pathname;
@@ -72,6 +73,12 @@ export const PAGES: readonly PageDefinition[] = [
 		label: 'nav.tools',
 		description: 'nav.tools.description',
 		icon: Tools
+	},
+	{
+		href: '/orchestration',
+		label: 'nav.orchestration',
+		description: 'nav.orchestration.description',
+		icon: Orchestration
 	},
 	{
 		href: '/assistant',

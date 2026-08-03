@@ -317,6 +317,28 @@ export type HubVoice = {
 	blocked: string | null;
 };
 
+/** One thing to be done in a project. */
+export type Task = {
+	id: number;
+	projectPath: string;
+	title: string;
+	notes: string;
+	/** `open`, `running`, `waiting`, `deferred` or `done`. */
+	state: string;
+	position: number;
+	createdTs: string;
+	sessionId: string | null;
+};
+
+/** A skill or an agent definition, as it lies on disk. */
+export type Definition = {
+	name: string;
+	description: string;
+	path: string;
+	/** `user` for the home folder, otherwise the project it belongs to. */
+	scope: string;
+};
+
 /** What the info page says about the running build. */
 export type AppInfo = {
 	version: string;
@@ -361,6 +383,12 @@ export const api = {
 		invoke<WriteOutcome>('remove_project_registration', { path }),
 	listTools: () => invoke<ToolRow[]>('list_tools'),
 	listActivities: () => invoke<ActivityRow[]>('list_activities'),
+	listTasks: (project: string | null) => invoke<Task[]>('list_tasks', { project }),
+	addTask: (project: string, title: string) => invoke<Task>('add_task', { project, title }),
+	updateTask: (task: Task) => invoke<void>('update_task', { task }),
+	removeTask: (id: number) => invoke<void>('remove_task', { id }),
+	listDefinitions: (project: string | null) =>
+		invoke<[Definition[], Definition[]]>('list_definitions', { project }),
 	listModels: () => invoke<ModelRow[]>('list_models'),
 	listAgents: () => invoke<AgentRow[]>('list_agents'),
 	getRhythm: () => invoke<Rhythm>('get_rhythm'),

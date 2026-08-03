@@ -5,6 +5,7 @@ pub mod error;
 pub mod hub;
 pub mod ingest;
 pub mod live;
+pub mod orchestration;
 pub mod paths;
 pub mod projects;
 pub mod speech;
@@ -36,6 +37,11 @@ pub fn run() {
             commands::projects::remove_project_registration,
             commands::usage::list_tools,
             commands::usage::list_models,
+            commands::orchestration::list_tasks,
+            commands::orchestration::add_task,
+            commands::orchestration::update_task,
+            commands::orchestration::remove_task,
+            commands::orchestration::list_definitions,
             commands::usage::list_activities,
             commands::usage::list_agents,
             commands::usage::get_rhythm,

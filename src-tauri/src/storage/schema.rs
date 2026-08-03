@@ -3,7 +3,7 @@ use rusqlite::Connection;
 
 /// Bumped whenever a migration is added. Forward only — this is a cache that can
 /// be rebuilt from the transcripts at any time, so there is no downgrade path.
-pub(crate) const TARGET_VERSION: i64 = 2;
+pub(crate) const TARGET_VERSION: i64 = 3;
 
 pub fn migrate(conn: &Connection) -> Result<()> {
     let current: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
@@ -13,6 +13,9 @@ pub fn migrate(conn: &Connection) -> Result<()> {
     }
     if current < 2 {
         conn.execute_batch(V2)?;
+    }
+    if current < 3 {
+        conn.execute_batch(V3)?;
     }
 
     conn.pragma_update(None, "user_version", TARGET_VERSION)?;
@@ -142,4 +145,25 @@ CREATE TABLE IF NOT EXISTS session_activity (
 );
 
 CREATE INDEX IF NOT EXISTS ix_session_activity ON session_activity(activity);
+"#;
+
+const V3: &str = r#"
+-- What a project is meant to get done, in the order it should happen.
+--
+-- The app's own list, not Claude Code's: these are the features and stories a
+-- session is started for, and the only table here the user writes by hand.
+CREATE TABLE IF NOT EXISTS tasks (
+    id           INTEGER PRIMARY KEY,
+    project_path TEXT NOT NULL,
+    title        TEXT NOT NULL,
+    notes        TEXT NOT NULL DEFAULT '',
+    -- open, running, waiting, deferred, done
+    state        TEXT NOT NULL DEFAULT 'open',
+    position     INTEGER NOT NULL DEFAULT 0,
+    created_ts   TEXT NOT NULL,
+    -- The session that worked on it, once one has.
+    session_id   TEXT
+);
+
+CREATE INDEX IF NOT EXISTS ix_tasks_project ON tasks(project_path, position);
 "#;

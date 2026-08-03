@@ -6,6 +6,7 @@
 pub mod app;
 pub mod assistant;
 pub mod live;
+pub mod orchestration;
 pub mod overview;
 pub mod projects;
 pub mod scan;
