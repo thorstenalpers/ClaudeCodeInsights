@@ -11,7 +11,8 @@
 
 use crate::error::{Error, Result};
 use claude_agent_sdk_rs::{
-    ClaudeAgentOptions, ClaudeClient, PermissionResult, PermissionResultAllow, PermissionResultDeny,
+    ClaudeAgentOptions, ClaudeClient, ContentBlock, Message, PermissionResult,
+    PermissionResultAllow, PermissionResultDeny,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -69,6 +70,66 @@ pub struct Ask {
     pub tool: String,
     /// What the tool was called with, as it came, for the window to show.
     pub input: serde_json::Value,
+}
+
+/// One line of a run, as the window shows it.
+///
+/// The SDK's message tree is flattened here rather than in the window: the
+/// shapes belong to a dependency that will change, and a console needs four
+/// things — who said it, what it was, the text, and whether it went wrong.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Line {
+    pub run: String,
+    /// `text`, `thinking`, `tool`, `result` or `system`.
+    pub kind: String,
+    pub text: String,
+    /// The tool's name, for the lines that are a tool.
+    pub tool: Option<String>,
+    /// What the CLI says the turn cost; under a subscription this is what it
+    /// would have cost at API rates, not a charge.
+    pub cost_usd: Option<f64>,
+}
+
+/// Flattens one message into the lines a console shows.
+fn lines_of(run: &str, message: &Message) -> Vec<Line> {
+    let line = |kind: &str, text: String, tool: Option<String>, cost: Option<f64>| Line {
+        run: run.to_owned(),
+        kind: kind.to_owned(),
+        text,
+        tool,
+        cost_usd: cost,
+    };
+
+    match message {
+        Message::Assistant(assistant) => assistant
+            .message
+            .content
+            .iter()
+            .filter_map(|block| match block {
+                ContentBlock::Text(text) => Some(line("text", text.text.clone(), None, None)),
+                ContentBlock::Thinking(thinking) => {
+                    Some(line("thinking", thinking.thinking.clone(), None, None))
+                }
+                ContentBlock::ToolUse(call) => Some(line(
+                    "tool",
+                    call.input.to_string(),
+                    Some(call.name.clone()),
+                    None,
+                )),
+                _ => None,
+            })
+            .collect(),
+        Message::Result(result) => vec![line(
+            "result",
+            result.result.clone().unwrap_or_default(),
+            None,
+            result.total_cost_usd,
+        )],
+        Message::System(system) => vec![line("system", system.subtype.clone(), None, None)],
+        // Stream events and the control protocol are noise in a console.
+        _ => Vec::new(),
+    }
 }
 
 enum Step {
@@ -285,10 +346,9 @@ async fn drive<R: Runtime>(
             while let Some(message) = stream.next().await {
                 match message {
                     Ok(message) => {
-                        let _ = app.emit(
-                            "session:message",
-                            serde_json::json!({ "id": id, "message": message }),
-                        );
+                        for line in lines_of(&id, &message) {
+                            let _ = app.emit("session:message", line);
+                        }
                     }
                     Err(error) => {
                         let _ = app.emit(

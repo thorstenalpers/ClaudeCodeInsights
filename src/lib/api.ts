@@ -317,6 +317,46 @@ export type HubVoice = {
 	blocked: string | null;
 };
 
+/** How far a run may go before it asks. */
+export type Rule = 'ask' | 'readsFree';
+
+/** What the window asks for when it starts a run. */
+export type RunRequest = {
+	project: string;
+	prompt: string;
+	model?: string | null;
+	cliPath?: string | null;
+	rule: Rule;
+	/** Ends the run when the spend passes this, in US dollars. */
+	budgetUsd?: number | null;
+	taskId?: number | null;
+};
+
+export type RunInfo = {
+	id: string;
+	project: string;
+	taskId: number | null;
+	rule: Rule;
+};
+
+/** One line of a run, already flattened by the host. */
+export type RunLine = {
+	run: string;
+	/** `text`, `thinking`, `tool`, `result`, `system` — or `you` for what was typed. */
+	kind: string;
+	text: string;
+	tool: string | null;
+	costUsd: number | null;
+};
+
+/** A tool waiting for an answer. */
+export type Ask = {
+	id: string;
+	run: string;
+	tool: string;
+	input: unknown;
+};
+
 /** One thing to be done in a project. */
 export type Task = {
 	id: number;
@@ -383,6 +423,13 @@ export const api = {
 		invoke<WriteOutcome>('remove_project_registration', { path }),
 	listTools: () => invoke<ToolRow[]>('list_tools'),
 	listActivities: () => invoke<ActivityRow[]>('list_activities'),
+	startSession: (request: RunRequest) => invoke<RunInfo>('start_session', { request }),
+	sendToSession: (id: string, prompt: string) => invoke<void>('send_to_session', { id, prompt }),
+	interruptSession: (id: string) => invoke<void>('interrupt_session', { id }),
+	stopSession: (id: string) => invoke<void>('stop_session', { id }),
+	answerPermission: (id: string, allow: boolean) =>
+		invoke<void>('answer_permission', { id, allow }),
+	listRunningSessions: () => invoke<RunInfo[]>('list_sessions_running'),
 	listTasks: (project: string | null) => invoke<Task[]>('list_tasks', { project }),
 	addTask: (project: string, title: string) => invoke<Task>('add_task', { project, title }),
 	updateTask: (task: Task) => invoke<void>('update_task', { task }),

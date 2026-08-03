@@ -3,10 +3,10 @@
 	 * The projects, what is meant to happen in them, and what is there to do it.
 	 *
 	 * The list of tasks is the app's own — features, stories, whatever is written
-	 * down — and it is what a session will eventually be started for. The rules
-	 * beneath it are stored but not yet obeyed: nothing runs sessions from here
-	 * until the session runner exists, and saying so is better than a switch that
-	 * quietly does nothing.
+	 * down — and starting one hands its title to a session in that project. The
+	 * console beside it is that session: what it says, what it wants to run, and
+	 * the answer it is waiting for. Of the rules only the first is obeyed so far;
+	 * the others are stored and say so on the card.
 	 */
 	import { api, type Definition, type ProjectRow, type Task } from '$lib/api';
 	import { Badge } from '$lib/components/ui/badge';
@@ -19,8 +19,13 @@
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { costOfSplit } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
+	import { cli } from '$lib/cli.svelte';
+	import { runs } from '$lib/runs.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
+	import ShieldQuestion from '@lucide/svelte/icons/shield-question';
+	import Square from '@lucide/svelte/icons/square';
 	import Trash from '@lucide/svelte/icons/trash-2';
 
 	let projects = $state<ProjectRow[] | null>(null);
@@ -113,6 +118,7 @@
 	 * until the session runner can honour it.
 	 */
 	const RULES = [
+		'orchestration.rule.readsFree',
 		'orchestration.rule.defer',
 		'orchestration.rule.ask',
 		'orchestration.rule.stopOnBudget',
@@ -136,6 +142,43 @@
 		rules = rules.includes(rule) ? rules.filter((entry) => entry !== rule) : [...rules, rule];
 		localStorage.setItem(RULES_KEY, JSON.stringify(rules));
 	}
+
+	void runs.listen();
+
+	/** The run this project has going, if any. */
+	const run = $derived(runs.running.find((entry) => entry.project === chosen) ?? null);
+	const waiting = $derived(runs.asks.filter((ask) => ask.run === run?.id));
+	let prompt = $state('');
+
+	/** Reading tools may go through only where the rule says so. */
+	const rule = $derived(rules.includes('orchestration.rule.readsFree') ? 'readsFree' : 'ask');
+
+	async function startFor(task: Task): Promise<void> {
+		await runs.start({
+			project: chosen,
+			prompt: task.title,
+			rule,
+			cliPath: cli.configured,
+			taskId: task.id
+		});
+		if (runs.error === null) await move(task, 'running');
+	}
+
+	async function say(): Promise<void> {
+		if (!run || prompt.trim() === '') return;
+		const text = prompt;
+		prompt = '';
+		await runs.send(run.id, text);
+	}
+
+	const TONE_LINE: Record<string, string> = {
+		you: 'text-foreground',
+		text: '',
+		thinking: 'text-muted-foreground italic',
+		tool: 'font-mono text-muted-foreground',
+		result: 'text-muted-foreground',
+		system: 'text-muted-foreground/60'
+	};
 </script>
 
 <div class="@container flex h-full min-h-0 flex-col gap-3 p-4">
@@ -211,6 +254,17 @@
 								</Button>
 							</div>
 							<div class="flex flex-wrap gap-1">
+								{#if !run && task.state !== 'done'}
+									<Button
+										variant="outline"
+										size="sm"
+										class="h-6 gap-1 px-2 text-xs font-normal"
+										onclick={() => void startFor(task)}
+									>
+										<Play class="size-3" />
+										{t('orchestration.run.start')}
+									</Button>
+								{/if}
 								{#each STATES as state (state)}
 									<Button
 										variant={task.state === state ? 'secondary' : 'ghost'}
@@ -237,6 +291,109 @@
 			</Card.Root>
 
 			<div class="flex min-h-0 flex-col gap-3">
+				{#if run}
+					<Card.Root data-size="sm" class="flex min-h-0 flex-col">
+						<Card.Header class="gap-1">
+							<div class="flex flex-wrap items-center gap-2">
+								<Card.Title class="text-base">{t('orchestration.run')}</Card.Title>
+								<Badge variant="secondary" class="font-normal">
+									{t(
+										`orchestration.run.${runs.state[run.id] ?? 'running'}` as 'orchestration.run.running'
+									)}
+								</Badge>
+								<span class="font-mono text-xs text-muted-foreground">{run.id}</span>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="ml-auto h-7 px-2 text-xs font-normal"
+									onclick={() => void runs.interrupt(run.id)}
+								>
+									{t('orchestration.run.interrupt')}
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-7 px-2 text-xs font-normal"
+									onclick={() => void runs.stop(run.id)}
+								>
+									<Square class="size-3" />
+									{t('orchestration.run.stop')}
+								</Button>
+							</div>
+						</Card.Header>
+						<Card.Content class="flex min-h-0 flex-col gap-2">
+							{#each waiting as ask (ask.id)}
+								<!-- The whole point of the module: nothing runs until this is
+								     answered, so it sits above the conversation, not beside it. -->
+								<div class="flex flex-col gap-2 rounded-md border border-primary/40 p-2">
+									<div class="flex flex-wrap items-center gap-2">
+										<ShieldQuestion class="size-4 shrink-0 text-primary" />
+										<span class="text-sm font-medium">
+											{t('orchestration.ask', { tool: ask.tool })}
+										</span>
+									</div>
+									<pre
+										class="max-h-32 overflow-auto rounded bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">{JSON.stringify(
+											ask.input,
+											null,
+											1
+										)}</pre>
+									<div class="flex gap-2">
+										<Button size="sm" class="h-7" onclick={() => void runs.answer(ask.id, true)}>
+											{t('orchestration.ask.allow')}
+										</Button>
+										<Button
+											variant="outline"
+											size="sm"
+											class="h-7"
+											onclick={() => void runs.answer(ask.id, false)}
+										>
+											{t('orchestration.ask.deny')}
+										</Button>
+									</div>
+								</div>
+							{/each}
+
+							<div class="max-h-64 min-h-0 flex-1 overflow-auto rounded-md border p-2">
+								{#each runs.linesOf(run.id) as line, index (index)}
+									<div class="flex gap-2 py-0.5 text-xs">
+										<span class="w-14 shrink-0 text-muted-foreground/60">
+											{line.tool ?? line.kind}
+										</span>
+										<span class="min-w-0 flex-1 wrap-anywhere {TONE_LINE[line.kind] ?? ''}">
+											{line.text}
+										</span>
+									</div>
+								{/each}
+								{#if runs.linesOf(run.id).length === 0}
+									<p class="text-xs text-muted-foreground">{t('orchestration.run.waiting')}</p>
+								{/if}
+							</div>
+
+							<form
+								class="flex items-center gap-2"
+								onsubmit={(event) => {
+									event.preventDefault();
+									void say();
+								}}
+							>
+								<Input
+									class="h-8 flex-1"
+									bind:value={prompt}
+									placeholder={t('orchestration.run.say')}
+								/>
+								<Button type="submit" variant="outline" size="sm" class="h-8 font-normal">
+									{t('orchestration.run.send')}
+								</Button>
+							</form>
+
+							{#if runs.error}
+								<p class="text-xs text-destructive">{runs.error}</p>
+							{/if}
+						</Card.Content>
+					</Card.Root>
+				{/if}
+
 				<Card.Root data-size="sm">
 					<Card.Header class="gap-1">
 						<Card.Title class="text-base">{t('orchestration.project')}</Card.Title>
