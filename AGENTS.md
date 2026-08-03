@@ -1,4 +1,4 @@
-# ClaudeAdmin
+# Claude Insights
 
 A local desktop app for reading and managing what Claude Code stores on this
 machine: transcripts, usage, cost, and the projects registered in its settings.
@@ -6,14 +6,14 @@ Everything stays on the machine. Nothing is uploaded.
 
 ## Stack
 
-| Part          | Choice                                                           |
-| ------------- | ---------------------------------------------------------------- |
-| Shell         | Tauri 2 (Rust), one WebView2 window                              |
-| Backend       | Rust — `src-tauri/`                                              |
-| Storage       | SQLite via `rusqlite` (bundled), at `%LocalAppData%\ClaudeAdmin` |
-| Frontend      | SvelteKit (SPA, adapter-static), Svelte 5 runes, Tailwind v4     |
-| Tables        | `@tanstack/table-core`                                           |
-| Lint / format | ESLint flat config with `recommendedTypeChecked`, Prettier       |
+| Part          | Choice                                                               |
+| ------------- | -------------------------------------------------------------------- |
+| Shell         | Tauri 2 (Rust), one WebView2 window                                  |
+| Backend       | Rust — `src-tauri/`                                                  |
+| Storage       | SQLite via `rusqlite` (bundled), at `%LocalAppData%\Claude Insights` |
+| Frontend      | SvelteKit (SPA, adapter-static), Svelte 5 runes, Tailwind v4         |
+| Tables        | `@tanstack/table-core`                                               |
+| Lint / format | ESLint flat config with `recommendedTypeChecked`, Prettier           |
 
 ## Commands
 
@@ -35,7 +35,7 @@ a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 
 1. **Never write into `~/.claude/`, except where the user explicitly asked for
    it.** Transcripts are foreign, read-only territory. Everything this app owns
-   lives under `%LocalAppData%\ClaudeAdmin`.
+   lives under `%LocalAppData%\Claude Insights`.
 2. **Any change to `~/.claude.json` writes a backup next to it first.** It is
    Claude Code's own configuration; a corrupt one breaks the user's tooling.
 3. **A destructive action shows exactly what disappears before it runs** — file
@@ -50,8 +50,10 @@ a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 7. **The API key never crosses to the frontend**, never appears in a log, never
    in an exception message. Keys live in the OS credential store; the window may
    ask whether one is set and may replace it, never read it back. Every hosted
-   call is made in Rust for the same reason — and it is the only thing in this
-   app that opens a network connection.
+   call is made in Rust for the same reason. Two things in this app reach the
+   network, both from Rust and both only when asked: the hosted assistant, and
+   the voice-pack download, which goes to a fixed address from a table in the
+   source and never to one the window supplies.
 8. **`src/lib/components/ui/**` is generated** by `shadcn-svelte add`. Changes
    there are lost on the next update; it is excluded from lint and format.
 9. Components take props and emit events. Route pages read stores and call the
