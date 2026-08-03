@@ -325,6 +325,7 @@ export const zh: Messages = {
 	'activity.execution': '执行',
 	'activity.mcp': 'MCP',
 	'activity.other': '其他',
+	'activity.detail.sessions': '{total} 个中最近的 {shown} 个。',
 	'activity.noTools': '没有工具调用',
 
 	'placeholder.activity.1': '按星期与小时的热力图',

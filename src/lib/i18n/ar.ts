@@ -328,6 +328,7 @@ export const ar: Messages = {
 	'activity.execution': 'تنفيذ',
 	'activity.mcp': 'MCP',
 	'activity.other': 'أخرى',
+	'activity.detail.sessions': 'أحدث {shown} من أصل {total}.',
 	'activity.noTools': 'لا استدعاءات أدوات',
 
 	'placeholder.activity.1': 'خريطة حرارية حسب يوم الأسبوع والساعة',

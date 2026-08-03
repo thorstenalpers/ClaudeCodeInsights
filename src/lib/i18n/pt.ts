@@ -336,6 +336,7 @@ export const pt: Messages = {
 	'activity.execution': 'Execução',
 	'activity.mcp': 'MCP',
 	'activity.other': 'Outros',
+	'activity.detail.sessions': 'As {shown} mais recentes de {total}.',
 	'activity.noTools': 'Sem chamadas a ferramentas',
 
 	'placeholder.activity.1': 'Mapa de calor por dia da semana e hora',

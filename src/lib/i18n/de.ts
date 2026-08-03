@@ -338,6 +338,7 @@ export const de: Messages = {
 	'activity.execution': 'Ausführung',
 	'activity.mcp': 'MCP',
 	'activity.other': 'Sonstiges',
+	'activity.detail.sessions': 'Die {shown} jüngsten von {total}.',
 	'activity.noTools': 'Keine Werkzeugaufrufe',
 
 	'placeholder.activity.1': 'Heatmap nach Wochentag und Stunde',

@@ -339,6 +339,7 @@ export const fr: Messages = {
 	'activity.execution': 'Exécution',
 	'activity.mcp': 'MCP',
 	'activity.other': 'Autre',
+	'activity.detail.sessions': 'Les {shown} plus récentes sur {total}.',
 	'activity.noTools': 'Aucun appel d’outil',
 
 	'placeholder.activity.1': 'Carte thermique jour de la semaine par heure',

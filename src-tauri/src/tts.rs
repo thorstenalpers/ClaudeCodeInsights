@@ -61,6 +61,11 @@ pub struct Pack {
 /// what it is looking at without asking the network again.
 pub(crate) const MANIFEST: &str = "pack.json";
 
+/// How many speakers a Vits pack turned out to have, written the first time it
+/// is loaded. The number is the model's own answer and costs a load to get, so
+/// it is kept rather than asked for on every listing.
+const SPEAKERS: &str = "speakers.txt";
+
 fn archive(id: &str, language: &str, label: &str, megabytes: u32, kind: Kind) -> Pack {
     Pack {
         id: id.to_owned(),
@@ -110,6 +115,15 @@ pub fn catalogue() -> Vec<Pack> {
             "de",
             "Piper German (Thorsten, clearer)",
             110,
+            Kind::Vits,
+        ),
+        // Several deliveries of one speaker — amused, angry, sleepy and the
+        // rest — which is the only German pack here that is not level throughout.
+        archive(
+            "vits-piper-de_DE-thorsten_emotional-medium",
+            "de",
+            "Piper German (Thorsten, emotional)",
+            80,
             Kind::Vits,
         ),
         archive("kokoro-en-v0_19", "en", "Kokoro English", 330, Kind::Kokoro),
@@ -197,14 +211,19 @@ fn is_installed(kind: Kind, dir: &Path) -> bool {
         }
 }
 
-/// The number of speakers, read from the voice table's size.
+/// The number of speakers a pack offers.
 ///
-/// `voices.bin` is a flat array of float32 embeddings, 510 * 256 per speaker.
-/// A Piper voice has no such table: it is one speaker and nothing to count.
+/// Kokoro says it in the size of its voice table: a flat array of float32
+/// embeddings, 510 * 256 per speaker. A Vits pack keeps no such table — most
+/// are one voice, but an emotional Piper model is several, and only the loaded
+/// model knows. Until it has been loaded once, one is the honest guess.
 fn speaker_count(kind: Kind, dir: &Path) -> u32 {
     const PER_SPEAKER: u64 = 510 * 256 * 4;
     match kind {
-        Kind::Vits => 1,
+        Kind::Vits => fs::read_to_string(dir.join(SPEAKERS))
+            .ok()
+            .and_then(|text| text.trim().parse().ok())
+            .unwrap_or(1),
         Kind::Kokoro => fs::metadata(dir.join("voices.bin"))
             .map(|meta| (meta.len() / PER_SPEAKER) as u32)
             .unwrap_or(0),
@@ -465,6 +484,10 @@ fn engine_for(pack: &Pack) -> Result<()> {
 
     let tts = sherpa_onnx::OfflineTts::create(&config)
         .ok_or_else(|| Error::BadRequest("the voice would not load".to_owned()))?;
+
+    if pack.kind == Kind::Vits {
+        let _ = fs::write(dir.join(SPEAKERS), tts.num_speakers().max(1).to_string());
+    }
 
     *slot = Some((pack.id.to_owned(), tts));
     Ok(())

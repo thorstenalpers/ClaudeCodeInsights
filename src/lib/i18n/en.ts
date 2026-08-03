@@ -338,6 +338,7 @@ export const en = {
 	'activity.execution': 'Execution',
 	'activity.mcp': 'MCP',
 	'activity.other': 'Other',
+	'activity.detail.sessions': 'The {shown} most recent of {total}.',
 	'activity.noTools': 'No tool calls',
 
 	'placeholder.activity.1': 'Weekday by hour heatmap',

@@ -334,6 +334,7 @@ export const hi: Messages = {
 	'activity.execution': 'निष्पादन',
 	'activity.mcp': 'MCP',
 	'activity.other': 'अन्य',
+	'activity.detail.sessions': '{total} में से {shown} सबसे नई।',
 	'activity.noTools': 'कोई टूल कॉल नहीं',
 
 	'placeholder.activity.1': 'सप्ताह के दिन और घंटे के अनुसार हीटमैप',

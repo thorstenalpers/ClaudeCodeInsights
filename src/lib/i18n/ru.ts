@@ -335,6 +335,7 @@ export const ru: Messages = {
 	'activity.execution': 'Выполнение',
 	'activity.mcp': 'MCP',
 	'activity.other': 'Прочее',
+	'activity.detail.sessions': '{shown} самых недавних из {total}.',
 	'activity.noTools': 'Нет вызовов инструментов',
 
 	'placeholder.activity.1': 'Тепловая карта по дням недели и часам',

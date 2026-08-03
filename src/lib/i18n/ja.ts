@@ -336,6 +336,7 @@ export const ja: Messages = {
 	'activity.execution': '実行',
 	'activity.mcp': 'MCP',
 	'activity.other': 'その他',
+	'activity.detail.sessions': '{total} 件のうち新しい {shown} 件。',
 	'activity.noTools': 'ツール呼び出しなし',
 
 	'placeholder.activity.1': '曜日と時間帯のヒートマップ',
