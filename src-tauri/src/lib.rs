@@ -8,6 +8,7 @@ pub mod live;
 pub mod orchestration;
 pub mod paths;
 pub mod projects;
+pub mod sessions;
 pub mod speech;
 pub mod state;
 pub mod storage;
@@ -37,6 +38,12 @@ pub fn run() {
             commands::projects::remove_project_registration,
             commands::usage::list_tools,
             commands::usage::list_models,
+            commands::runs::start_session,
+            commands::runs::send_to_session,
+            commands::runs::interrupt_session,
+            commands::runs::stop_session,
+            commands::runs::answer_permission,
+            commands::runs::list_sessions_running,
             commands::orchestration::list_tasks,
             commands::orchestration::add_task,
             commands::orchestration::update_task,

@@ -9,6 +9,7 @@ pub mod live;
 pub mod orchestration;
 pub mod overview;
 pub mod projects;
+pub mod runs;
 pub mod scan;
 pub mod sessions;
 pub mod speech;
