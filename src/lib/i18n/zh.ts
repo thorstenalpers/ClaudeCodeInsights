@@ -415,7 +415,7 @@ export const zh: Messages = {
 	'settings.voice.packs.failed': '下载失败',
 	'settings.voice.packs.folder': '语音包位于 {path}。手动放进去的内容会在下次启动时被找到。',
 	'settings.voice.packs.hint':
-		'语音包是一个在本机运行的神经语音。取回它是本应用唯一的下载，只连向 sherpa-onnx 的发布页面。',
+		'语音包是在本机运行的神经语音：离线朗读，不收费用，读出的句子不会离开这台电脑。取用它是本应用唯一的下载。',
 	'settings.voice.hub': '来自 Hugging Face',
 	'settings.voice.hub.placeholder': '例如 kokoro german',
 	'settings.voice.hub.search': '搜索',

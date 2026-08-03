@@ -432,7 +432,7 @@ export const hi: Messages = {
 	'settings.voice.packs.folder':
 		'पैकेज {path} में रहते हैं। वहाँ हाथ से रखी चीज़ें अगली बार शुरू होने पर मिल जाती हैं।',
 	'settings.voice.packs.hint':
-		'पैकेज एक न्यूरल आवाज़ है जो इसी मशीन पर चलती है। इसे लाना इस ऐप का इकलौता डाउनलोड है, और वह भी केवल sherpa-onnx के रिलीज़ पेज से।',
+		'पैकेज एक न्यूरल आवाज़ है जो इसी मशीन पर चलती है: यह ऑफ़लाइन बोलती है, कुछ नहीं लेती, और पढ़ा गया कोई वाक्य कंप्यूटर से बाहर नहीं जाता। इसे लाना ही इस ऐप का इकलौता डाउनलोड है।',
 	'settings.voice.hub': 'Hugging Face से',
 	'settings.voice.hub.placeholder': 'जैसे kokoro german',
 	'settings.voice.hub.search': 'खोजें',

@@ -41,10 +41,10 @@ pub async fn install_hub_voice(app: tauri::AppHandle, repo: String) -> Result<Pa
         .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
 }
 
-/// Stops the running download at its next chunk.
+/// Stops one running download at its next chunk.
 #[tauri::command]
-pub fn cancel_voice_pack() {
-    tts::cancel();
+pub fn cancel_voice_pack(id: String) {
+    tts::cancel(&id);
 }
 
 #[tauri::command(async)]

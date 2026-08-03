@@ -6,7 +6,7 @@ you replay any past conversation, and manages the projects registered in Claude
 Code's settings.
 
 **Everything stays local, unless you ask otherwise.** The app reads `~/.claude/`
-and writes only to `%LocalAppData%\Claude Insights`. There is no telemetry, and
+and writes only to `%LocalAppData%\ClaudeAdmin`. There is no telemetry, and
 nothing is sent anywhere on its own.
 
 The one exception is the Assistant, and only when you point it at a hosted

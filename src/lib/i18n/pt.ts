@@ -436,7 +436,7 @@ export const pt: Messages = {
 	'settings.voice.packs.folder':
 		'Os pacotes ficam em {path}. O que puseres lá à mão é encontrado no próximo arranque.',
 	'settings.voice.packs.hint':
-		'Um pacote é uma voz neuronal que corre nesta máquina. Ir buscá-lo é a única transferência desta aplicação; vai à página de versões do sherpa-onnx e a mais lado nenhum.',
+		'Um pacote é uma voz neural que corre nesta máquina: fala offline, não custa nada e nenhuma frase lida sai do computador. Obtê-lo é a única transferência que esta aplicação faz.',
 	'settings.voice.hub': 'Do Hugging Face',
 	'settings.voice.hub.placeholder': 'p. ex. kokoro german',
 	'settings.voice.hub.search': 'Procurar',

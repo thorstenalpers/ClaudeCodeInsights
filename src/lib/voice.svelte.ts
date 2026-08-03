@@ -59,11 +59,13 @@ class Voice {
 	packs = $state<VoicePack[]>([]);
 	/** Where packs are unpacked, shown so the folder is no mystery. */
 	folder = $state<string>('');
-	/** Which pack is being fetched, so the button can say so. */
-	installing = $state<string | null>(null);
-	/** Bytes in so far, and what the server promised, for the progress bar. */
-	received = $state(0);
-	total = $state<number | null>(null);
+	/**
+	 * The downloads on their way, by pack id.
+	 *
+	 * A map rather than one slot: several packs can be fetched at once, and each
+	 * carries its own progress and its own cancel.
+	 */
+	running = $state<Record<string, { received: number; total: number | null }>>({});
 	/** Empty means: whichever voice speaks the app's language. */
 	name = $state<string>(
 		typeof localStorage === 'undefined' ? '' : (localStorage.getItem(VOICE_KEY) ?? '')
@@ -116,11 +118,9 @@ class Voice {
 	 * this app ships, which is the only difference the download makes.
 	 */
 	async install(id: string, repo?: string, megabytes?: number): Promise<void> {
-		if (!isHosted || this.installing) return;
+		if (!isHosted || this.running[id]) return;
 		const pack = this.packs.find((entry) => entry.id === id) ?? { megabytes: megabytes ?? 0 };
-		this.installing = id;
-		this.received = 0;
-		this.total = null;
+		this.running = { ...this.running, [id]: { received: 0, total: null } };
 		this.error = null;
 		logs.info('voice', `installing pack ${id}`);
 
@@ -129,17 +129,30 @@ class Voice {
 			'voice:progress',
 			(event) => {
 				if (event.payload.id !== id) return;
-				this.received = event.payload.received;
-				this.total = event.payload.total;
+				this.running = {
+					...this.running,
+					[id]: { received: event.payload.received, total: event.payload.total }
+				};
+				// The toast is the download's own line: several can be on their
+				// way, and the one being watched is rarely the one on screen.
+				toast.loading(this.title(id), {
+					id: notice,
+					description: this.line(id),
+					duration: Number.POSITIVE_INFINITY,
+					action: {
+						label: t('settings.voice.packs.cancel'),
+						onClick: () => void this.cancel(id)
+					}
+				});
 			}
 		);
 
 		// Minutes of download with no other sign of life, so the state is said
 		// out loud rather than left to a disabled button.
-		const notice = toast.loading(t('settings.voice.packs.installing'), {
-			description: t('settings.voice.packs.size', { size: pack?.megabytes ?? 0 }),
+		const notice = toast.loading(this.title(id), {
+			description: t('settings.voice.packs.size', { size: pack.megabytes }),
 			duration: Number.POSITIVE_INFINITY,
-			action: { label: t('settings.voice.packs.cancel'), onClick: () => void this.cancel() }
+			action: { label: t('settings.voice.packs.cancel'), onClick: () => void this.cancel(id) }
 		});
 
 		try {
@@ -149,41 +162,64 @@ class Voice {
 			toast.success(t('settings.voice.packs.done', { label: installed.label }), {
 				id: notice,
 				description: this.folder,
-				duration: 8000
+				duration: 8000,
+				action: undefined
 			});
 		} catch (cause) {
-			this.error = cause instanceof Error ? cause.message : String(cause);
+			const message = cause instanceof Error ? cause.message : String(cause);
 			// A cancel is the user's own doing, not a failure to report as one.
-			if (this.error.includes('cancelled')) {
+			if (message.includes('cancelled')) {
 				logs.info('voice', `pack ${id} cancelled`);
-				toast.info(t('settings.voice.packs.cancelled'), { id: notice, duration: 5000 });
-				this.error = null;
+				toast.info(t('settings.voice.packs.cancelled'), {
+					id: notice,
+					duration: 5000,
+					action: undefined
+				});
 			} else {
-				logs.error('voice', `pack ${id} failed: ${this.error}`);
+				this.error = message;
+				logs.error('voice', `pack ${id} failed: ${message}`);
 				toast.error(t('settings.voice.packs.failed'), {
 					id: notice,
-					description: this.error,
-					duration: 12000
+					description: message,
+					duration: 12000,
+					action: undefined
 				});
 			}
 		} finally {
 			stop();
-			this.installing = null;
-			this.received = 0;
-			this.total = null;
+			this.running = Object.fromEntries(Object.entries(this.running).filter(([key]) => key !== id));
 		}
 	}
 
-	/** Asks the host to stop the running download. */
-	async cancel(): Promise<void> {
-		if (!isHosted || !this.installing) return;
-		await api.cancelVoicePack().catch(() => {});
+	/** The pack's own name in its notice, so several downloads stay apart. */
+	private title(id: string): string {
+		const label = this.packs.find((entry) => entry.id === id)?.label ?? id.replace(/^hub:/, '');
+		return `${t('settings.voice.packs.installing')} · ${label}`;
 	}
 
-	/** How far the running download has come, 0–100, or null while unknown. */
-	get percent(): number | null {
-		if (!this.total) return null;
-		return Math.min(100, Math.round((this.received / this.total) * 100));
+	/** Percent where the size is known, bytes where it is not. */
+	private line(id: string): string {
+		const done = this.percentOf(id);
+		if (done !== null) return `${done}%`;
+		const received = this.running[id]?.received ?? 0;
+		return t('settings.voice.packs.size', { size: Math.round(received / 1048576) });
+	}
+
+	/** Asks the host to stop one running download. */
+	async cancel(id: string): Promise<void> {
+		if (!isHosted || !this.running[id]) return;
+		await api.cancelVoicePack(id).catch(() => {});
+	}
+
+	isInstalling(id: string): boolean {
+		return this.running[id] !== undefined;
+	}
+
+	/** How far one download has come, 0–100, or null while the size is unknown. */
+	percentOf(id: string): number | null {
+		const entry = this.running[id];
+		if (!entry?.total) return null;
+		return Math.min(100, Math.round((entry.received / entry.total) * 100));
 	}
 
 	async remove(id: string): Promise<void> {

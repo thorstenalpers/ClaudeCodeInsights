@@ -257,24 +257,26 @@
 							>
 								{t('settings.voice.packs.remove')}
 							</Button>
-						{:else if voice.installing === pack.id}
+						{:else if voice.isInstalling(pack.id)}
 							<!-- A bar and a number, because "Downloading…" for six minutes
 							     is indistinguishable from a download that has died. -->
 							<div class="flex min-w-40 items-center gap-2">
 								<div class="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-muted">
 									<div
 										class="h-full rounded-full bg-primary transition-[width] duration-300"
-										style:width={voice.percent === null ? '100%' : `${voice.percent}%`}
+										style:width={voice.percentOf(pack.id) === null
+											? '100%'
+											: `${voice.percentOf(pack.id)}%`}
 									></div>
 								</div>
 								<span class="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-									{voice.percent === null ? '' : `${voice.percent}%`}
+									{voice.percentOf(pack.id) === null ? '' : `${voice.percentOf(pack.id)}%`}
 								</span>
 								<Button
 									variant="ghost"
 									size="sm"
 									class="h-8 font-normal"
-									onclick={() => void voice.cancel()}
+									onclick={() => void voice.cancel(pack.id)}
 								>
 									{t('settings.voice.packs.cancel')}
 								</Button>
@@ -284,7 +286,6 @@
 								variant="outline"
 								size="sm"
 								class="h-8 gap-1 font-normal"
-								disabled={voice.installing !== null}
 								onclick={() => void voice.install(pack.id)}
 							>
 								<Download class="size-3.5" />
@@ -346,16 +347,25 @@
 							<span class="text-xs text-muted-foreground">
 								{t('settings.voice.hub.blocked', { reason: model.blocked })}
 							</span>
-						{:else if voice.installing === `hub:${model.repo}`}
+						{:else if voice.isInstalling(`hub:${model.repo}`)}
 							<span class="text-xs text-muted-foreground tabular-nums">
-								{voice.percent === null ? '' : `${voice.percent}%`}
+								{voice.percentOf(`hub:${model.repo}`) === null
+									? ''
+									: `${voice.percentOf(`hub:${model.repo}`)}%`}
 							</span>
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-8 font-normal"
+								onclick={() => void voice.cancel(`hub:${model.repo}`)}
+							>
+								{t('settings.voice.packs.cancel')}
+							</Button>
 						{:else}
 							<Button
 								variant="outline"
 								size="sm"
 								class="h-8 gap-1 font-normal"
-								disabled={voice.installing !== null}
 								onclick={() => void voice.install(`hub:${model.repo}`, model.repo, model.megabytes)}
 							>
 								<Download class="size-3.5" />

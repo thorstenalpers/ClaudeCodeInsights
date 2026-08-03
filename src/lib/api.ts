@@ -361,7 +361,7 @@ export const api = {
 	installVoicePack: (id: string) => invoke<VoicePack>('install_voice_pack', { id }),
 	searchVoiceHub: (query: string) => invoke<HubVoice[]>('search_voice_hub', { query }),
 	installHubVoice: (repo: string) => invoke<VoicePack>('install_hub_voice', { repo }),
-	cancelVoicePack: () => invoke<void>('cancel_voice_pack'),
+	cancelVoicePack: (id: string) => invoke<void>('cancel_voice_pack', { id }),
 	removeVoicePack: (id: string) => invoke<void>('remove_voice_pack', { id }),
 	speakText: (id: string, speaker: number, text: string) =>
 		invoke<void>('speak_text', { id, speaker, text }),

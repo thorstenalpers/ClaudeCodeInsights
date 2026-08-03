@@ -439,7 +439,7 @@ export const fr: Messages = {
 	'settings.voice.packs.folder':
 		'Les packs sont dans {path}. Ce que vous y déposez à la main est trouvé au prochain démarrage.',
 	'settings.voice.packs.hint':
-		'Un pack est une voix neuronale qui s’exécute sur cette machine. Le récupérer est le seul téléchargement de cette application ; il va vers la page des versions de sherpa-onnx et nulle part ailleurs.',
+		'Un paquet est une voix neuronale qui tourne sur cette machine : elle parle hors ligne, ne coûte rien, et aucune phrase lue à voix haute ne quitte l’ordinateur. Le télécharger est le seul téléchargement que fait cette application.',
 	'settings.voice.hub': 'Depuis Hugging Face',
 	'settings.voice.hub.placeholder': 'p. ex. kokoro german',
 	'settings.voice.hub.search': 'Rechercher',

@@ -437,7 +437,7 @@ export const en = {
 	'settings.voice.packs.folder':
 		'Packs live in {path}. Anything put there by hand is found on the next start.',
 	'settings.voice.packs.hint':
-		'A pack is a neural voice that runs on this machine. Fetching one is the only download this app makes; it goes to the sherpa-onnx release page and nowhere else.',
+		'A pack is a neural voice that runs on this machine: it speaks offline, costs nothing, and no sentence you have read out leaves the computer. Fetching one is the only download this app makes.',
 	'settings.voice.hub': 'From Hugging Face',
 	'settings.voice.hub.placeholder': 'e.g. kokoro german',
 	'settings.voice.hub.search': 'Search',

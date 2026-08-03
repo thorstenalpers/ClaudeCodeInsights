@@ -6,14 +6,14 @@ Everything stays on the machine. Nothing is uploaded.
 
 ## Stack
 
-| Part          | Choice                                                               |
-| ------------- | -------------------------------------------------------------------- |
-| Shell         | Tauri 2 (Rust), one WebView2 window                                  |
-| Backend       | Rust — `src-tauri/`                                                  |
-| Storage       | SQLite via `rusqlite` (bundled), at `%LocalAppData%\Claude Insights` |
-| Frontend      | SvelteKit (SPA, adapter-static), Svelte 5 runes, Tailwind v4         |
-| Tables        | `@tanstack/table-core`                                               |
-| Lint / format | ESLint flat config with `recommendedTypeChecked`, Prettier           |
+| Part          | Choice                                                           |
+| ------------- | ---------------------------------------------------------------- |
+| Shell         | Tauri 2 (Rust), one WebView2 window                              |
+| Backend       | Rust — `src-tauri/`                                              |
+| Storage       | SQLite via `rusqlite` (bundled), at `%LocalAppData%\ClaudeAdmin` |
+| Frontend      | SvelteKit (SPA, adapter-static), Svelte 5 runes, Tailwind v4     |
+| Tables        | `@tanstack/table-core`                                           |
+| Lint / format | ESLint flat config with `recommendedTypeChecked`, Prettier       |
 
 ## Commands
 
@@ -35,7 +35,7 @@ a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 
 1. **Never write into `~/.claude/`, except where the user explicitly asked for
    it.** Transcripts are foreign, read-only territory. Everything this app owns
-   lives under `%LocalAppData%\Claude Insights`.
+   lives under `%LocalAppData%\ClaudeAdmin`.
 2. **Any change to `~/.claude.json` writes a backup next to it first.** It is
    Claude Code's own configuration; a corrupt one breaks the user's tooling.
 3. **A destructive action shows exactly what disappears before it runs** — file

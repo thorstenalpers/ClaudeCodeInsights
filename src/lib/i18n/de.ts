@@ -438,7 +438,7 @@ export const de: Messages = {
 	'settings.voice.packs.folder':
 		'Pakete liegen in {path}. Was du dort von Hand ablegst, wird beim nächsten Start gefunden.',
 	'settings.voice.packs.hint':
-		'Ein Paket ist eine neuronale Stimme, die auf diesem Rechner läuft. Es zu holen ist der einzige Download dieser App; er geht zur Release-Seite von sherpa-onnx und sonst nirgendwohin.',
+		'Ein Paket ist eine neuronale Stimme, die auf diesem Rechner läuft: sie spricht offline, kostet nichts, und kein vorgelesener Satz verlässt den Computer. Das Holen ist der einzige Download, den diese App macht.',
 	'settings.voice.hub': 'Von Hugging Face',
 	'settings.voice.hub.placeholder': 'z. B. kokoro german',
 	'settings.voice.hub.search': 'Suchen',

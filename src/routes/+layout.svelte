@@ -215,8 +215,6 @@
 
 		<StatusBar />
 		<VoiceHint />
-		<!-- Top centre, not top right: the scan, language and mode buttons live in
-		     that corner, and an error notice stays up long enough to hide them. -->
-		<Toaster position="top-center" />
+		<Toaster position="top-right" />
 	</Sidebar.Inset>
 </Sidebar.Provider>

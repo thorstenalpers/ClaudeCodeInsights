@@ -38,6 +38,18 @@ pub enum Origin {
     Archive { url: String },
     /// A Hugging Face repository, downloaded file by file.
     Hub { repo: String },
+    /// A Kokoro export that has to be assembled before sherpa can speak it.
+    ///
+    /// The community exports carry the model and a NumPy `.npz` of voices and
+    /// nothing else. The token table and the phonemiser's data come from the
+    /// sherpa mirror, the voices are rewritten as a flat table, and the
+    /// metadata sherpa reads is appended to the model — which is the whole
+    /// difference between a repository that cannot be spoken and one that can.
+    KokoroExport {
+        repo: String,
+        model: String,
+        voices: String,
+    },
 }
 
 /// A voice pack that can be fetched, and where it comes from.
@@ -89,43 +101,19 @@ fn archive(id: &str, language: &str, label: &str, megabytes: u32, kind: Kind) ->
 /// "multilingual" that answers in Chinese is worse than no pack at all.
 pub fn catalogue() -> Vec<Pack> {
     vec![
-        archive(
-            "vits-piper-de_DE-eva_k-x_low",
-            "de",
-            "Piper German (Eva K, quick)",
-            26,
-            Kind::Vits,
-        ),
-        archive(
-            "vits-piper-de_DE-ramona-low",
-            "de",
-            "Piper German (Ramona)",
-            64,
-            Kind::Vits,
-        ),
-        archive(
-            "vits-piper-de_DE-thorsten-medium",
-            "de",
-            "Piper German (Thorsten)",
-            67,
-            Kind::Vits,
-        ),
-        archive(
-            "vits-piper-de_DE-thorsten-high",
-            "de",
-            "Piper German (Thorsten, clearer)",
-            110,
-            Kind::Vits,
-        ),
-        // Several deliveries of one speaker — amused, angry, sleepy and the
-        // rest — which is the only German pack here that is not level throughout.
-        archive(
-            "vits-piper-de_DE-thorsten_emotional-medium",
-            "de",
-            "Piper German (Thorsten, emotional)",
-            80,
-            Kind::Vits,
-        ),
+        Pack {
+            id: "hub:Godelaune/Kokoro-82M-ONNX-German-Martin".to_owned(),
+            language: "de".to_owned(),
+            label: "Kokoro German (Martin)".to_owned(),
+            megabytes: 330,
+            kind: Kind::Kokoro,
+            origin: Origin::KokoroExport {
+                repo: "Godelaune/Kokoro-82M-ONNX-German-Martin".to_owned(),
+                model: "kokoro-martin.onnx".to_owned(),
+                voices: "voices-martin.npz".to_owned(),
+            },
+            dir: "Godelaune--Kokoro-82M-ONNX-German-Martin".to_owned(),
+        },
         archive("kokoro-en-v0_19", "en", "Kokoro English", 330, Kind::Kokoro),
         archive(
             "kokoro-multi-lang-v1_1",
@@ -258,8 +246,11 @@ pub fn list() -> Result<Vec<PackInfo>> {
         .collect())
 }
 
-/// Set while a download should stop; cleared when the next one starts.
-static CANCELLED: AtomicBool = AtomicBool::new(false);
+/// The packs whose download the user has given up on.
+///
+/// A list rather than one flag: several packs can be on their way at once, and
+/// a single flag would have stopped all of them together.
+static CANCELLED: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
 /// How much has arrived, for the window to show while it waits.
 #[derive(Debug, Clone, Serialize)]
@@ -271,10 +262,26 @@ pub struct Progress {
     pub total: Option<u64>,
 }
 
-/// Asks the running download to stop at its next chunk.
-pub fn cancel() {
-    log::info!("voice pack: cancel requested");
-    CANCELLED.store(true, Ordering::Relaxed);
+/// Asks one running download to stop at its next chunk.
+pub fn cancel(id: &str) {
+    log::info!("voice pack '{id}': cancel requested");
+    if let Ok(mut cancelled) = CANCELLED.lock() {
+        cancelled.push(id.to_owned());
+    }
+}
+
+fn is_cancelled(id: &str) -> bool {
+    CANCELLED
+        .lock()
+        .map(|cancelled| cancelled.iter().any(|entry| entry == id))
+        .unwrap_or(false)
+}
+
+/// Forgets a pack's cancellation, so a second attempt is not stopped by the first.
+fn clear_cancel(id: &str) {
+    if let Ok(mut cancelled) = CANCELLED.lock() {
+        cancelled.retain(|entry| entry != id);
+    }
 }
 
 /// Fetches a pack and unpacks it, reporting how far along it is.
@@ -315,7 +322,7 @@ fn fetch_pack(pack: &Pack, report: &dyn Fn(Progress)) -> Result<PackInfo> {
         return Ok(installed_info(pack, &dir));
     }
 
-    CANCELLED.store(false, Ordering::Relaxed);
+    clear_cancel(id);
 
     match &pack.origin {
         Origin::Archive { url } => {
@@ -329,6 +336,11 @@ fn fetch_pack(pack: &Pack, report: &dyn Fn(Progress)) -> Result<PackInfo> {
             tar::Archive::new(decoder).unpack(voices_dir()?)?;
         }
         Origin::Hub { repo } => crate::hub::install(pack, repo, report)?,
+        Origin::KokoroExport {
+            repo,
+            model,
+            voices,
+        } => crate::hub::assemble_kokoro(pack, repo, model, voices, report)?,
     }
 
     if !is_installed(pack.kind, &dir) {
@@ -381,7 +393,7 @@ pub(crate) fn download(
     let mut announced = 0_u64;
 
     loop {
-        if CANCELLED.load(Ordering::Relaxed) {
+        if is_cancelled(id) {
             log::info!("voice pack '{id}': cancelled after {} bytes", bytes.len());
             return Err(Error::BadRequest("cancelled".to_owned()));
         }
@@ -596,12 +608,68 @@ mod tests {
 mod probe {
     use super::*;
 
+    /// Speaks a sentence with whichever pack is named, and says what came out.
+    ///
+    /// The point is the samples, not the sound: a model whose vocabulary does
+    /// not match its tokens still returns a buffer, but a silent or absurdly
+    /// short one. Length and peak are what can be checked without ears.
+    #[test]
+    #[ignore = "needs an installed pack"]
+    fn a_pack_says_something() {
+        let id = std::env::var("PACK").expect("set PACK to a pack id");
+        let text = std::env::var("SAY")
+            .unwrap_or_else(|_| "Guten Tag, so werden die Antworten klingen.".to_owned());
+
+        let pack = find(&id).expect("the pack must be known");
+        engine_for(&pack).expect("the voice must load");
+        let mut slot = ENGINE.lock().unwrap();
+        let (_, tts) = slot.as_mut().expect("the engine must be there");
+
+        let audio = tts
+            .generate_with_config(
+                &text,
+                &sherpa_onnx::GenerationConfig {
+                    speed: 1.0,
+                    sid: 0,
+                    ..Default::default()
+                },
+                None::<fn(&[f32], f32) -> bool>,
+            )
+            .expect("the voice must speak");
+
+        let samples = audio.samples();
+        let seconds = samples.len() as f32 / audio.sample_rate() as f32;
+        let peak = samples.iter().fold(0.0_f32, |a, s| a.max(s.abs()));
+        println!(
+            "pack={id} rate={} samples={} seconds={seconds:.2} peak={peak:.3}",
+            audio.sample_rate(),
+            samples.len()
+        );
+
+        if let Ok(path) = std::env::var("WAV") {
+            assert!(audio.save(&path), "the sample must be writable");
+            println!("wrote {path}");
+        }
+
+        assert!(
+            seconds > 1.0,
+            "a sentence that short cannot be the sentence"
+        );
+        assert!(peak > 0.05, "the buffer is silence");
+    }
+
     #[test]
     #[ignore = "downloads a few hundred megabytes"]
     fn a_pack_installs() {
-        let info = fetch("kokoro-en-v0_19", &|_| {}).unwrap();
+        let id = std::env::var("PACK").unwrap_or_else(|_| "kokoro-en-v0_19".to_owned());
+        let info = fetch(&id, &|progress| {
+            if let Some(total) = progress.total {
+                eprintln!("  {} / {} bytes", progress.received, total);
+            }
+        })
+        .unwrap();
         assert!(info.installed);
-        assert!(info.voices > 0);
+        assert!(info.voices > 0, "a pack with no speaker cannot be chosen");
     }
 
     #[test]

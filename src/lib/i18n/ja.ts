@@ -433,7 +433,7 @@ export const ja: Messages = {
 	'settings.voice.packs.folder':
 		'パックは {path} にあります。手で置いたものは次回起動時に見つかります。',
 	'settings.voice.packs.hint':
-		'パックはこの端末で動くニューラル音声です。取得はこのアプリが行う唯一のダウンロードで、接続先は sherpa-onnx のリリースページだけです。',
+		'パックはこの端末で動くニューラル音声です。オフラインで話し、費用はかからず、読み上げた文が外に出ることもありません。取得がこのアプリの唯一のダウンロードです。',
 	'settings.voice.hub': 'Hugging Face から',
 	'settings.voice.hub.placeholder': '例: kokoro german',
 	'settings.voice.hub.search': '検索',

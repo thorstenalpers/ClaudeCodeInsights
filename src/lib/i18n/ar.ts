@@ -423,7 +423,7 @@ export const ar: Messages = {
 	'settings.voice.packs.folder':
 		'الحزم في {path}. وما تضعه هناك يدويًا يُعثر عليه عند التشغيل التالي.',
 	'settings.voice.packs.hint':
-		'الحزمة صوت عصبي يعمل على هذا الجهاز. جلبها هو التنزيل الوحيد لهذا التطبيق، وإلى صفحة إصدارات sherpa-onnx وحدها.',
+		'الحزمة صوت عصبي يعمل على هذا الجهاز: ينطق دون اتصال، بلا تكلفة، ولا تغادر أي جملة تُقرأ هذا الحاسوب. جلبها هو التنزيل الوحيد الذي يقوم به هذا التطبيق.',
 	'settings.voice.hub': 'من Hugging Face',
 	'settings.voice.hub.placeholder': 'مثال: kokoro german',
 	'settings.voice.hub.search': 'بحث',
