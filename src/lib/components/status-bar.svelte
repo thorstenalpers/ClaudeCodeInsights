@@ -2,21 +2,18 @@
 	/**
 	 * What every figure in the window rests on, said out loud.
 	 *
-	 * The same number means two different things depending on how the account
-	 * is billed, and chatting costs nothing on a subscription but real money
-	 * through an API key. Neither is visible from the numbers themselves, so the
-	 * bar states both rather than leaving them to be inferred.
+	 * Which binary is being read, which model answered, and what the figures are
+	 * converted at. None of that is visible from the numbers themselves, and a
+	 * reader comparing two machines needs the version before the totals.
 	 */
 	import Cpu from '@lucide/svelte/icons/cpu';
-	import CreditCard from '@lucide/svelte/icons/credit-card';
-	import KeyRound from '@lucide/svelte/icons/key-round';
 	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import Terminal from '@lucide/svelte/icons/terminal';
 	import { LOCAL_SOURCE, assistant } from '$lib/assistant.svelte';
+	import { cli } from '$lib/cli.svelte';
 	import { t } from '$lib/i18n/index.svelte';
-	import { billing, plan } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 
-	const subscription = $derived(billing.mode === 'subscription');
 	const chatsOnPlan = $derived(assistant.source === LOCAL_SOURCE);
 
 	// What actually answered outranks what was asked for; before the first
@@ -31,15 +28,15 @@
 <footer
 	class="@container flex h-7 shrink-0 items-center gap-3 overflow-hidden border-t bg-muted/30 px-3 text-xs text-muted-foreground"
 >
-	<span class="flex shrink-0 items-center gap-1.5" title={t('status.billing.hint')}>
-		{#if subscription}
-			<CreditCard class="size-3.5 text-primary" />
-			<span class="font-medium text-foreground">{t(`cost.plan.${plan.id}`)}</span>
-			<span class="hidden @md:inline">{t('status.billing.subscription')}</span>
+	<!-- The agent this window is reading and asking, named and versioned. Which
+	     plan pays for it is a settings question; which binary answers is not. -->
+	<span class="flex shrink-0 items-center gap-1.5" title={cli.status?.path ?? t('status.cli.hint')}>
+		<Terminal class="size-3.5 {cli.status?.found ? 'text-primary' : 'text-muted-foreground'}" />
+		<span class="font-medium text-foreground">{t('transcript.claude')}</span>
+		{#if cli.status?.found}
+			<span>{cli.status.version ?? t('status.cli.unknownVersion')}</span>
 		{:else}
-			<KeyRound class="size-3.5" />
-			<span class="font-medium text-foreground">{t('status.billing.api')}</span>
-			<span class="hidden @md:inline">{t('status.billing.api.hint')}</span>
+			<span class="hidden @md:inline">{t('status.cli.missing')}</span>
 		{/if}
 	</span>
 

@@ -35,7 +35,7 @@
 				<tr class="text-muted-foreground">
 					<th class="py-1 pr-2 text-left font-medium">{t('cost.column.model')}</th>
 					{#each FIELDS as field (field.id)}
-						<th class="py-1 pr-2 text-right font-medium">{t(field.label)}</th>
+						<th class="w-24 py-1 pr-2 text-right font-medium">{t(field.label)}</th>
 					{/each}
 				</tr>
 			</thead>
@@ -49,7 +49,7 @@
 									type="number"
 									min="0"
 									step="0.01"
-									class="h-7 w-20 rounded border bg-transparent px-1.5 text-right text-xs tabular-nums"
+									class="h-7 w-full rounded border bg-transparent px-1.5 text-right text-xs tabular-nums"
 									value={rates.for(family.id)[field.id]}
 									aria-label={`${family.id} — ${t(field.label)}`}
 									oninput={(event: Event) => onRate(family.id, field.id, event)}

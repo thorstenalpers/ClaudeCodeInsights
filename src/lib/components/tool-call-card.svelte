@@ -16,7 +16,7 @@
 <div class="rounded-md border text-sm">
 	<button
 		type="button"
-		class="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-accent/50"
+		class="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-primary/10"
 		onclick={() => (open = !open)}
 	>
 		<ChevronRight class="size-3.5 shrink-0 text-muted-foreground {open ? 'rotate-90' : ''}" />

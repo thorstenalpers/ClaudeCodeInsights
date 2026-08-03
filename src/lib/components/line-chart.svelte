@@ -13,9 +13,11 @@
 		series: Line[];
 		format: (value: number) => string;
 		height?: number;
+		/** Fills below each line. Not stacked: the point is which one is higher. */
+		area?: boolean;
 	};
 
-	let { labels, series, format, height = 200 }: Props = $props();
+	let { labels, series, format, height = 200, area = false }: Props = $props();
 
 	const CHART_VARS = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'];
 
@@ -46,20 +48,52 @@
 		return PAD.top + plot.height - (value / peak) * plot.height;
 	}
 
-	/** Skips the gaps rather than drawing through them, so a month with no plan
-	 *  recorded reads as unknown instead of zero. */
-	function path(values: (number | null)[]): string {
-		let d = '';
-		let pen = false;
+	/** Runs of drawable points. A gap ends a run rather than being drawn
+	 *  through, so a month with no plan recorded reads as unknown, not zero. */
+	function runs(values: (number | null)[]): { index: number; value: number }[][] {
+		const result: { index: number; value: number }[][] = [];
+		let current: { index: number; value: number }[] = [];
 		values.forEach((value, index) => {
 			if (value === null) {
-				pen = false;
+				if (current.length > 0) result.push(current);
+				current = [];
 				return;
 			}
-			d += `${pen ? 'L' : 'M'}${x(index).toFixed(1)} ${y(value).toFixed(1)} `;
-			pen = true;
+			current.push({ index, value });
 		});
-		return d.trim();
+		if (current.length > 0) result.push(current);
+		return result;
+	}
+
+	function path(values: (number | null)[]): string {
+		return runs(values)
+			.map((run) =>
+				run
+					.map(
+						(point, position) =>
+							`${position === 0 ? 'M' : 'L'}${x(point.index).toFixed(1)} ${y(point.value).toFixed(1)}`
+					)
+					.join(' ')
+			)
+			.join(' ');
+	}
+
+	/** The same runs, closed along the baseline. A single point has no width to
+	 *  fill, so it is left to the dot to show. */
+	function fill(values: (number | null)[]): string {
+		const base = (PAD.top + plot.height).toFixed(1);
+		return runs(values)
+			.filter((run) => run.length > 1)
+			.map((run) => {
+				const line = run
+					.map(
+						(point, position) =>
+							`${position === 0 ? 'M' : 'L'}${x(point.index).toFixed(1)} ${y(point.value).toFixed(1)}`
+					)
+					.join(' ');
+				return `${line} L${x(run[run.length - 1].index).toFixed(1)} ${base} L${x(run[0].index).toFixed(1)} ${base} Z`;
+			})
+			.join(' ');
 	}
 
 	const ticks = $derived([0, peak / 2, peak]);
@@ -109,6 +143,14 @@
 		{/each}
 
 		{#each series as line, index (line.key)}
+			{#if area}
+				<path
+					d={fill(line.values)}
+					fill="var({CHART_VARS[index % CHART_VARS.length]})"
+					fill-opacity="0.18"
+					stroke="none"
+				/>
+			{/if}
 			<path
 				d={path(line.values)}
 				fill="none"

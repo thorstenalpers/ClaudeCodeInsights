@@ -71,14 +71,14 @@
 						<span class="flex items-center gap-1.5">
 							<span class="size-2 shrink-0 rounded-[2px]" style="background: {segment.colour}"
 							></span>
-							{segment.name.replace('_', ' ')}
+							{labelFor(segment.name)}
 						</span>
 						<span class="tabular-nums">{Math.round(segment.percent)}%</span>
 					</div>
 				{/each}
 			</div>
 		{:else}
-			<span class="text-xs">No tool calls</span>
+			<span class="text-xs">{t('activity.noTools')}</span>
 		{/if}
 	</Tooltip.Content>
 </Tooltip.Root>
