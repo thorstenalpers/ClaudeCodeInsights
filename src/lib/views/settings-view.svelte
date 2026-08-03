@@ -18,6 +18,7 @@
 	import { SUBSCRIPTIONS, billing, plan, type BillingMode, type PlanId } from '$lib/pricing.svelte';
 	import ApiKeys from '$lib/components/api-keys.svelte';
 	import RateTable from '$lib/components/rate-table.svelte';
+	import { assistant, SHARE_PARTS } from '$lib/assistant.svelte';
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
@@ -450,6 +451,35 @@
 						: t('settings.cli.missing')}
 				</p>
 			{/if}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root data-size="sm" class="shrink-0">
+		<Card.Header>
+			<Card.Title>{t('settings.share')}</Card.Title>
+			<Card.Description>{t('settings.share.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-2">
+			{#each SHARE_PARTS as part (part)}
+				<button
+					type="button"
+					aria-pressed={assistant.share[part]}
+					class="flex items-start gap-2 rounded-md border p-2 text-left transition-colors hover:bg-primary/10"
+					class:border-primary={assistant.share[part]}
+					onclick={() => assistant.setShare(part, !assistant.share[part])}
+				>
+					<span
+						class="mt-0.5 size-4 shrink-0 rounded-sm border-2"
+						class:bg-primary={assistant.share[part]}
+						class:border-primary={assistant.share[part]}
+					></span>
+					<span class="flex flex-col gap-0.5">
+						<span class="text-sm font-medium">{t(`settings.share.${part}`)}</span>
+						<span class="text-xs text-muted-foreground">{t(`settings.share.${part}Hint`)}</span>
+					</span>
+				</button>
+			{/each}
+			<p class="max-w-md text-xs text-muted-foreground">{t('settings.share.note')}</p>
 		</Card.Content>
 	</Card.Root>
 

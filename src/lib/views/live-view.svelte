@@ -11,8 +11,18 @@
 	import Pin from '@lucide/svelte/icons/pin';
 	import PinOff from '@lucide/svelte/icons/pin-off';
 	import RotateCw from '@lucide/svelte/icons/rotate-cw';
+	import TableIcon from '@lucide/svelte/icons/table';
+	import MessageSquare from '@lucide/svelte/icons/message-square';
 	import { Button } from '$lib/components/ui/button';
 	import { api, type LiveTurn } from '$lib/api';
+	import ResetView from '$lib/components/reset-view.svelte';
+	import SortHeader from '$lib/components/sort-header.svelte';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
+	import { compact } from '$lib/format';
+	import { costOf } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
+	import { createTable } from '$lib/table.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import { displayPath, formatTime } from '$lib/format';
@@ -120,6 +130,53 @@
 	const current = $derived(visible.find((tab) => tab.id === openTab) ?? visible[0]);
 	const shown = $derived(turns.filter((turn) => turn.sessionId === current?.id));
 
+	/** The stream reads as a conversation; the table answers questions about it. */
+	let asTable = $state(false);
+
+	const cost = (turn: LiveTurn) => (turn.model ? costOf(turn.model, turn) : 0);
+	const tokens = (turn: LiveTurn) =>
+		turn.inputTokens + turn.outputTokens + turn.cacheReadTokens + turn.cacheWriteTokens;
+
+	const COLUMNS = [
+		{ id: 'time', label: 'logs.column.time' as const },
+		{ id: 'role', label: 'live.column.role' as const },
+		{ id: 'kind', label: 'live.column.kind' as const },
+		{
+			id: 'model',
+			label: 'sessions.column.model' as const,
+			class: 'hidden @xl:table-cell'
+		},
+		{ id: 'tools', label: 'nav.tools' as const, class: 'hidden @lg:table-cell' },
+		{ id: 'tokens', label: 'agents.column.tokens' as const, numeric: true },
+		{ id: 'cost', label: 'sessions.column.cost' as const, numeric: true },
+		{ id: 'text', label: 'live.column.text' as const }
+	];
+
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
+
+	const table = createTable<LiveTurn>(
+		() => shown,
+		{
+			time: (turn) => turn.timestamp ?? '',
+			role: (turn) => turn.role,
+			// The thinking flag rides in the kind column: it is the same question
+			// — what was this line doing — and it costs no width.
+			kind: (turn) => (turn.thinking ? `${turn.kind}+` : turn.kind),
+			model: (turn) => shortModel(turn.model ?? ''),
+			tools: (turn) => turn.tools.join(', '),
+			tokens,
+			cost,
+			text: (turn) => turn.text ?? ''
+		},
+		{ sort: 'time', descending: false }
+	);
+
+	function shortModel(model: string): string {
+		return model.replace(/^claude-/, '');
+	}
+
 	/** Re-reads every followed transcript from the start. */
 	async function reload(): Promise<void> {
 		if (reloading) return;
@@ -179,9 +236,19 @@
 				<CircleDot class="size-3" />
 				{following ? t('live.following') : t('live.stopped')}
 			</Badge>
-			{#if current?.project}
-				<span class="truncate font-mono text-xs text-muted-foreground">
-					{displayPath(current.project)}
+			{#if current}
+				<!-- The id in the title, because a project name does not place a
+				     session and two of them can be running side by side. -->
+				<span class="flex min-w-0 items-center gap-1.5">
+					{#if pinned.includes(current.id)}
+						<Pin class="size-3 shrink-0 text-muted-foreground" />
+					{/if}
+					<span class="font-mono text-xs" title={current.id}>{current.id.slice(0, 8)}</span>
+					{#if current.project}
+						<span class="truncate font-mono text-xs text-muted-foreground">
+							· {displayPath(current.project)}
+						</span>
+					{/if}
 				</span>
 			{/if}
 			{#if lastAt}
@@ -205,6 +272,15 @@
 					{t(isPinned ? 'live.unpin' : 'live.pin')}
 				</Button>
 			{/if}
+
+			<Button variant="outline" size="sm" onclick={() => (asTable = !asTable)}>
+				{#if asTable}
+					<MessageSquare />
+				{:else}
+					<TableIcon />
+				{/if}
+				{t(asTable ? 'live.asStream' : 'live.asTable')}
+			</Button>
 
 			<Button variant="outline" size="sm" disabled={reloading} onclick={() => void reload()}>
 				<RotateCw class={reloading ? 'animate-spin' : ''} />
@@ -261,45 +337,131 @@
 			</div>
 		{/if}
 
-		<div class="min-h-0 flex-1 overflow-auto rounded-md border p-3">
-			{#if shown.length === 0}
-				<p class="text-sm text-muted-foreground">{t('live.waiting')}</p>
-			{:else}
-				<div class="flex flex-col gap-3">
-					{#each shown as turn, index (index)}
-						<div class="flex flex-col gap-1">
-							<div class="flex items-center gap-2 text-xs text-muted-foreground">
-								<span class={['font-medium', turn.role === 'user' && 'text-foreground']}>
+		{#if asTable}
+			<div class="flex shrink-0 flex-wrap items-center gap-2">
+				<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+				<ResetView show={table.dirty} onreset={() => table.reset()} />
+				<span class="ml-auto text-xs text-muted-foreground tabular-nums">
+					{table.rows.length}
+				</span>
+			</div>
+
+			<div
+				class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-xs [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
+			>
+				<Table.Root>
+					<Table.Header class="sticky top-0 z-10 bg-background">
+						<Table.Row>
+							{#each COLUMNS as column (column.id)}
+								<SortHeader
+									{...column}
+									label={t(column.label)}
+									direction={table.direction(column.id)}
+									rank={table.rank(column.id)}
+									multi={table.sorts.length > 1}
+									kind={table.kind(column.id)}
+									filtered={table.isFiltered(column.id)}
+									options={table.options(column.id)}
+									chosen={table.chosen(column.id)}
+									text={table.textFilter(column.id)}
+									range={table.range(column.id)}
+									onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
+									ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+									ontext={(id: string, value: string) => table.setText(id, value)}
+									onrange={(id: string, bound: 'min' | 'max', value: string) =>
+										table.setRange(id, bound, value)}
+									onclear={(id: string) => table.clearFilter(id)}
+								/>
+							{/each}
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each table.rows as turn, index (index)}
+							<Table.Row>
+								<Table.Cell class="whitespace-nowrap text-muted-foreground/60 tabular-nums">
+									{formatTime(turn.timestamp)}
+								</Table.Cell>
+								<Table.Cell class="whitespace-nowrap">
 									{turn.role === 'user' ? t('transcript.you') : t('transcript.claude')}
-								</span>
-								<span class="tabular-nums">{formatTime(turn.timestamp)}</span>
-							</div>
-
-							{#if turn.text}
-								<div
-									class={[
-										'text-sm leading-relaxed whitespace-pre-wrap',
-										turn.role === 'user' && 'rounded-lg bg-muted px-3 py-2'
-									]}
-								>
-									{turn.text}
-								</div>
-							{/if}
-
-							{#if turn.tools.length > 0}
-								<div class="flex flex-wrap gap-1">
-									{#each turn.tools as tool, position (position)}
-										<Badge variant="outline" class="h-5 px-1.5 font-mono text-[11px] font-normal">
-											{tool}
+									{#if turn.agent}
+										<span class="text-muted-foreground">·{t('live.column.agent')}</span>
+									{/if}
+								</Table.Cell>
+								<Table.Cell class="whitespace-nowrap">
+									<Badge variant="outline" class="h-5 px-1.5 font-normal">
+										{t(turn.kind === 'code' ? 'live.kind.code' : 'live.kind.chat')}
+									</Badge>
+									{#if turn.thinking}
+										<Badge variant="outline" class="h-5 px-1.5 font-normal">
+											{t('live.kind.thinking')}
 										</Badge>
-									{/each}
+									{/if}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.model, 'whitespace-nowrap text-muted-foreground']}>
+									{shortModel(turn.model ?? '')}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.tools, 'max-w-40 truncate font-mono']}>
+									{turn.tools.join(', ')}
+								</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">
+									{tokens(turn) === 0 ? '' : compact(tokens(turn))}
+								</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">
+									{cost(turn) === 0 ? '' : region.format(cost(turn))}
+								</Table.Cell>
+								<Table.Cell class="max-w-96 truncate" title={turn.text ?? ''}>
+									{turn.text ?? ''}
+								</Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+
+				{#if table.rows.length === 0}
+					<p class="p-4 text-sm text-muted-foreground">{t('live.waiting')}</p>
+				{/if}
+			</div>
+		{:else}
+			<div class="min-h-0 flex-1 overflow-auto rounded-md border p-3">
+				{#if shown.length === 0}
+					<p class="text-sm text-muted-foreground">{t('live.waiting')}</p>
+				{:else}
+					<div class="flex flex-col gap-3">
+						{#each shown as turn, index (index)}
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center gap-2 text-xs text-muted-foreground">
+									<span class={['font-medium', turn.role === 'user' && 'text-foreground']}>
+										{turn.role === 'user' ? t('transcript.you') : t('transcript.claude')}
+									</span>
+									<span class="tabular-nums">{formatTime(turn.timestamp)}</span>
 								</div>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
+
+								{#if turn.text}
+									<div
+										class={[
+											'text-sm leading-relaxed whitespace-pre-wrap',
+											turn.role === 'user' && 'rounded-lg bg-muted px-3 py-2'
+										]}
+									>
+										{turn.text}
+									</div>
+								{/if}
+
+								{#if turn.tools.length > 0}
+									<div class="flex flex-wrap gap-1">
+										{#each turn.tools as tool, position (position)}
+											<Badge variant="outline" class="h-5 px-1.5 font-mono text-[11px] font-normal">
+												{tool}
+											</Badge>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/if}
 
 		<p class="shrink-0 text-xs text-muted-foreground">{t('live.readOnly')}</p>
 	{/if}

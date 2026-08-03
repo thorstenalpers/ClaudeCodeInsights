@@ -7,7 +7,9 @@
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import { api, type CliStatus, type ProviderInfo } from '$lib/api';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { assistant, LOCAL_SOURCE } from '$lib/assistant.svelte';
+	import { resolve } from '$app/paths';
+	import { Badge } from '$lib/components/ui/badge';
+	import { assistant, LOCAL_SOURCE, SHARE_PARTS } from '$lib/assistant.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -306,6 +308,22 @@
 		<details class="rounded-md border p-3 text-xs">
 			<summary class="cursor-pointer text-muted-foreground">{t('assistant.context')}</summary>
 			<p class="mt-2 text-muted-foreground">{t('assistant.contextNote')}</p>
+			<!-- What travels with a question is a setting, and the place a reader
+			     asks about it is here, where the text itself is on screen. -->
+			<div class="mt-2 flex flex-wrap items-center gap-1">
+				{#each SHARE_PARTS as part (part)}
+					<Badge variant={assistant.share[part] ? 'secondary' : 'outline'} class="font-normal">
+						{t(`settings.share.${part}`)}
+						{assistant.share[part] ? '' : `· ${t('assistant.context.off')}`}
+					</Badge>
+				{/each}
+				<a
+					href={resolve('/settings')}
+					class="ml-1 text-muted-foreground underline-offset-2 hover:underline"
+				>
+					{t('assistant.context.change')}
+				</a>
+			</div>
 			<pre
 				class="mt-2 overflow-x-auto font-mono text-[11px] whitespace-pre-wrap">{assistant.context}</pre>
 		</details>

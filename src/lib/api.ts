@@ -278,10 +278,22 @@ export type Rhythm = {
 export type LiveTurn = {
 	sessionId: string;
 	project: string | null;
+	gitBranch: string | null;
 	role: string;
 	timestamp: string | null;
 	text: string | null;
 	tools: string[];
+	model: string | null;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	/** The line carried a thinking block. */
+	thinking: boolean;
+	/** `code` when it reached for a tool, `chat` when it only spoke. */
+	kind: string;
+	/** From a subagent's own thread rather than the conversation. */
+	agent: boolean;
 };
 
 export type VoicePack = {

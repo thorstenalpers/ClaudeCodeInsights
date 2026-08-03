@@ -24,6 +24,30 @@ const KEY = 'claudeadmin.assistantSource';
 const MODEL_KEY = 'claudeadmin.assistantModel';
 const EFFORT_KEY = 'claudeadmin.assistantEffort';
 
+const SHARE_KEY = 'claudeadmin.assistantShare';
+
+/** Which parts of the summary a hosted model is allowed to see. */
+export type Share = { models: boolean; tools: boolean; rhythm: boolean };
+
+const SHARE_ALL: Share = { models: true, tools: true, rhythm: true };
+
+export const SHARE_PARTS: (keyof Share)[] = ['models', 'tools', 'rhythm'];
+
+function storedShare(): Share {
+	if (typeof localStorage === 'undefined') return { ...SHARE_ALL };
+	try {
+		const raw: unknown = JSON.parse(localStorage.getItem(SHARE_KEY) ?? '{}');
+		const value = raw as Partial<Share>;
+		return {
+			models: value.models ?? true,
+			tools: value.tools ?? true,
+			rhythm: value.rhythm ?? true
+		};
+	} catch {
+		return { ...SHARE_ALL };
+	}
+}
+
 function stored(key: string): string {
 	return typeof localStorage === 'undefined' ? '' : (localStorage.getItem(key) ?? '');
 }
@@ -79,6 +103,19 @@ class Assistant {
 	/** What the last answer says actually served it, which can differ. */
 	last = $state<Answer | null>(null);
 
+	/**
+	 * What of the summary goes out with a question.
+	 *
+	 * Every part is on by default and can be switched off: the figures are the
+	 * user's, and a hosted model is somebody else's machine.
+	 */
+	share = $state<Share>(storedShare());
+
+	setShare(part: keyof Share, on: boolean): void {
+		this.share = { ...this.share, [part]: on };
+		localStorage.setItem(SHARE_KEY, JSON.stringify(this.share));
+	}
+
 	models = $state<ModelRow[]>([]);
 	tools = $state<ToolRow[]>([]);
 	rhythm = $state<Rhythm | null>(null);
@@ -123,7 +160,7 @@ class Assistant {
 	get context(): string {
 		const lines: string[] = ['Claude Code usage on this machine.', ''];
 
-		if (this.models.length > 0) {
+		if (this.share.models && this.models.length > 0) {
 			lines.push('Models (turns, input, output, cache read, cost at API rates in USD):');
 			for (const row of this.models) {
 				lines.push(
@@ -135,7 +172,7 @@ class Assistant {
 			lines.push('');
 		}
 
-		if (this.tools.length > 0) {
+		if (this.share.tools && this.tools.length > 0) {
 			lines.push('Top tools (calls, sessions):');
 			for (const row of this.tools.slice(0, 10)) {
 				lines.push(`- ${row.name}: ${exact(row.calls)} calls in ${exact(row.sessions)} sessions`);
@@ -143,7 +180,7 @@ class Assistant {
 			lines.push('');
 		}
 
-		if (this.rhythm) {
+		if (this.share.rhythm && this.rhythm) {
 			lines.push(
 				`Active days: ${this.rhythm.activeDays}, longest streak ${this.rhythm.longestStreak}, ` +
 					`current streak ${this.rhythm.currentStreak}.`

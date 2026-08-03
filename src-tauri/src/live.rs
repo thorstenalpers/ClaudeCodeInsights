@@ -26,11 +26,24 @@ use tauri::{AppHandle, Emitter};
 pub struct LiveTurn {
     pub session_id: String,
     pub project: Option<String>,
+    pub git_branch: Option<String>,
     pub role: String,
     pub timestamp: Option<String>,
     pub text: Option<String>,
     /// The tools this line called, by name, in order.
     pub tools: Vec<String>,
+    pub model: Option<String>,
+    pub input_tokens: i64,
+    pub output_tokens: i64,
+    pub cache_read_tokens: i64,
+    pub cache_write_tokens: i64,
+    /// True when the line carried a thinking block.
+    pub thinking: bool,
+    /// A line that reached for a tool is work on the code; one that did not is
+    /// conversation. Derived here so every row can be told apart at a glance.
+    pub kind: String,
+    /// A line from a subagent's own thread rather than from the conversation.
+    pub agent: bool,
 }
 
 /// The file being followed and how far it has been read.
@@ -93,6 +106,7 @@ fn parse(line: &str, path: &Path) -> Option<LiveTurn> {
 
     let mut text = String::new();
     let mut tools = Vec::new();
+    let mut thinking = false;
 
     match message.get("content") {
         Some(serde_json::Value::String(plain)) => text.push_str(plain),
@@ -109,6 +123,7 @@ fn parse(line: &str, path: &Path) -> Option<LiveTurn> {
                             tools.push(name.to_owned());
                         }
                     }
+                    Some("thinking") => thinking = true,
                     _ => {}
                 }
             }
@@ -116,9 +131,17 @@ fn parse(line: &str, path: &Path) -> Option<LiveTurn> {
         _ => {}
     }
 
-    if text.trim().is_empty() && tools.is_empty() {
+    if text.trim().is_empty() && tools.is_empty() && !thinking {
         return None;
     }
+
+    let usage = |field: &str| {
+        message
+            .get("usage")
+            .and_then(|usage| usage.get(field))
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0)
+    };
 
     Some(LiveTurn {
         session_id: value
@@ -140,7 +163,26 @@ fn parse(line: &str, path: &Path) -> Option<LiveTurn> {
             .and_then(serde_json::Value::as_str)
             .map(str::to_owned),
         text: (!text.trim().is_empty()).then(|| text.trim().to_owned()),
+        kind: if tools.is_empty() { "chat" } else { "code" }.to_owned(),
         tools,
+        git_branch: value
+            .get("gitBranch")
+            .and_then(serde_json::Value::as_str)
+            .filter(|branch| !branch.is_empty())
+            .map(str::to_owned),
+        model: message
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned),
+        input_tokens: usage("input_tokens"),
+        output_tokens: usage("output_tokens"),
+        cache_read_tokens: usage("cache_read_input_tokens"),
+        cache_write_tokens: usage("cache_creation_input_tokens"),
+        thinking,
+        agent: value
+            .get("isSidechain")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false),
     })
 }
 
@@ -298,6 +340,41 @@ mod tests {
         assert_eq!(turn.role, "assistant");
         assert_eq!(turn.text.as_deref(), Some("Working"));
         assert_eq!(turn.tools, vec!["Edit"]);
+        assert_eq!(turn.kind, "code", "a line that used a tool is work");
+    }
+
+    #[test]
+    fn a_turn_carries_what_the_table_shows() {
+        let line = r#"{"sessionId":"abc","cwd":"C:/p","gitBranch":"main","isSidechain":true,
+            "timestamp":"2026-08-03T09:00:00Z",
+            "message":{"role":"assistant","model":"claude-opus-5",
+            "usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":900,
+            "cache_creation_input_tokens":7},
+            "content":[{"type":"thinking","thinking":"…"},{"type":"text","text":"Done"}]}}"#;
+        let turn = parse(line, Path::new("x.jsonl")).unwrap();
+        assert_eq!(turn.model.as_deref(), Some("claude-opus-5"));
+        assert_eq!(
+            (
+                turn.input_tokens,
+                turn.output_tokens,
+                turn.cache_read_tokens,
+                turn.cache_write_tokens
+            ),
+            (10, 5, 900, 7)
+        );
+        assert_eq!(turn.git_branch.as_deref(), Some("main"));
+        assert!(turn.thinking);
+        assert!(turn.agent);
+        assert_eq!(turn.kind, "chat", "no tool call, so it is conversation");
+    }
+
+    #[test]
+    fn a_line_that_only_thinks_is_still_a_turn() {
+        let line = r#"{"sessionId":"abc","message":{"role":"assistant",
+            "content":[{"type":"thinking","thinking":"…"}]}}"#;
+        let turn = parse(line, Path::new("x.jsonl")).expect("thinking alone is worth a row");
+        assert!(turn.thinking);
+        assert!(turn.text.is_none());
     }
 
     #[test]

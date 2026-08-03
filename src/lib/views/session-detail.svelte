@@ -1,7 +1,12 @@
 <script lang="ts">
 	import Brain from '@lucide/svelte/icons/brain';
-	import { api, type TranscriptPage } from '$lib/api';
+	import { api, type TranscriptPage, type TranscriptTurn } from '$lib/api';
 	import ToolCallCard from '$lib/components/tool-call-card.svelte';
+	import ResetView from '$lib/components/reset-view.svelte';
+	import SortHeader from '$lib/components/sort-header.svelte';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
+	import { createTable } from '$lib/table.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -69,6 +74,44 @@
 				)
 			: []
 	);
+
+	/** The transcript reads as a conversation; the table answers about its parts. */
+	let asTable = $state(false);
+
+	const COLUMNS = [
+		{ id: 'index', label: 'transcript.column.turn' as const, numeric: true },
+		{ id: 'time', label: 'logs.column.time' as const },
+		{ id: 'role', label: 'live.column.role' as const },
+		{ id: 'kind', label: 'live.column.kind' as const },
+		{ id: 'tools', label: 'nav.tools' as const, class: 'hidden @lg:table-cell' },
+		{ id: 'text', label: 'live.column.text' as const }
+	];
+
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
+
+	/** What a turn was: it can be several at once, so they are joined. */
+	function kindOf(turn: TranscriptTurn): string {
+		const parts: string[] = [];
+		if (turn.text) parts.push(t('live.kind.chat'));
+		if (turn.thinking) parts.push(t('live.kind.thinking'));
+		if (turn.toolCalls.length > 0) parts.push(t('live.kind.code'));
+		return parts.join(' · ');
+	}
+
+	const table = createTable<TranscriptTurn>(
+		() => visible,
+		{
+			index: (turn) => turn.index,
+			time: (turn) => turn.timestamp ?? '',
+			role: (turn) => turn.role,
+			kind: kindOf,
+			tools: (turn) => turn.toolCalls.map((call) => call.name).join(', '),
+			text: (turn) => turn.text ?? turn.thinking ?? ''
+		},
+		{ sort: 'index', descending: false }
+	);
 </script>
 
 <div class="flex h-full flex-col">
@@ -89,6 +132,20 @@
 		>
 			{t('transcript.thinking')}
 		</Button>
+
+		<Button
+			variant={asTable ? 'default' : 'outline'}
+			size="sm"
+			class="h-7 px-2 text-xs font-normal"
+			onclick={() => (asTable = !asTable)}
+		>
+			{t(asTable ? 'live.asStream' : 'live.asTable')}
+		</Button>
+
+		{#if asTable}
+			<Input placeholder={t('common.search')} class="h-7 max-w-56" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
+		{/if}
 
 		{#if page}
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
@@ -121,6 +178,60 @@
 				</Card.Root>
 			{:else if visible.length === 0}
 				<p class="text-sm text-muted-foreground">{t('transcript.filteredOut')}</p>
+			{:else if asTable}
+				<div
+					class="overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-xs [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
+				>
+					<Table.Root>
+						<Table.Header class="sticky top-0 z-10 bg-background">
+							<Table.Row>
+								{#each COLUMNS as column (column.id)}
+									<SortHeader
+										{...column}
+										label={t(column.label)}
+										direction={table.direction(column.id)}
+										rank={table.rank(column.id)}
+										multi={table.sorts.length > 1}
+										kind={table.kind(column.id)}
+										filtered={table.isFiltered(column.id)}
+										options={table.options(column.id)}
+										chosen={table.chosen(column.id)}
+										text={table.textFilter(column.id)}
+										range={table.range(column.id)}
+										onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
+										ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+										ontext={(id: string, value: string) => table.setText(id, value)}
+										onrange={(id: string, bound: 'min' | 'max', value: string) =>
+											table.setRange(id, bound, value)}
+										onclear={(id: string) => table.clearFilter(id)}
+									/>
+								{/each}
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each table.rows as turn (turn.index)}
+								<Table.Row>
+									<Table.Cell class="text-right tabular-nums">{turn.index + 1}</Table.Cell>
+									<Table.Cell class="whitespace-nowrap text-muted-foreground/60 tabular-nums">
+										{formatTime(turn.timestamp)}
+									</Table.Cell>
+									<Table.Cell class="whitespace-nowrap">
+										{turn.role === 'user' ? t('transcript.you') : t('transcript.claude')}
+									</Table.Cell>
+									<Table.Cell class="whitespace-nowrap text-muted-foreground">
+										{kindOf(turn)}
+									</Table.Cell>
+									<Table.Cell class={[CLASS.tools, 'max-w-40 truncate font-mono']}>
+										{turn.toolCalls.map((call) => call.name).join(', ')}
+									</Table.Cell>
+									<Table.Cell class="max-w-96 truncate" title={turn.text ?? turn.thinking ?? ''}>
+										{turn.text ?? turn.thinking ?? ''}
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
 			{:else}
 				{#each visible as turn (turn.index)}
 					<div class="flex flex-col gap-2">
