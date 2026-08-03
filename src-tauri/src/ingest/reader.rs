@@ -128,8 +128,11 @@ pub fn parse_file(path: &Path, skip_lines: u64) -> Result<FileParse> {
             }
             "user" => {
                 if let Some(value) = record.tool_use_result.as_ref()
-                    && let Some(dispatch) = AgentDispatch::from_value(value)
+                    && let Some(mut dispatch) = AgentDispatch::from_value(value)
                 {
+                    // The run reports itself on its parent's record, so this is
+                    // the only place that knows which session started it.
+                    dispatch.parent_session_id = Some(session_id.clone());
                     result.agents.push(dispatch);
                 }
             }

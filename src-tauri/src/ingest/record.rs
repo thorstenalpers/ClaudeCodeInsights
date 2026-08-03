@@ -98,6 +98,8 @@ impl RawRecord {
 #[derive(Debug, Clone)]
 pub struct AgentDispatch {
     pub agent_id: String,
+    /// The session the dispatch was read from; the record itself does not say.
+    pub parent_session_id: Option<String>,
     pub agent_type: Option<String>,
     pub status: Option<String>,
     pub total_tokens: Option<i64>,
@@ -114,6 +116,7 @@ impl AgentDispatch {
 
         Some(Self {
             agent_id,
+            parent_session_id: None,
             agent_type: value
                 .get("agentType")
                 .and_then(Value::as_str)

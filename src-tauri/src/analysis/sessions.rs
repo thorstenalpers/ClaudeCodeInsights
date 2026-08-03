@@ -31,6 +31,26 @@ pub struct SessionQuery {
     pub from: Option<String>,
     #[serde(default)]
     pub to: Option<String>,
+    /// The window's price table, sent only to sort by cost.
+    ///
+    /// Cost is still never stored: it is worked out inside the one query that
+    /// needs an order for it, from rates the window binds as parameters. The
+    /// alternative — sorting the page the window already holds — would order
+    /// twenty-five rows and call it the history.
+    #[serde(default)]
+    pub rates: Vec<FamilyRate>,
+}
+
+/// USD per million tokens for one model family, as the window has them.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FamilyRate {
+    /// `opus`, `sonnet`, `haiku`, `fable` — matched against the model name.
+    pub family: String,
+    pub input: f64,
+    pub output: f64,
+    pub cache_read: f64,
+    pub cache_write: f64,
 }
 
 fn default_page_size() -> u32 {
@@ -52,6 +72,7 @@ impl Default for SessionQuery {
             branches: Vec::new(),
             from: None,
             to: None,
+            rates: Vec::new(),
         }
     }
 }
@@ -107,6 +128,53 @@ fn order_by(sort: Option<&str>) -> &'static str {
         Some("activity") => "activity",
         _ => "s.last_ts",
     }
+}
+
+/// The cost of a row in SQL, from rates bound as parameters.
+///
+/// Every family the window sent becomes one `WHEN`, matched on the model name
+/// the same way the window matches it. Only the placeholders are written into
+/// the statement; the numbers travel as bound values, and a family name that
+/// is not one of the four known ones never reaches the string at all.
+fn cost_expression(rates: &[FamilyRate], first_index: usize) -> (String, Vec<Box<dyn ToSql>>) {
+    const KNOWN: [&str; 4] = ["opus", "fable", "sonnet", "haiku"];
+
+    let mut arms = String::new();
+    let mut params: Vec<Box<dyn ToSql>> = Vec::new();
+    let mut index = first_index;
+
+    for rate in rates
+        .iter()
+        .filter(|rate| KNOWN.contains(&rate.family.as_str()))
+    {
+        // `fable` and `mythos` are the same family under two names.
+        let pattern = if rate.family == "fable" {
+            "(s.model LIKE '%fable%' OR s.model LIKE '%mythos%')".to_owned()
+        } else {
+            format!("s.model LIKE '%{}%'", rate.family)
+        };
+
+        arms.push_str(&format!(
+            " WHEN {pattern} THEN (input_tokens * ?{} + output_tokens * ?{} \
+             + cache_read_tokens * ?{} + cache_write_tokens * ?{})",
+            index,
+            index + 1,
+            index + 2,
+            index + 3
+        ));
+
+        params.push(Box::new(rate.input));
+        params.push(Box::new(rate.output));
+        params.push(Box::new(rate.cache_read));
+        params.push(Box::new(rate.cache_write));
+        index += 4;
+    }
+
+    if arms.is_empty() {
+        return ("0".to_owned(), params);
+    }
+
+    (format!("(CASE{arms} ELSE 0 END)"), params)
 }
 
 /// The join every session query starts from.
@@ -176,10 +244,17 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
     }
 
     if !request.projects.is_empty() {
+        // Either spelling counts. The filter chips carry the short name the
+        // facets are built from, while a project's own page knows only the full
+        // path it was registered under — matching one column would leave the
+        // other asking for rows that cannot answer.
         where_parts.push(format!(
-            "COALESCE(s.project_name, '') IN ({})",
+            "(COALESCE(s.project_name, '') IN ({0}) OR COALESCE(s.project_path, '') IN ({0}))",
             placeholders(request.projects.len())
         ));
+        for value in &request.projects {
+            params.push(Box::new(value.clone()));
+        }
         for value in &request.projects {
             params.push(Box::new(value.clone()));
         }
@@ -218,6 +293,16 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
     let page_size = request.page_size.clamp(1, 500);
     let offset = request.page as i64 * page_size as i64;
 
+    // Cost is the one order the database cannot know on its own, so the rates
+    // come with the request and are bound after the filters.
+    let order = if request.sort.as_deref() == Some("cost") {
+        let (expression, rate_params) = cost_expression(&request.rates, params.len() + 1);
+        params.extend(rate_params);
+        expression
+    } else {
+        order_by(request.sort.as_deref()).to_owned()
+    };
+
     let sql = format!(
         r#"
         SELECT
@@ -242,7 +327,6 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
         ORDER BY {order} {direction}
         LIMIT ?{limit_index} OFFSET ?{offset_index}
         "#,
-        order = order_by(request.sort.as_deref()),
         limit_index = params.len() + 1,
         offset_index = params.len() + 2,
     );
@@ -360,4 +444,55 @@ pub fn facets(conn: &Connection) -> Result<SessionFacets> {
              ORDER BY git_branch",
         )?,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::storage::schema;
+
+    fn seeded() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        schema::migrate(&conn).unwrap();
+        conn.execute_batch(
+            r#"
+            INSERT INTO scan_files (id, path, mtime_ms, size_bytes, line_count, scanned_at)
+            VALUES (1, 'f.jsonl', 0, 0, 0, '2026-01-01T00:00:00Z');
+
+            INSERT INTO sessions (session_id, project_name, project_path, turn_count)
+            VALUES ('s1', 'work/a', 'C:\Sources\work\a', 1);
+
+            INSERT INTO turns (id, session_id, message_id, ts_utc, model, input_tokens,
+                               output_tokens, cache_read_tokens, cache_write_tokens, scan_file_id)
+            VALUES (1, 's1', 'm1', '2026-01-01T10:00:00Z', 'claude-opus-5', 100, 10, 1000, 5, 1);
+            "#,
+        )
+        .unwrap();
+        conn
+    }
+
+    fn request(projects: Vec<String>) -> SessionQuery {
+        SessionQuery {
+            projects,
+            ..SessionQuery::default()
+        }
+    }
+
+    #[test]
+    fn a_project_is_found_by_its_short_name_and_by_its_full_path() {
+        // The filter chips send the one, a project's own page sends the other.
+        let conn = seeded();
+        assert_eq!(
+            query(&conn, &request(vec!["work/a".to_owned()]))
+                .unwrap()
+                .total,
+            1
+        );
+        assert_eq!(
+            query(&conn, &request(vec![r"C:\Sources\work\a".to_owned()]))
+                .unwrap()
+                .total,
+            1
+        );
+    }
 }

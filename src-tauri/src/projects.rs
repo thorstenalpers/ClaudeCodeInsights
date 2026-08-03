@@ -215,10 +215,21 @@ fn jsonl_files(dir: &Path) -> Vec<TranscriptFile> {
 
 fn transcript_dir_for(path: &str) -> Option<PathBuf> {
     let encoded = encode_project_dir(path);
-    crate::paths::default_scan_roots()
+    let by_encoding = crate::paths::default_scan_roots()
         .iter()
         .map(|root| root.join(&encoded))
-        .find(|dir| dir.is_dir())
+        .find(|dir| dir.is_dir());
+
+    // A row discovered from disk carries the transcript folder as its path,
+    // not a project directory — encoding that again finds nothing, which is
+    // what made deleting such a row fail.
+    by_encoding.or_else(|| {
+        let candidate = Path::new(path);
+        let inside_a_root = crate::paths::default_scan_roots()
+            .iter()
+            .any(|root| candidate.starts_with(root));
+        (inside_a_root && candidate.is_dir()).then(|| candidate.to_path_buf())
+    })
 }
 
 pub fn list(conn: &Connection) -> Result<ProjectsReport> {
@@ -413,6 +424,29 @@ fn purge_scanned_files(conn: &mut Connection, files: &[String]) -> Result<()> {
     tx.commit()?;
 
     crate::ingest::scanner::recompute_derived(conn)?;
+    Ok(())
+}
+
+/// Hands `~/.claude.json` to whatever the system opens `.json` with.
+///
+/// The path is worked out here rather than taken from the window, so the only
+/// file this can ever open is Claude Code's own configuration.
+pub fn open_config() -> Result<()> {
+    let config_path = crate::paths::claude_config_path()?;
+    if !config_path.is_file() {
+        bail!("{} does not exist", config_path.display());
+    }
+
+    #[cfg(windows)]
+    std::process::Command::new("explorer.exe")
+        .arg(&config_path)
+        .spawn()?;
+
+    #[cfg(not(windows))]
+    std::process::Command::new("xdg-open")
+        .arg(&config_path)
+        .spawn()?;
+
     Ok(())
 }
 

@@ -61,6 +61,23 @@ pub fn by_project(conn: &Connection) -> Result<HashMap<String, Vec<ModelTokens>>
     )
 }
 
+/// Keyed by the activity a session was classified as.
+pub fn by_activity(conn: &Connection) -> Result<HashMap<String, Vec<ModelTokens>>> {
+    split(
+        conn,
+        "SELECT COALESCE(sa.activity, 'unknown'),
+                COALESCE(t.model, ''),
+                COALESCE(SUM(t.input_tokens), 0),
+                COALESCE(SUM(t.output_tokens), 0),
+                COALESCE(SUM(t.cache_read_tokens), 0),
+                COALESCE(SUM(t.cache_write_tokens), 0)
+         FROM sessions s
+         JOIN turns t ON t.session_id = s.session_id
+         LEFT JOIN session_activity sa ON sa.session_id = s.session_id
+         GROUP BY COALESCE(sa.activity, 'unknown'), t.model",
+    )
+}
+
 pub fn by_agent_type(conn: &Connection) -> Result<HashMap<String, Vec<ModelTokens>>> {
     split(
         conn,

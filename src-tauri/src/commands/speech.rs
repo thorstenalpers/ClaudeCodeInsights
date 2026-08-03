@@ -12,3 +12,8 @@ pub fn speech_available() -> bool {
 pub fn recognize_speech(locale: String) -> Result<String> {
     speech::recognize(&locale)
 }
+
+#[tauri::command]
+pub fn open_speech_settings() -> Result<()> {
+    speech::open_settings()
+}

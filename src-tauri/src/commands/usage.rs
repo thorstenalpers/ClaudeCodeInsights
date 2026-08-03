@@ -1,7 +1,7 @@
 use super::db;
 use crate::analysis::rhythm::{self, Rhythm};
 use crate::analysis::series::{self, Series, SeriesFacets, SeriesQuery};
-use crate::analysis::usage::{self, AgentRow, ModelRow, ToolRow};
+use crate::analysis::usage::{self, ActivityRow, AgentRow, ModelRow, ToolRow};
 use crate::error::Result;
 
 #[tauri::command]
@@ -12,6 +12,11 @@ pub fn list_tools() -> Result<Vec<ToolRow>> {
 #[tauri::command]
 pub fn list_models() -> Result<Vec<ModelRow>> {
     Ok(usage::models(&db()?)?)
+}
+
+#[tauri::command]
+pub fn list_activities() -> Result<Vec<ActivityRow>> {
+    Ok(usage::activities(&db()?)?)
 }
 
 #[tauri::command]

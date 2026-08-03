@@ -103,7 +103,6 @@ pub fn load(conn: &Connection, query: &SeriesQuery) -> Result<Series> {
     for (values, column) in [
         (&query.models, "COALESCE(t.model, 'unknown')"),
         (&query.activities, "COALESCE(sa.activity, 'unknown')"),
-        (&query.projects, "COALESCE(s.project_name, 'unknown')"),
         (&query.branches, "COALESCE(s.git_branch, 'none')"),
         (&query.tools, "tt.tool_name"),
     ] {
@@ -113,6 +112,19 @@ pub fn load(conn: &Connection, query: &SeriesQuery) -> Result<Series> {
         // Placeholders come from the number of bound values, never from text.
         wheres.push(format!("{column} IN ({})", placeholders(values.len())));
         binds.extend(values.iter().map(|v| SqlValue::Text(v.clone())));
+    }
+
+    if !query.projects.is_empty() {
+        // The filter chips carry the short name the facets are built from; a
+        // project's own page knows only the full path it was registered under.
+        // Matching one column alone leaves the other asking for nothing.
+        let marks = placeholders(query.projects.len());
+        wheres.push(format!(
+            "(COALESCE(s.project_name, 'unknown') IN ({marks}) OR COALESCE(s.project_path, '') IN ({marks}))"
+        ));
+        for _ in 0..2 {
+            binds.extend(query.projects.iter().map(|v| SqlValue::Text(v.clone())));
+        }
     }
 
     if let Some(from) = &query.from {
@@ -204,7 +216,8 @@ mod tests {
             INSERT INTO scan_files (id, path, mtime_ms, size_bytes, line_count, scanned_at)
             VALUES (1, 'f.jsonl', 0, 0, 0, '2026-01-01T00:00:00Z');
 
-            INSERT INTO sessions (session_id, project_name) VALUES ('s1', 'work/a'), ('s2', 'work/b');
+            INSERT INTO sessions (session_id, project_name, project_path)
+            VALUES ('s1', 'work/a', 'C:\Sources\work\a'), ('s2', 'work/b', 'C:\Sources\work\b');
             INSERT INTO session_activity (session_id, activity, profile_json)
             VALUES ('s1', 'coding', '{}'), ('s2', 'research', '{}');
 
@@ -236,6 +249,20 @@ mod tests {
             from: None,
             to: None,
         }
+    }
+
+    #[test]
+    fn a_project_is_found_by_its_short_name_and_by_its_full_path() {
+        // The filter chips send the one, a project's own page sends the other.
+        let conn = seeded();
+
+        let mut by_name = query("model");
+        by_name.projects = vec!["work/a".to_owned()];
+        assert_eq!(load(&conn, &by_name).unwrap().keys, ["claude-opus-5"]);
+
+        let mut by_path = query("model");
+        by_path.projects = vec![r"C:\Sources\work\a".to_owned()];
+        assert_eq!(load(&conn, &by_path).unwrap().keys, ["claude-opus-5"]);
     }
 
     #[test]

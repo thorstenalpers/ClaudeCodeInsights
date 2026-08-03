@@ -27,9 +27,21 @@ anyhow = "1.0.104"
 thiserror = "2"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 keyring = { version = "3.6.3", features = ["windows-native"] }
-reqwest = { version = "0.13.4", default-features = false, features = ["blocking", "json"] }
+reqwest = { version = "0.13.4", default-features = false, features = [
+	"blocking",
+	"json",
+	"rustls",
+] }
 windows = { version = "0.62.2", features = ["Media_SpeechRecognition", "Globalization", "Foundation"] }
 pollster = "1.0.1"
+sherpa-onnx = { version = "1.13.4", default-features = false, features = ["shared"] }
+tar = "0.4.46"
+bzip2 = "0.6.1"
+rodio = { version = "0.21.1", features = ["wav"] }
+notify = { version = "8.2.0", default-features = false, features = ["macos_fsevent"] }
+claude-agent-sdk-rs = "0.6.4"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "time"] }
+tokio-stream = "0.1.19"
 
 [profile.release]
 # The publish artifact competed against a 224 MB .NET folder; keeping it small

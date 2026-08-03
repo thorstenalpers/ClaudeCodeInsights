@@ -4,11 +4,13 @@
 //! failure into `Error`. Anything longer belongs in the domain module.
 
 pub mod assistant;
+pub mod live;
 pub mod overview;
 pub mod projects;
 pub mod scan;
 pub mod sessions;
 pub mod speech;
+pub mod tts;
 pub mod usage;
 
 use crate::paths;

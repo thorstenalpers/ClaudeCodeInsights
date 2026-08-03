@@ -1,14 +1,17 @@
 //! Asking the local Claude Code CLI, which is the one source that needs no key.
 //!
-//! The prompt goes to a binary on this machine and the answer comes back on its
-//! stdout. Whether that binary reaches the network is Claude Code's business,
-//! under the user's own account.
+//! The prompt goes through the Agent SDK to a binary on this machine, and the
+//! answer comes back as typed messages rather than as JSON to be guessed at.
+//! Whether that binary reaches the network is Claude Code's business, under the
+//! user's own account.
 
 use crate::error::{Error, Result};
+use claude_agent_sdk_rs::{ClaudeAgentOptions, ClaudeClient, ContentBlock, Message};
 use serde::Serialize;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
+use tokio_stream::StreamExt;
 
 /// How long a single question may take before it is abandoned.
 ///
@@ -21,6 +24,8 @@ const TIMEOUT: Duration = Duration::from_secs(120);
 pub struct CliStatus {
     pub found: bool,
     pub path: Option<String>,
+    /// What `claude --version` answers, so the window can name what it found.
+    pub version: Option<String>,
 }
 
 /// The effort levels the CLI accepts, in the order it lists them.
@@ -65,16 +70,34 @@ pub fn status(configured: Option<&str>) -> CliStatus {
     let path = locate(configured);
     CliStatus {
         found: path.is_some(),
+        version: path.as_deref().and_then(version_of),
         path: path.map(|value| value.to_string_lossy().into_owned()),
     }
 }
 
-/// Runs one prompt through the CLI and returns what it printed.
+/// The version string the binary reports, or none when it will not say.
 ///
-/// `-p` is the non-interactive form: it answers once and exits, which is the
-/// only shape that fits a button. `--output-format json` costs nothing extra
-/// and carries back which model actually answered and what it cost — so the
-/// window can state those rather than repeat what it asked for.
+/// Asked of the binary the user configured rather than of whatever `claude`
+/// happens to be on PATH — those are not always the same install.
+fn version_of(binary: &std::path::Path) -> Option<String> {
+    let output = Command::new(binary).arg("--version").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .next()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_owned)
+}
+
+/// Runs one prompt through the CLI and returns what it answered.
+///
+/// `max_turns: 1` is the shape that fits a button: it answers once and stops.
+/// The SDK spawns the same binary the user configured — `cli_path` rather than
+/// whatever `claude` is on PATH — and `--effort` rides along as an extra
+/// argument, since the options struct has no field of its own for it.
 pub fn ask(
     configured: Option<&str>,
     prompt: &str,
@@ -88,80 +111,117 @@ pub fn ask(
     let binary = locate(configured)
         .ok_or_else(|| Error::BadRequest("Claude Code was not found on this machine".to_owned()))?;
 
-    let mut command = Command::new(&binary);
-    command.arg("-p").arg(prompt).arg("--output-format").arg("json");
-
-    if let Some(model) = model.filter(|value| !value.trim().is_empty()) {
-        command.arg("--model").arg(model);
-    }
+    let mut options = ClaudeAgentOptions {
+        max_turns: Some(1),
+        cli_path: Some(binary),
+        model: model
+            .filter(|value| !value.trim().is_empty())
+            .map(str::to_owned),
+        ..ClaudeAgentOptions::default()
+    };
     if let Some(effort) = effort.filter(|value| EFFORTS.contains(value)) {
-        command.arg("--effort").arg(effort);
+        options
+            .extra_args
+            .insert("effort".to_owned(), Some(effort.to_owned()));
     }
 
-    let mut child = command
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()?;
+    let prompt = prompt.to_owned();
+    let messages = tauri::async_runtime::block_on(async move {
+        // A CLI waiting for a login prompt would otherwise hang the button
+        // forever, and the window has no way to answer it.
+        tokio::time::timeout(TIMEOUT, drain(prompt, options))
+            .await
+            .unwrap_or_else(|_| {
+                Err(Error::BadRequest(format!(
+                    "Claude Code did not answer within {} seconds",
+                    TIMEOUT.as_secs()
+                )))
+            })
+    })?;
 
-    let deadline = std::time::Instant::now() + TIMEOUT;
-    loop {
-        if child.try_wait()?.is_some() {
-            break;
-        }
-        if std::time::Instant::now() >= deadline {
-            let _ = child.kill();
-            return Err(Error::BadRequest(format!(
-                "Claude Code did not answer within {} seconds",
-                TIMEOUT.as_secs()
-            )));
-        }
-        std::thread::sleep(Duration::from_millis(100));
-    }
-
-    let output = child.wait_with_output()?;
-    if !output.status.success() {
-        let message = String::from_utf8_lossy(&output.stderr);
-        let message = message.trim();
-        return Err(Error::BadRequest(if message.is_empty() {
-            "Claude Code exited without an answer".to_owned()
-        } else {
-            message.to_owned()
-        }));
-    }
-
-    parse(&String::from_utf8_lossy(&output.stdout), effort)
+    collect(&messages, effort)
 }
 
-/// Reads the CLI's JSON result, falling back to the raw text.
+/// Reads the run to its end, keeping only the messages this build understands.
 ///
-/// A future version that changes the envelope should degrade to showing the
-/// answer, not to showing nothing.
-fn parse(stdout: &str, effort: Option<&str>) -> Result<Answer> {
-    let trimmed = stdout.trim();
-    let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed) else {
-        return Ok(Answer {
-            text: trimmed.to_owned(),
-            effort: effort.map(str::to_owned),
-            ..Answer::default()
-        });
-    };
+/// Two SDK entry points are ruled out for this. The one-shot `query` fails the
+/// whole run on the first message it cannot parse, and the CLI emits kinds this
+/// version has not caught up with — a `rate_limit_event` would cost the user
+/// their answer. `query_stream` drops its transport with the answer still in
+/// flight, so it usually returns nothing but the opening system message. A
+/// client owns its transport for as long as it lives, which is what makes the
+/// run survive to its result.
+async fn drain(prompt: String, options: ClaudeAgentOptions) -> Result<Vec<Message>> {
+    let mut client = ClaudeClient::new(options);
+    client
+        .connect()
+        .await
+        .map_err(|cause| Error::BadRequest(cause.to_string()))?;
+    client
+        .query(prompt)
+        .await
+        .map_err(|cause| Error::BadRequest(cause.to_string()))?;
 
-    if value["is_error"].as_bool() == Some(true) {
-        let message = value["result"].as_str().unwrap_or("Claude Code reported an error");
-        return Err(Error::BadRequest(message.to_owned()));
+    let mut messages = Vec::new();
+    {
+        let mut stream = client.receive_response();
+        while let Some(message) = stream.next().await {
+            match message {
+                Ok(message) => messages.push(message),
+                Err(cause) => log::debug!("skipping a message the SDK cannot read: {cause}"),
+            }
+        }
+    }
+    let _ = client.disconnect().await;
+    Ok(messages)
+}
+
+/// Folds the message stream into the one answer the window shows.
+///
+/// The assistant messages carry the text and the model that actually served
+/// it; the closing result message carries the cost. Both are read from typed
+/// fields rather than from a JSON envelope that a future version may reshape.
+fn collect(messages: &[Message], effort: Option<&str>) -> Result<Answer> {
+    let mut answer = Answer {
+        effort: effort.map(str::to_owned),
+        ..Answer::default()
+    };
+    let mut text = String::new();
+
+    for message in messages {
+        match message {
+            Message::Assistant(assistant) => {
+                if assistant.message.model.is_some() {
+                    answer.model = assistant.message.model.clone();
+                }
+                for block in &assistant.message.content {
+                    if let ContentBlock::Text(part) = block {
+                        text.push_str(&part.text);
+                    }
+                }
+            }
+            Message::Result(result) => {
+                if result.is_error {
+                    let message = result
+                        .result
+                        .clone()
+                        .unwrap_or_else(|| "Claude Code reported an error".to_owned());
+                    return Err(Error::BadRequest(message));
+                }
+                answer.cost_usd = result.total_cost_usd;
+                // The result text is the whole answer; the assistant blocks are
+                // only used when the run ends without one.
+                if let Some(final_text) = result.result.as_deref().filter(|value| !value.is_empty())
+                {
+                    text = final_text.to_owned();
+                }
+            }
+            _ => {}
+        }
     }
 
-    Ok(Answer {
-        text: value["result"].as_str().unwrap_or(trimmed).trim().to_owned(),
-        // The key of modelUsage is the full model id, which is the only place
-        // the answer says what actually served it.
-        model: value["modelUsage"]
-            .as_object()
-            .and_then(|usage| usage.keys().next().cloned()),
-        effort: effort.map(str::to_owned),
-        cost_usd: value["total_cost_usd"].as_f64(),
-    })
+    answer.text = text.trim().to_owned();
+    Ok(answer)
 }
 
 #[cfg(test)]
@@ -182,11 +242,46 @@ mod tests {
         assert!(status.path.is_none());
     }
 
+    fn assistant(text: &str, model: Option<&str>) -> Message {
+        Message::Assistant(claude_agent_sdk_rs::AssistantMessage {
+            message: claude_agent_sdk_rs::AssistantMessageInner {
+                content: vec![ContentBlock::Text(claude_agent_sdk_rs::TextBlock {
+                    text: text.to_owned(),
+                })],
+                model: model.map(str::to_owned),
+                id: None,
+                stop_reason: None,
+                usage: None,
+                error: None,
+            },
+            parent_tool_use_id: None,
+            session_id: None,
+            uuid: None,
+        })
+    }
+
+    fn result(text: Option<&str>, failed: bool, cost: Option<f64>) -> Message {
+        Message::Result(claude_agent_sdk_rs::ResultMessage {
+            subtype: "success".to_owned(),
+            duration_ms: 1,
+            duration_api_ms: 1,
+            is_error: failed,
+            num_turns: 1,
+            session_id: "s".to_owned(),
+            total_cost_usd: cost,
+            usage: None,
+            result: text.map(str::to_owned),
+            structured_output: None,
+        })
+    }
+
     #[test]
-    fn the_json_envelope_gives_up_the_model_and_the_cost() {
-        let answer = parse(
-            r#"{"type":"result","is_error":false,"result":"Ok.","total_cost_usd":0.021,
-                "modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":10}}}"#,
+    fn the_messages_give_up_the_model_and_the_cost() {
+        let answer = collect(
+            &[
+                assistant("Ok.", Some("claude-haiku-4-5-20251001")),
+                result(Some("Ok."), false, Some(0.021)),
+            ],
             Some("low"),
         )
         .unwrap();
@@ -197,16 +292,24 @@ mod tests {
     }
 
     #[test]
-    fn plain_text_still_reaches_the_window() {
-        let answer = parse("just words", None).unwrap();
+    fn a_run_without_a_result_still_reaches_the_window() {
+        let answer = collect(&[assistant("just words", None)], None).unwrap();
         assert_eq!(answer.text, "just words");
         assert!(answer.model.is_none());
     }
 
     #[test]
     fn a_reported_error_is_an_error() {
-        let failed = parse(r#"{"is_error":true,"result":"no session"}"#, None);
+        let failed = collect(&[result(Some("no session"), true, None)], None);
         assert!(failed.is_err());
+    }
+
+    #[test]
+    #[ignore = "spends a turn of the developer's own Claude Code account"]
+    fn answers_from_the_real_cli() {
+        let answer = ask(None, "Reply with the single word: pong", None, Some("low")).unwrap();
+        assert!(!answer.text.is_empty());
+        assert!(answer.model.is_some());
     }
 
     #[test]

@@ -324,11 +324,12 @@ fn write_parse(
     for agent in &parsed.agents {
         tx.execute(
             "INSERT INTO agents
-                (agent_id, agent_type, completed_ts, status, total_tokens,
-                 total_duration_ms, tool_use_count)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                (agent_id, agent_type, parent_session_id, completed_ts, status,
+                 total_tokens, total_duration_ms, tool_use_count)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
              ON CONFLICT(agent_id) DO UPDATE SET
                 agent_type        = COALESCE(excluded.agent_type, agents.agent_type),
+                parent_session_id = COALESCE(excluded.parent_session_id, agents.parent_session_id),
                 status            = COALESCE(excluded.status, agents.status),
                 total_tokens      = COALESCE(excluded.total_tokens, agents.total_tokens),
                 total_duration_ms = COALESCE(excluded.total_duration_ms, agents.total_duration_ms),
@@ -336,6 +337,7 @@ fn write_parse(
             params![
                 agent.agent_id,
                 agent.agent_type,
+                agent.parent_session_id,
                 chrono::Utc::now().to_rfc3339(),
                 agent.status,
                 agent.total_tokens,
@@ -581,6 +583,29 @@ mod tests {
             .unwrap();
         assert_eq!(first, "2026-01-01T10:00:00Z");
         assert_eq!(last, "2026-01-01T12:00:00Z");
+    }
+
+    #[test]
+    fn a_dispatch_is_stored_against_the_session_that_started_it() {
+        let mut fixture = Fixture::new("agent-parent");
+        fixture.write(
+            "a.jsonl",
+            &[
+                turn_line("m1", "u1", 10, "2026-01-01T10:00:00Z", "claude-opus-4-8"),
+                r#"{"type":"user","sessionId":"s1","uuid":"u2","timestamp":"2026-01-01T10:01:00Z","toolUseResult":{"agentId":"agent-1","agentType":"Explore","totalTokens":50}}"#.to_owned(),
+            ],
+        );
+        fixture.scan();
+
+        let parent: Option<String> = fixture
+            .conn
+            .query_row("SELECT parent_session_id FROM agents", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            parent.as_deref(),
+            Some("s1"),
+            "without this the agents page cannot say which project a run belongs to"
+        );
     }
 
     #[test]

@@ -157,6 +157,11 @@ mod tests {
         assert_eq!(agent.agent_id, "agent-1");
         assert_eq!(agent.agent_type.as_deref(), Some("Explore"));
         assert_eq!(agent.total_tokens, Some(1234));
+        assert_eq!(
+            agent.parent_session_id.as_deref(),
+            Some("s1"),
+            "the run reports itself on its parent's record and nowhere else"
+        );
     }
 
     #[test]

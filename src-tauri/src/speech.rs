@@ -19,6 +19,10 @@ use crate::error::{Error, Result};
 /// code and answered with directions.
 pub const PRIVACY_NOT_ACCEPTED: i32 = 0x8004_5509_u32 as i32;
 
+/// Where Windows keeps both the recogniser's language pack and the voices.
+#[cfg(windows)]
+const SETTINGS_URI: &str = "ms-settings:speech";
+
 #[cfg(windows)]
 mod imp {
     use super::*;
@@ -57,9 +61,11 @@ mod imp {
 
         // WinRT hands back futures; the command already runs on a worker, so
         // blocking on them here is what keeps this function readable.
-        pollster::block_on(recognizer.CompileConstraintsAsync().map_err(failed)?).map_err(failed)?;
+        pollster::block_on(recognizer.CompileConstraintsAsync().map_err(failed)?)
+            .map_err(failed)?;
 
-        let result = pollster::block_on(recognizer.RecognizeAsync().map_err(failed)?).map_err(failed)?;
+        let result =
+            pollster::block_on(recognizer.RecognizeAsync().map_err(failed)?).map_err(failed)?;
 
         let status = result.Status().map_err(failed)?;
 
@@ -71,11 +77,26 @@ mod imp {
 
         Ok(result.Text().map_err(failed)?.to_string())
     }
+
+    /// Opens the page where Windows installs voices and language packs.
+    ///
+    /// The address is a constant for the same reason the free-key page is one:
+    /// nothing the window says becomes an argument to the shell.
+    pub fn open_settings() -> Result<()> {
+        std::process::Command::new("explorer.exe")
+            .arg(SETTINGS_URI)
+            .spawn()?;
+        Ok(())
+    }
 }
 
 #[cfg(not(windows))]
 mod imp {
     use super::*;
+
+    pub fn open_settings() -> Result<()> {
+        Err(Error::BadRequest("speech settings need Windows".to_owned()))
+    }
 
     pub fn available() -> bool {
         false
@@ -88,7 +109,7 @@ mod imp {
     }
 }
 
-pub use imp::{available, recognize};
+pub use imp::{available, open_settings, recognize};
 
 #[cfg(test)]
 mod tests {

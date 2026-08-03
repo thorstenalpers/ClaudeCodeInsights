@@ -19,6 +19,11 @@ pub fn delete_project_transcripts(path: String) -> Result<DeleteOutcome> {
 }
 
 #[tauri::command]
+pub fn open_claude_config() -> Result<()> {
+    Ok(projects::open_config()?)
+}
+
+#[tauri::command]
 pub fn get_project_settings(path: String) -> Result<String> {
     Ok(projects::settings_json(&path)?)
 }
