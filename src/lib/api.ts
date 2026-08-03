@@ -305,6 +305,15 @@ export type HubVoice = {
 	blocked: string | null;
 };
 
+/** What the info page says about the running build. */
+export type AppInfo = {
+	version: string;
+	dataDir: string;
+	database: string;
+	voices: string;
+	logs: string;
+};
+
 export type CliStatus = { found: boolean; path: string | null; version: string | null };
 
 export type ProviderInfo = {
@@ -316,6 +325,8 @@ export type ProviderInfo = {
 
 export const api = {
 	getOverview: () => invoke<Overview>('get_overview'),
+	getAppInfo: () => invoke<AppInfo>('get_app_info'),
+	openDataFolder: (which: string) => invoke<void>('open_data_folder', { which }),
 	getTranscript: (sessionId: string, offset: number, limit: number) =>
 		invoke<TranscriptPage>('get_transcript', { sessionId, offset, limit }),
 	getScanState: () => invoke<ScanState>('get_scan_state'),

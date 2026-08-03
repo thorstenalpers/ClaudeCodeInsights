@@ -12,6 +12,7 @@ import Sessions from '@lucide/svelte/icons/messages-square';
 import Settings from '@lucide/svelte/icons/settings';
 import Logs from '@lucide/svelte/icons/scroll-text';
 import Tools from '@lucide/svelte/icons/wrench';
+import Info from '@lucide/svelte/icons/info';
 
 export type PageDefinition = {
 	href: Pathname;
@@ -88,6 +89,14 @@ export const LOG_PAGE: PageDefinition = {
 	icon: Logs
 };
 
+/** Pinned at the foot of the rail, above the settings. */
+export const INFO_PAGE: PageDefinition = {
+	href: '/info',
+	label: 'nav.info',
+	description: 'nav.info.description',
+	icon: Info
+};
+
 export const SETTINGS_PAGE: PageDefinition = {
 	href: '/settings',
 	label: 'nav.settings',
@@ -97,7 +106,7 @@ export const SETTINGS_PAGE: PageDefinition = {
 
 // The log page is in here even while the rail hides it: the breadcrumb has
 // to be able to name a page the user reached by its address.
-export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, LOG_PAGE, SETTINGS_PAGE];
+export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, LOG_PAGE, INFO_PAGE, SETTINGS_PAGE];
 
 /** The rail highlights the deepest match, so /sessions/abc keeps Sessions active. */
 export function activeHref(pathname: string): Pathname {

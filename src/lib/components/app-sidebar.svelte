@@ -9,11 +9,12 @@
 
 	type Props = {
 		pages: readonly PageDefinition[];
-		settingsPage: PageDefinition;
+		/** Pinned at the foot, in the order given. */
+		footer: PageDefinition[];
 		active: string;
 	};
 
-	let { pages, settingsPage, active }: Props = $props();
+	let { pages, footer, active }: Props = $props();
 
 	/**
 	 * What a menu entry does under the pointer.
@@ -83,27 +84,29 @@
 
 	<Sidebar.Footer>
 		<Sidebar.Menu>
-			<Sidebar.MenuItem>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Sidebar.MenuButton {...props} isActive={active === settingsPage.href}>
-								{#snippet child({ props: buttonProps })}
-									<a
-										{...buttonProps}
-										href={resolve(settingsPage.href)}
-										class={cn((buttonProps as { class?: string }).class, HOVER)}
-									>
-										<settingsPage.icon />
-										<span>{t(settingsPage.label)}</span>
-									</a>
-								{/snippet}
-							</Sidebar.MenuButton>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="right">{t(settingsPage.label)}</Tooltip.Content>
-				</Tooltip.Root>
-			</Sidebar.MenuItem>
+			{#each footer as page (page.href)}
+				<Sidebar.MenuItem>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Sidebar.MenuButton {...props} isActive={active === page.href}>
+									{#snippet child({ props: buttonProps })}
+										<a
+											{...buttonProps}
+											href={resolve(page.href)}
+											class={cn((buttonProps as { class?: string }).class, HOVER)}
+										>
+											<page.icon />
+											<span>{t(page.label)}</span>
+										</a>
+									{/snippet}
+								</Sidebar.MenuButton>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content side="right">{t(page.label)}</Tooltip.Content>
+					</Tooltip.Root>
+				</Sidebar.MenuItem>
+			{/each}
 		</Sidebar.Menu>
 	</Sidebar.Footer>
 

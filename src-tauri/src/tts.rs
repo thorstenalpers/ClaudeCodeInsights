@@ -565,16 +565,31 @@ fn play(samples: &[f32], sample_rate: u32) -> Result<()> {
 
     let length =
         std::time::Duration::from_secs_f64(samples.len() as f64 / sample_rate.max(1) as f64);
+    // What the device has yet to emit once the mixer has read everything. It
+    // cannot be asked for, and closing the stream at that moment took the last
+    // seconds of the sentence with it, so it is waited out.
+    const TAIL: std::time::Duration = std::time::Duration::from_millis(2500);
     let start = std::time::Instant::now();
-    while start.elapsed() < length {
+
+    loop {
         if SILENCED.load(Ordering::Relaxed) {
             sink.stop();
             return Ok(());
         }
+        // Two clocks, because neither alone is the end: the sink's own position
+        // runs ahead of the speaker, and the wall clock knows nothing about a
+        // device that started late.
+        if sink.empty() && sink.get_pos() >= length && start.elapsed() >= length + TAIL {
+            break;
+        }
+        // Past twice the sentence plus the wait, something is wedged and
+        // holding this thread helps nobody.
+        if start.elapsed() > length * 2 + TAIL {
+            break;
+        }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
-    sink.sleep_until_end();
     Ok(())
 }
 

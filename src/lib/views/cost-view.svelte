@@ -326,6 +326,88 @@
 			</span>
 		</div>
 
+		<div class="flex shrink-0 flex-wrap items-center gap-2">
+			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+			<ResetView show={table.dirty} onreset={() => table.reset()} />
+		</div>
+
+		<div
+			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
+		>
+			<Table.Root>
+				<Table.Header class="sticky top-0 z-10 bg-background">
+					<Table.Row>
+						{#each COLUMNS as column (column.id)}
+							<SortHeader
+								{...column}
+								label={t(column.label)}
+								direction={table.direction(column.id)}
+								rank={table.rank(column.id)}
+								multi={table.sorts.length > 1}
+								kind={table.kind(column.id)}
+								filtered={table.isFiltered(column.id)}
+								options={table.options(column.id)}
+								chosen={table.chosen(column.id)}
+								text={table.textFilter(column.id)}
+								range={table.range(column.id)}
+								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
+								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+								ontext={(id: string, value: string) => table.setText(id, value)}
+								onrange={(id: string, bound: 'min' | 'max', value: string) =>
+									table.setRange(id, bound, value)}
+								onclear={(id: string) => table.clearFilter(id)}
+							/>
+						{/each}
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each table.rows as entry (entry.row.model)}
+						<Table.Row>
+							<Table.Cell class="font-medium">
+								<div class="flex items-center gap-2">
+									{shortModel(entry.row.model)}
+									{#if !isPriced(entry.row.model)}
+										<Badge variant="outline" class="font-normal">{t('cost.unpriced')}</Badge>
+									{/if}
+								</div>
+							</Table.Cell>
+							<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
+								{exact(entry.row.turns)}
+							</Table.Cell>
+							<Table.Cell class={[CLASS.sessions, 'text-right tabular-nums']}>
+								{exact(entry.row.sessions)}
+							</Table.Cell>
+							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.inputTokens)}>
+								{compact(entry.row.inputTokens)}
+							</Table.Cell>
+							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.outputTokens)}>
+								{compact(entry.row.outputTokens)}
+							</Table.Cell>
+							<Table.Cell
+								class={[CLASS.cacheReadTokens, 'text-right tabular-nums']}
+								title={exact(entry.row.cacheReadTokens)}
+							>
+								{compact(entry.row.cacheReadTokens)}
+							</Table.Cell>
+							<Table.Cell
+								class={[CLASS.cacheWriteTokens, 'text-right tabular-nums']}
+								title={exact(entry.row.cacheWriteTokens)}
+							>
+								{compact(entry.row.cacheWriteTokens)}
+							</Table.Cell>
+							<Table.Cell class="text-right font-medium tabular-nums">
+								{isPriced(entry.row.model) ? money(entry.cost) : t('common.none')}
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+
+			{#if table.rows.length === 0}
+				<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+			{/if}
+		</div>
+
 		{#if history.labels.length > 0}
 			<Card.Root data-size="sm" class="shrink-0">
 				<Card.Header class="gap-1">
@@ -507,88 +589,6 @@
 				</Card.Content>
 			</Card.Root>
 		{/if}
-
-		<div class="flex shrink-0 flex-wrap items-center gap-2">
-			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
-			<ResetView show={table.dirty} onreset={() => table.reset()} />
-		</div>
-
-		<div
-			class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
-		>
-			<Table.Root>
-				<Table.Header class="sticky top-0 z-10 bg-background">
-					<Table.Row>
-						{#each COLUMNS as column (column.id)}
-							<SortHeader
-								{...column}
-								label={t(column.label)}
-								direction={table.direction(column.id)}
-								rank={table.rank(column.id)}
-								multi={table.sorts.length > 1}
-								kind={table.kind(column.id)}
-								filtered={table.isFiltered(column.id)}
-								options={table.options(column.id)}
-								chosen={table.chosen(column.id)}
-								text={table.textFilter(column.id)}
-								range={table.range(column.id)}
-								onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
-								ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
-								ontext={(id: string, value: string) => table.setText(id, value)}
-								onrange={(id: string, bound: 'min' | 'max', value: string) =>
-									table.setRange(id, bound, value)}
-								onclear={(id: string) => table.clearFilter(id)}
-							/>
-						{/each}
-					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each table.rows as entry (entry.row.model)}
-						<Table.Row>
-							<Table.Cell class="font-medium">
-								<div class="flex items-center gap-2">
-									{shortModel(entry.row.model)}
-									{#if !isPriced(entry.row.model)}
-										<Badge variant="outline" class="font-normal">{t('cost.unpriced')}</Badge>
-									{/if}
-								</div>
-							</Table.Cell>
-							<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
-								{exact(entry.row.turns)}
-							</Table.Cell>
-							<Table.Cell class={[CLASS.sessions, 'text-right tabular-nums']}>
-								{exact(entry.row.sessions)}
-							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.inputTokens)}>
-								{compact(entry.row.inputTokens)}
-							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums" title={exact(entry.row.outputTokens)}>
-								{compact(entry.row.outputTokens)}
-							</Table.Cell>
-							<Table.Cell
-								class={[CLASS.cacheReadTokens, 'text-right tabular-nums']}
-								title={exact(entry.row.cacheReadTokens)}
-							>
-								{compact(entry.row.cacheReadTokens)}
-							</Table.Cell>
-							<Table.Cell
-								class={[CLASS.cacheWriteTokens, 'text-right tabular-nums']}
-								title={exact(entry.row.cacheWriteTokens)}
-							>
-								{compact(entry.row.cacheWriteTokens)}
-							</Table.Cell>
-							<Table.Cell class="text-right font-medium tabular-nums">
-								{isPriced(entry.row.model) ? money(entry.cost) : t('common.none')}
-							</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-
-			{#if table.rows.length === 0}
-				<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
-			{/if}
-		</div>
 
 		<p class="shrink-0 text-xs text-muted-foreground">
 			{#if region.isIndicative}

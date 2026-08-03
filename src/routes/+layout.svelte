@@ -26,7 +26,7 @@
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { nav } from '$lib/nav.svelte';
-	import { LOG_PAGE, PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
+	import { INFO_PAGE, LOG_PAGE, PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
 	import { scan } from '$lib/scan.svelte';
 	import { theme } from '$lib/theme.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -125,7 +125,7 @@
 >
 	<AppSidebar
 		pages={railPages}
-		settingsPage={SETTINGS_PAGE}
+		footer={[INFO_PAGE, SETTINGS_PAGE]}
 		active={activeHref(page.url.pathname)}
 	/>
 

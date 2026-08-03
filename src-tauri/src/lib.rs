@@ -20,6 +20,8 @@ pub fn run() {
         .manage(state::ScanGuard::default())
         .invoke_handler(tauri::generate_handler![
             commands::scan::get_scan_state,
+            commands::app::get_app_info,
+            commands::app::open_data_folder,
             commands::scan::start_scan,
             commands::overview::get_overview,
             commands::sessions::list_sessions,

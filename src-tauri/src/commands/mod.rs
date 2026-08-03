@@ -3,6 +3,7 @@
 //! Commands stay thin: open a connection, call the domain, let `?` turn a
 //! failure into `Error`. Anything longer belongs in the domain module.
 
+pub mod app;
 pub mod assistant;
 pub mod live;
 pub mod overview;
