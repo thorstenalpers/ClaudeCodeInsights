@@ -9,20 +9,26 @@
 	import { page } from '$app/state';
 	import AppMark from '$lib/components/app-mark.svelte';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
-	import AssistantSheet from '$lib/components/assistant-sheet.svelte';
+	import RailToggle from '$lib/components/rail-toggle.svelte';
 	import StatusBar from '$lib/components/status-bar.svelte';
+	import VoiceHint from '$lib/components/voice-hint.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import ScanButton from '$lib/components/scan-button.svelte';
 	import LanguageMenu from '$lib/components/language-menu.svelte';
 	import ModeToggle from '$lib/components/mode-toggle.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
+	import { Toaster } from '$lib/components/ui/sonner';
 	import { Separator } from '$lib/components/ui/separator';
+	import { displayPath } from '$lib/format';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
+	import { cli } from '$lib/cli.svelte';
+	import { logs } from '$lib/logs.svelte';
 	import { nav } from '$lib/nav.svelte';
-	import { PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
+	import { LOG_PAGE, PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
 	import { scan } from '$lib/scan.svelte';
 	import { theme } from '$lib/theme.svelte';
+	import { voice } from '$lib/voice.svelte';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
@@ -33,10 +39,19 @@
 	let viewport = $state(NARROW);
 	/** What the user chose while there was room; restored when there is again. */
 	let preferred = $state(true);
+	/** The last click, which outranks the width until the width class changes. */
+	let clicked = $state<boolean | null>(null);
 
-	// The width decides, not the last click: a window dragged narrow collapses,
-	// and dragged wide again comes back to whatever the user had set.
-	let sidebarOpen = $derived(viewport < NARROW ? false : preferred);
+	const narrow = $derived(viewport < NARROW);
+
+	// Crossing the threshold is a new situation, so the old click stops speaking
+	// for it: dragged narrow the rail wins, dragged wide again what was set does.
+	$effect(() => {
+		void narrow;
+		clicked = null;
+	});
+
+	let sidebarOpen = $derived(clicked ?? (narrow ? false : preferred));
 
 	/**
 	 * The splash, in the window it is covering.
@@ -49,7 +64,14 @@
 
 	theme.init();
 	i18n.init();
+	voice.init();
+	// The folder is re-read at startup, so a pack copied in by hand counts.
+	void voice.loadPacks();
 	void scan.init();
+	// The host's own lines, kept whether or not the view is on: a log that only
+	// starts recording once someone opens it has already missed the interesting part.
+	void logs.listen();
+	void cli.refresh();
 
 	$effect(() => {
 		// Two nested frames: the first is scheduled before the upcoming paint,
@@ -57,8 +79,15 @@
 		requestAnimationFrame(() => requestAnimationFrame(() => (starting = false)));
 	});
 
+	const railPages = $derived(logs.enabled ? [...PAGES, LOG_PAGE] : PAGES);
 	const current = $derived(pageFor(page.url.pathname));
 	const detailSessionId = $derived(page.params.id ?? null);
+	/** The project a sub-page is about, which the URL carries but no page said. */
+	const detailProject = $derived(page.params.path ?? null);
+	/** The folder alone: the whole path is already on the line below. */
+	const projectName = $derived(
+		detailProject?.split(/[\\/]/).filter(Boolean).at(-1) ?? detailProject
+	);
 </script>
 
 <svelte:window bind:innerWidth={viewport} />
@@ -80,23 +109,30 @@
 <Sidebar.Provider
 	bind:open={sidebarOpen}
 	onOpenChange={(open: boolean) => {
-		sidebarOpen = open;
-		if (viewport >= NARROW) preferred = open;
+		clicked = open;
+		if (!narrow) preferred = open;
 	}}
 >
-	<AppSidebar pages={PAGES} settingsPage={SETTINGS_PAGE} active={activeHref(page.url.pathname)} />
+	<AppSidebar
+		pages={railPages}
+		settingsPage={SETTINGS_PAGE}
+		active={activeHref(page.url.pathname)}
+	/>
 
-	<Sidebar.Inset class="flex h-screen min-w-0 flex-col overflow-hidden">
+	<Sidebar.Inset class="flex h-dvh min-w-0 flex-col overflow-hidden">
 		<header class="@container flex h-12 shrink-0 items-center gap-2 border-b px-3">
+			<!-- Only where the rail is a sheet: there its own toggle travels inside it,
+			     so this is the one way back to the navigation. -->
+			<RailToggle class="md:hidden" />
 			<AppMark class="hidden size-5 shrink-0 text-foreground @md:block" />
 			<Separator orientation="vertical" class="mr-1 hidden h-4 @md:block" />
 
-			{#if detailSessionId}
+			{#if detailSessionId || detailProject}
 				<Button
 					variant="ghost"
 					size="icon"
 					aria-label={t('header.back')}
-					onclick={() => goto(resolve('/sessions'))}
+					onclick={() => goto(detailSessionId ? resolve('/sessions') : resolve('/projects'))}
 				>
 					<ArrowLeft />
 				</Button>
@@ -123,12 +159,21 @@
 						</a>
 						<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
 						<span class="truncate font-semibold">{nav.detailLabel || t('header.session')}</span>
+					{:else if detailProject}
+						<a
+							href={resolve('/projects')}
+							class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							{t('nav.projects')}
+						</a>
+						<ChevronRight class="size-3 shrink-0 text-muted-foreground/60" />
+						<span class="truncate font-semibold">{projectName}</span>
 					{:else}
 						<span class="truncate font-semibold">{t(current.label)}</span>
 					{/if}
 				</div>
 				<p class="hidden truncate text-xs leading-tight text-muted-foreground @xl:block">
-					{detailSessionId ?? t(current.description)}
+					{detailSessionId ?? (detailProject ? displayPath(detailProject) : t(current.description))}
 				</p>
 			</nav>
 			<div class="ml-auto flex items-center gap-1">
@@ -143,6 +188,9 @@
 		</main>
 
 		<StatusBar />
-		<AssistantSheet />
+		<VoiceHint />
+		<!-- Top centre, not top right: the scan, language and mode buttons live in
+		     that corner, and an error notice stays up long enough to hide them. -->
+		<Toaster position="top-center" />
 	</Sidebar.Inset>
 </Sidebar.Provider>

@@ -8,6 +8,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import { compact, exact, formatWhen } from '$lib/format';
+	import type { MessageKey } from '$lib/i18n/en';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { costOfSplit } from '$lib/pricing.svelte';
@@ -106,6 +107,13 @@
 		},
 		{ sort: 'runs' }
 	);
+
+	/** The activity's own name where there is one, the raw id where there is not. */
+	function activityLabel(activity: string): string {
+		const key = `activity.${activity}` as MessageKey;
+		const named = t(key);
+		return named === key ? activity : named;
+	}
 
 	function duration(ms: number): string {
 		if (ms < 1000) return `${ms} ms`;
@@ -219,7 +227,9 @@
 		if (!open) selected = null;
 	}}
 >
-	<Dialog.Content class="max-w-lg">
+	<Dialog.Content
+		class="max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] overflow-auto sm:max-w-lg"
+	>
 		<Dialog.Header>
 			<Dialog.Title>{selected?.agentType}</Dialog.Title>
 			<Dialog.Description>{t('nav.agents.description')}</Dialog.Description>
@@ -260,9 +270,32 @@
 					{(selected.toolUseCount / Math.max(1, selected.runs)).toFixed(1)}
 				</dd>
 
+				<dt class="text-muted-foreground">{t('cost.column.sessions')}</dt>
+				<dd class="text-right tabular-nums">{exact(selected.sessions)}</dd>
+
 				<dt class="text-muted-foreground">{t('agents.column.last')}</dt>
 				<dd class="text-right">{formatWhen(selected.lastTs)}</dd>
 			</dl>
+
+			<!-- Where it ran and what those sessions were doing: the run itself
+			     carries neither, both come from the session that started it. -->
+			{#each [{ label: 'nav.projects', tallies: selected.projects }, { label: 'sessions.column.activity', tallies: selected.activities }] as const as group (group.label)}
+				{#if group.tallies.length > 0}
+					<div class="flex flex-col gap-1 border-t pt-3">
+						<span class="text-xs text-muted-foreground">{t(group.label)}</span>
+						{#each group.tallies as entry (entry.name)}
+							<div class="flex items-center gap-2 text-sm">
+								<span class="min-w-0 flex-1 truncate" title={entry.name}>
+									{group.label === 'nav.projects' ? entry.name : activityLabel(entry.name)}
+								</span>
+								<span class="shrink-0 text-muted-foreground tabular-nums">
+									{t('agents.detail.runs', { count: exact(entry.runs) })}
+								</span>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{/each}
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>

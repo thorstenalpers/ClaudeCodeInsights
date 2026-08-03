@@ -1,10 +1,13 @@
 <script lang="ts">
+	import FileJson from '@lucide/svelte/icons/file-json';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Unlink from '@lucide/svelte/icons/unlink';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { api, type ProjectRow, type ProjectsReport, type TranscriptFile } from '$lib/api';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Badge } from '$lib/components/ui/badge';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -15,7 +18,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { compact, exact, formatBytes, formatWhen } from '$lib/format';
+	import { compact, displayPath, exact, formatBytes, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { costOfSplit } from '$lib/pricing.svelte';
@@ -25,7 +28,6 @@
 
 	const COLUMNS = [
 		{ id: 'path', label: 'projects.column.project' as const, info: 'info.status' as const },
-		{ id: 'status', label: 'projects.column.status' as const, info: 'info.status' as const },
 		{
 			id: 'sessions',
 			label: 'projects.column.sessions' as const,
@@ -90,7 +92,7 @@
 	let deleteBusy = $state(false);
 	let deleteError = $state<string | null>(null);
 
-	let removeTarget = $state<ProjectRow | null>(null);
+	let removeTarget = $state<MergedRow | null>(null);
 	let removeBusy = $state(false);
 	let removeError = $state<string | null>(null);
 
@@ -164,8 +166,12 @@
 		removeBusy = true;
 		removeError = null;
 		try {
-			const outcome = await api.removeProjectRegistration(removeTarget.path);
-			lastBackup = outcome.backupPath;
+			// Every spelling of the same directory, or the row would come back
+			// with its twin still in the configuration.
+			for (const path of removeTarget.spellings) {
+				const outcome = await api.removeProjectRegistration(path);
+				lastBackup = outcome.backupPath;
+			}
 			removeTarget = null;
 			localVersion += 1;
 		} catch (cause) {
@@ -202,21 +208,59 @@
 		}
 	}
 
-	/** The badges as one sortable, filterable value. */
-	function statusOf(row: ProjectRow): string {
-		const flags = [
-			!row.registered && t('projects.badge.unregistered'),
-			!row.dirExists && t('projects.badge.missingDir'),
-			row.duplicateGroup && t('projects.badge.duplicate')
-		].filter(Boolean);
-		return flags.length > 0 ? flags.join(', ') : t('projects.badge.ok');
+	/** One project, with every spelling it is registered under. */
+	type MergedRow = ProjectRow & { spellings: string[] };
+
+	/**
+	 * Two spellings of one directory are one project, and the list says so once.
+	 *
+	 * The figures are not added up: the history is keyed by the normalised path,
+	 * so both registrations were already showing the same numbers. Only a second
+	 * transcript folder — which only a difference in case produces — brings
+	 * files of its own.
+	 */
+	const rows = $derived.by(() => {
+		const merged: MergedRow[] = [];
+		// A plain object, not a Map: this one is rebuilt from scratch on every
+		// run and never observed, which is what the reactive Map is for.
+		const byGroup: Record<string, MergedRow> = {};
+
+		for (const project of report?.projects ?? []) {
+			const group = project.duplicateGroup;
+			const seen = group ? byGroup[group] : undefined;
+
+			if (!seen) {
+				const row: MergedRow = { ...project, spellings: [project.path] };
+				if (group) byGroup[group] = row;
+				merged.push(row);
+				continue;
+			}
+
+			seen.spellings.push(project.path);
+			seen.dirExists = seen.dirExists || project.dirExists;
+			if (project.transcriptDir && project.transcriptDir !== seen.transcriptDir) {
+				seen.transcriptFiles += project.transcriptFiles;
+				seen.transcriptBytes += project.transcriptBytes;
+			}
+		}
+
+		return merged;
+	});
+
+	/** What this one row needs doing, or nothing at all. */
+	function adviceFor(row: ProjectRow): string {
+		return [
+			!row.registered && t('projects.advice.row.unregistered'),
+			!row.dirExists && t('projects.advice.row.missingDir')
+		]
+			.filter(Boolean)
+			.join(' ');
 	}
 
-	const table = createTable<ProjectRow>(
-		() => report?.projects ?? [],
+	const table = createTable<MergedRow>(
+		() => rows,
 		{
 			path: (row) => row.path,
-			status: (row) => statusOf(row),
 			sessions: (row) => row.sessions,
 			cost: (row) => costOfSplit(row.byModel),
 			turns: (row) => row.turns,
@@ -255,17 +299,26 @@
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
 			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
 			<ResetView show={table.dirty} onreset={() => table.reset()} />
-			<span class="hidden text-xs text-muted-foreground @xl:inline">
-				{t('projects.source', { path: report.configPath })}
-			</span>
+			<Button
+				variant="outline"
+				size="sm"
+				class="hidden h-8 max-w-full font-normal @xl:inline-flex"
+				title={t('projects.source.open')}
+				onclick={() => void api.openClaudeConfig()}
+			>
+				<FileJson class="size-3.5" />
+				<span class="truncate"
+					>{t('projects.source', { path: displayPath(report.configPath) })}</span
+				>
+			</Button>
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-				{t('projects.count', { count: exact(report.projects.length) })}
+				{t('projects.count', { count: exact(rows.length) })}
 			</span>
 		</div>
 
 		{#if lastBackup}
 			<p class="shrink-0 text-xs text-muted-foreground">
-				{t('projects.backupWritten', { path: lastBackup })}
+				{t('projects.backupWritten', { path: displayPath(lastBackup) })}
 			</p>
 		{/if}
 
@@ -332,27 +385,34 @@
 					</Table.Header>
 					<Table.Body>
 						{#each table.rows as project (project.path + (project.transcriptDir ?? ''))}
-							<Table.Row>
+							<Table.Row
+								class="cursor-pointer"
+								onclick={() =>
+									void goto(
+										resolve('/projects/[path]', { path: encodeURIComponent(project.path) })
+									)}
+							>
 								<Table.Cell
-									class="max-w-64 truncate font-mono text-xs @xl:max-w-96"
-									title={project.path}
+									class="max-w-36 truncate font-mono text-xs @md:max-w-52 @2xl:max-w-72"
+									title={displayPath(project.path)}
 								>
-									{project.path}
-								</Table.Cell>
-								<Table.Cell>
-									<div class="flex flex-wrap gap-1">
-										{#if !project.registered}
-											<Badge variant="outline">{t('projects.badge.unregistered')}</Badge>
+									<span class="flex items-center gap-2">
+										<span class="truncate">{displayPath(project.path)}</span>
+										{#if adviceFor(project)}
+											<Tooltip.Root>
+												<Tooltip.Trigger>
+													{#snippet child({ props })}
+														<span {...props} class="shrink-0 text-amber-500">
+															<TriangleAlert class="size-3.5" />
+														</span>
+													{/snippet}
+												</Tooltip.Trigger>
+												<Tooltip.Content class="max-w-72 text-xs font-normal">
+													{adviceFor(project)}
+												</Tooltip.Content>
+											</Tooltip.Root>
 										{/if}
-										{#if !project.dirExists}
-											<Badge variant="destructive">{t('projects.badge.missingDir')}</Badge>
-										{/if}
-										{#if project.duplicateGroup}
-											<Badge variant="secondary" title={t('projects.badge.duplicate.hint')}>
-												{t('projects.badge.duplicate')}
-											</Badge>
-										{/if}
-									</div>
+									</span>
 								</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">{exact(project.sessions)}</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">
@@ -369,7 +429,7 @@
 									{compact(project.outputTokens)}
 								</Table.Cell>
 								<Table.Cell class={[CLASS.transcriptBytes, 'text-right tabular-nums']}>
-									{#if project.transcriptFiles > 0}
+									{#if project.transcriptDir}
 										{exact(project.transcriptFiles)} · {formatBytes(project.transcriptBytes)}
 									{:else}
 										—
@@ -379,7 +439,11 @@
 									{formatWhen(project.lastTs)}
 								</Table.Cell>
 								<Table.Cell>
-									<div class="flex justify-end gap-1">
+									<div
+										class="flex justify-end gap-1"
+										role="presentation"
+										onclick={(event) => event.stopPropagation()}
+									>
 										{#if project.registered}
 											<Tooltip.Provider>
 												<Tooltip.Root>
@@ -462,11 +526,11 @@
 		if (!open) deleteTarget = null;
 	}}
 >
-	<AlertDialog.Content class="max-w-xl">
+	<AlertDialog.Content class="max-h-[calc(100dvh-2rem)] max-w-xl overflow-auto">
 		<AlertDialog.Header>
 			<AlertDialog.Title>{t('projects.delete.title')}</AlertDialog.Title>
-			<AlertDialog.Description>
-				{t('projects.delete.body', { path: deleteTarget?.transcriptDir ?? '' })}
+			<AlertDialog.Description class="wrap-anywhere">
+				{t('projects.delete.body', { path: displayPath(deleteTarget?.transcriptDir ?? '') })}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 
@@ -489,8 +553,8 @@
 					</Table.Body>
 				</Table.Root>
 
-				{#if table.rows.length === 0}
-					<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+				{#if deleteFiles.length === 0}
+					<p class="p-4 text-sm text-muted-foreground">{t('projects.detail.noFiles')}</p>
 				{/if}
 			</div>
 			<p class="text-xs text-muted-foreground tabular-nums">
@@ -507,11 +571,7 @@
 
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel disabled={deleteBusy}>{t('common.cancel')}</AlertDialog.Cancel>
-			<Button
-				variant="destructive"
-				disabled={deleteBusy || !deleteFiles || deleteFiles.length === 0}
-				onclick={confirmDelete}
-			>
+			<Button variant="destructive" disabled={deleteBusy || !deleteFiles} onclick={confirmDelete}>
 				{deleteBusy ? t('projects.delete.busy') : t('projects.delete.confirm')}
 			</Button>
 		</AlertDialog.Footer>
@@ -527,8 +587,8 @@
 	<AlertDialog.Content>
 		<AlertDialog.Header>
 			<AlertDialog.Title>{t('projects.remove.title')}</AlertDialog.Title>
-			<AlertDialog.Description>
-				{t('projects.remove.body', { path: removeTarget?.path ?? '' })}
+			<AlertDialog.Description class="wrap-anywhere">
+				{t('projects.remove.body', { path: displayPath(removeTarget?.path ?? '') })}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 
@@ -551,15 +611,21 @@
 		if (!open) settingsTarget = null;
 	}}
 >
-	<Dialog.Content class="max-w-2xl">
+	<Dialog.Content
+		class="max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] overflow-auto sm:max-w-2xl"
+	>
 		<Dialog.Header>
 			<Dialog.Title>{t('projects.settings.title')}</Dialog.Title>
-			<Dialog.Description>
-				{t('projects.settings.body', { path: settingsTarget?.path ?? '' })}
+			<Dialog.Description class="wrap-anywhere">
+				{t('projects.settings.body', { path: displayPath(settingsTarget?.path ?? '') })}
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<Textarea bind:value={settingsText} class="min-h-72 font-mono text-xs" spellcheck={false} />
+		<Textarea
+			bind:value={settingsText}
+			class="min-h-40 font-mono text-xs sm:min-h-72"
+			spellcheck={false}
+		/>
 
 		{#if settingsError}
 			<p class="text-xs text-destructive">{settingsError}</p>

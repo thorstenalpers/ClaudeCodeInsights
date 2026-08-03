@@ -1,16 +1,27 @@
 <script lang="ts">
-	import { api, type Rhythm } from '$lib/api';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { api, type ActivityRow, type Rhythm } from '$lib/api';
+	import { nav } from '$lib/nav.svelte';
+	import ResetView from '$lib/components/reset-view.svelte';
+	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { exact } from '$lib/format';
+	import { compact, exact, formatWhen } from '$lib/format';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { costOfSplit } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { createTable } from '$lib/table.svelte';
 
 	let rhythm = $state<Rhythm | null>(null);
+	let rows = $state<ActivityRow[] | null>(null);
 	let error = $state<string | null>(null);
 	let loading = $state(true);
 
@@ -39,6 +50,96 @@
 			cancelled = true;
 		};
 	});
+
+	$effect(() => {
+		void scan.dataVersion;
+		if (!isHosted) return;
+
+		let cancelled = false;
+		api
+			.listActivities()
+			.then((value) => {
+				if (!cancelled) rows = value;
+			})
+			.catch(() => {
+				// The grid below already reports a failure of the same database.
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	const COLUMNS = [
+		{ id: 'activity', label: 'sessions.column.activity' as const },
+		{ id: 'sessions', label: 'cost.column.sessions' as const, numeric: true },
+		{ id: 'turns', label: 'cost.column.turns' as const, numeric: true },
+		{
+			id: 'projects',
+			label: 'nav.projects' as const,
+			numeric: true,
+			class: 'hidden @md:table-cell'
+		},
+		{
+			id: 'inputTokens',
+			label: 'cost.column.input' as const,
+			numeric: true,
+			class: 'hidden @xl:table-cell'
+		},
+		{
+			id: 'outputTokens',
+			label: 'cost.column.output' as const,
+			numeric: true,
+			class: 'hidden @xl:table-cell'
+		},
+		{
+			id: 'cacheTokens',
+			label: 'sessions.column.cache' as const,
+			numeric: true,
+			class: 'hidden @3xl:table-cell'
+		},
+		{
+			id: 'lastTs',
+			label: 'sessions.column.last' as const,
+			class: 'hidden @2xl:table-cell'
+		},
+		{ id: 'cost', label: 'cost.column.cost' as const, numeric: true }
+	];
+
+	const CLASS: Record<string, string> = Object.fromEntries(
+		COLUMNS.map((column) => [column.id, 'class' in column ? (column.class ?? '') : ''])
+	);
+
+	function label(activity: string): string {
+		const key = `activity.${activity}` as MessageKey;
+		const named = t(key);
+		return named === key ? activity : named;
+	}
+
+	const cacheOf = (row: ActivityRow) => row.cacheReadTokens + row.cacheWriteTokens;
+
+	/** Opens the sessions behind a row, with the activity already filtered. */
+	function openSessions(activity: string): void {
+		nav.sessionActivity = activity;
+		void goto(resolve('/sessions'));
+	}
+
+	const table = createTable<ActivityRow>(
+		() => rows ?? [],
+		{
+			// Sorted and filtered on the name a reader sees, not on the id behind it.
+			activity: (row) => label(row.activity),
+			sessions: (row) => row.sessions,
+			turns: (row) => row.turns,
+			projects: (row) => row.projects,
+			inputTokens: (row) => row.inputTokens,
+			outputTokens: (row) => row.outputTokens,
+			cacheTokens: cacheOf,
+			lastTs: (row) => row.lastTs ?? '',
+			cost: (row) => costOfSplit(row.byModel)
+		},
+		{ sort: 'sessions' }
+	);
 
 	const HOURS = [...Array(24).keys()];
 
@@ -96,6 +197,79 @@
 				</Badge>
 			{/if}
 		</div>
+
+		{#if rows && rows.length > 0}
+			<div class="flex shrink-0 flex-wrap items-center gap-2">
+				<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
+				<ResetView show={table.dirty} onreset={() => table.reset()} />
+			</div>
+
+			<div
+				class="shrink-0 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
+			>
+				<Table.Root>
+					<Table.Header class="bg-background">
+						<Table.Row>
+							{#each COLUMNS as column (column.id)}
+								<SortHeader
+									{...column}
+									label={t(column.label)}
+									direction={table.direction(column.id)}
+									rank={table.rank(column.id)}
+									multi={table.sorts.length > 1}
+									kind={table.kind(column.id)}
+									filtered={table.isFiltered(column.id)}
+									options={table.options(column.id)}
+									chosen={table.chosen(column.id)}
+									text={table.textFilter(column.id)}
+									range={table.range(column.id)}
+									onsort={(id: string, additive: boolean) => table.toggle(id, additive)}
+									ontoggle={(id: string, value: string) => table.toggleValue(id, value)}
+									ontext={(id: string, value: string) => table.setText(id, value)}
+									onrange={(id: string, bound: 'min' | 'max', value: string) =>
+										table.setRange(id, bound, value)}
+									onclear={(id: string) => table.clearFilter(id)}
+								/>
+							{/each}
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each table.rows as row (row.activity)}
+							<!-- Into the sessions behind the number: the sessions page
+							     takes the filter from the URL. -->
+							<Table.Row class="cursor-pointer" onclick={() => openSessions(row.activity)}>
+								<Table.Cell class="font-medium">{label(row.activity)}</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">{exact(row.sessions)}</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">{exact(row.turns)}</Table.Cell>
+								<Table.Cell class={[CLASS.projects, 'text-right tabular-nums']}>
+									{exact(row.projects)}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.inputTokens, 'text-right tabular-nums']}>
+									{compact(row.inputTokens)}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.outputTokens, 'text-right tabular-nums']}>
+									{compact(row.outputTokens)}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.cacheTokens, 'text-right tabular-nums']}>
+									{compact(cacheOf(row))}
+								</Table.Cell>
+								<Table.Cell class={[CLASS.lastTs, 'whitespace-nowrap text-muted-foreground']}>
+									{formatWhen(row.lastTs)}
+								</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">
+									{@const cost = costOfSplit(row.byModel)}
+									{cost === null ? t('common.none') : region.format(cost)}
+								</Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+
+				{#if table.rows.length === 0}
+					<p class="p-4 text-sm text-muted-foreground">{t('common.noMatch')}</p>
+				{/if}
+			</div>
+		{/if}
 
 		<div class="overflow-x-auto rounded-md border p-4">
 			<div class="flex min-w-max flex-col gap-1">

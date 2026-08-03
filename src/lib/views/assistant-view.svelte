@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Mic from '@lucide/svelte/icons/mic';
+	import Square from '@lucide/svelte/icons/square';
 	import Send from '@lucide/svelte/icons/send';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import Check from '@lucide/svelte/icons/check';
@@ -10,6 +12,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { cli } from '$lib/cli.svelte';
+	import { displayPath } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { region } from '$lib/region.svelte';
@@ -69,6 +72,32 @@
 		} finally {
 			busy = false;
 		}
+	}
+
+	// A spoken sentence is a command as often as a question, so it is routed
+	// before it is answered; a recognised command asks via toast first.
+	async function dictate() {
+		const heard = await voice.listen();
+		if (!heard) return;
+
+		busy = true;
+		try {
+			const routed = await assistant.obey(heard);
+			if (routed.clarify) {
+				question = heard;
+				answer = routed.clarify;
+				if (voice.speaks) void voice.speak(routed.clarify);
+			}
+			if (routed.handled) return;
+		} catch (cause) {
+			error = errorMessage(cause);
+			return;
+		} finally {
+			busy = false;
+		}
+
+		question = heard;
+		await ask();
 	}
 </script>
 
@@ -170,7 +199,7 @@
 
 			<span class="text-xs text-muted-foreground">
 				{#if usingLocal && status?.path}
-					{t('assistant.found', { path: status.path })}
+					{t('assistant.found', { path: displayPath(status.path) })}
 				{:else if !usingLocal}
 					{t('assistant.sendsData')}
 				{/if}
@@ -197,10 +226,45 @@
 				class="min-h-24"
 				disabled={busy}
 			/>
-			<Button class="self-end" disabled={busy || !question.trim()} onclick={ask}>
-				<Send class="size-4" />
-				{busy ? t('assistant.asking') : t('assistant.ask')}
-			</Button>
+			<div class="flex flex-wrap items-center justify-end gap-2">
+				<label class="mr-auto flex items-center gap-2 text-sm">
+					<input
+						type="checkbox"
+						class="size-4 accent-primary"
+						checked={voice.speaks}
+						onchange={(event: Event) =>
+							voice.setSpeaks((event.currentTarget as HTMLInputElement).checked)}
+					/>
+					{t('settings.voice.output')}
+				</label>
+
+				{#if voice.speaking}
+					<Button variant="outline" onclick={() => voice.silence()}>
+						<Square class="size-4" />
+						{t('voice.stop')}
+					</Button>
+				{/if}
+
+				<Button
+					variant="outline"
+					disabled={busy || voice.listening || voice.available === false}
+					title={voice.available === false ? t('settings.voice.unavailable') : t('voice.listen')}
+					onclick={dictate}
+				>
+					<Mic class={['size-4', voice.listening && 'text-destructive']} />
+					{voice.listening ? t('voice.listening') : t('voice.listen')}
+				</Button>
+				<Button disabled={busy || !question.trim()} onclick={ask}>
+					<Send class="size-4" />
+					{busy ? t('assistant.asking') : t('assistant.ask')}
+				</Button>
+			</div>
+
+			{#if voice.needsPrivacy}
+				<p class="rounded-md border border-amber-500/40 p-2 text-xs">{t('voice.privacy')}</p>
+			{:else if voice.error}
+				<p class="text-xs text-destructive">{t('voice.failed', { message: voice.error })}</p>
+			{/if}
 		</div>
 
 		{#if error}

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Info from '@lucide/svelte/icons/info';
 	import Filter from '@lucide/svelte/icons/list-filter';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
@@ -19,14 +21,14 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { compact, exact, formatWhen } from '$lib/format';
+	import { compact, displayPath, exact, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { nav } from '$lib/nav.svelte';
-	import { costOf } from '$lib/pricing.svelte';
+	import { FAMILIES, costOf, rates } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 
@@ -58,7 +60,7 @@
 			class: 'w-36 hidden @md:table-cell'
 		},
 		{ id: 'last', label: 'sessions.column.last', sort: 'last', info: 'info.lastActive' },
-		{ id: 'cost', label: 'sessions.column.cost', numeric: true, info: 'info.cost' },
+		{ id: 'cost', label: 'sessions.column.cost', sort: 'cost', numeric: true, info: 'info.cost' },
 		{
 			id: 'duration',
 			label: 'sessions.column.duration',
@@ -112,14 +114,23 @@
 		COLUMNS.map((column) => [column.id, column.class ?? ''])
 	);
 
-	const PAGE_SIZE = 25;
+	const PAGE_SIZES = [25, 50, 100, 250];
 
+	// The filters are the host's work, not the page's: it searches, filters and
+	// sorts the whole history and hands back one page of the result. Changing
+	// how many rows that page holds changes nothing about what was searched.
+	let pageSize = $state(25);
 	let page = $state(0);
 	let sort = $state('last');
 	let descending = $state(true);
 	let searchInput = $state('');
 	let search = $state('');
-	let activities = $state<string[]>([]);
+	// The activity page arrives here with its filter already chosen. Taken once,
+	// as the starting value: reading it again would undo the reader's next click
+	// on the very filter they came in through.
+	const arriving = nav.take();
+
+	let activities = $state<string[]>(arriving ? [arriving] : []);
 	let models = $state<string[]>([]);
 	let tags = $state<string[]>([]);
 	let projects = $state<string[]>([]);
@@ -163,7 +174,7 @@
 	$effect(() => {
 		const query = {
 			page,
-			pageSize: PAGE_SIZE,
+			pageSize,
 			sort,
 			descending,
 			search: search || null,
@@ -173,7 +184,10 @@
 			projects,
 			branches,
 			from,
-			to
+			to,
+			// Sorting by cost happens in the host, over the whole history rather
+			// than over the page — so it needs the table the window prices with.
+			rates: FAMILIES.map((family) => ({ family: family.id, ...rates.for(family.id) }))
 		};
 		void scan.dataVersion;
 
@@ -536,7 +550,9 @@
 								</Table.Cell>
 
 								<Table.Cell class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}>
-									<span class="block truncate">{row.projectName ?? '—'}</span>
+									<span class="block truncate"
+										>{row.projectName ? displayPath(row.projectName) : '—'}</span
+									>
 									{#if row.gitBranch}
 										<span class="block truncate font-mono text-xs opacity-70">{row.gitBranch}</span>
 									{/if}
@@ -585,10 +601,38 @@
 				</Table.Root>
 			</div>
 
-			<div class="flex shrink-0 items-center justify-between">
-				<span class="text-xs text-muted-foreground tabular-nums">
-					{t('sessions.page', { page: result.page + 1, total: totalPages })}
-				</span>
+			<div class="flex shrink-0 flex-wrap items-center justify-between gap-2">
+				<div class="flex items-center gap-2">
+					<span class="text-xs text-muted-foreground tabular-nums">
+						{t('sessions.page', { page: result.page + 1, total: totalPages })}
+					</span>
+
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger>
+							{#snippet child({ props })}
+								<Button {...props} variant="outline" size="sm" class="h-7 gap-1 font-normal">
+									{t('sessions.perPage', { count: pageSize })}
+									<ChevronDown class="size-3.5 opacity-60" />
+								</Button>
+							{/snippet}
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="start" class="w-40">
+							{#each PAGE_SIZES as size (size)}
+								<DropdownMenu.Item
+									onSelect={() => {
+										pageSize = size;
+										page = 0;
+									}}
+								>
+									<span class="flex-1">{t('sessions.perPage', { count: size })}</span>
+									{#if pageSize === size}
+										<Check class="size-4" />
+									{/if}
+								</DropdownMenu.Item>
+							{/each}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
 				<div class="flex gap-1">
 					<Button
 						variant="outline"
