@@ -554,6 +554,16 @@ export const zh: Messages = {
 	'settings.voice.auto': '立即执行语音命令',
 	'settings.voice.auto.hint':
 		'不开启时，识别到的命令要先点一下才执行。无论如何，语音只能打开页面、重新扫描和切换主题，不能删除或写入。',
+	'settings.voice.recognition': 'Recognition languages',
+	'settings.voice.recognition.hint':
+		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
+	'settings.voice.recognition.none':
+		'Windows has no speech recognition installed at all on this machine.',
+	'settings.voice.recognition.missing':
+		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
+	'voice.language.missing':
+		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
+	'voice.language.none': 'none',
 	'voice.privacy':
 		'在“设置 › 隐私和安全性 › 语音”打开语音设置前，Windows 不会开始识别。识别本身仍在本机进行。',
 	'nav.logs': '日志',

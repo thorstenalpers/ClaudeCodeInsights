@@ -580,6 +580,16 @@ export const de: Messages = {
 	'settings.voice.auto': 'Sprachbefehle sofort ausführen',
 	'settings.voice.auto.hint':
 		'Ohne das wartet ein erkannter Befehl erst auf einen Klick. So oder so lassen sich nur Seiten öffnen, neu einlesen und das Thema wechseln — nichts, was löscht oder schreibt.',
+	'settings.voice.recognition': 'Erkennungssprachen',
+	'settings.voice.recognition.hint':
+		'Das Diktat braucht ein Sprachpaket für die eingestellte Sprache der App, getrennt von der Anzeigesprache und von den Stimmen installiert: Einstellungen › Zeit und Sprache › Spracherkennung › Sprache für die Spracherkennung.',
+	'settings.voice.recognition.none':
+		'Auf diesem Rechner ist überhaupt keine Spracherkennung installiert.',
+	'settings.voice.recognition.missing':
+		'Nichts davon spricht {language}, das Diktat verweigert also, solange die App darauf steht.',
+	'voice.language.missing':
+		'Windows hat auf diesem Rechner keine Spracherkennung für {language}. Installiere sie unter Einstellungen › Zeit und Sprache › Spracherkennung, oder stelle die App auf eine Sprache um, die vorhanden ist: {installed}.',
+	'voice.language.none': 'keine',
 	'voice.privacy':
 		'Windows startet die Erkennung erst, wenn die Spracheinstellung an ist: Einstellungen › Datenschutz und Sicherheit › Spracherkennung. Die Erkennung selbst läuft weiter auf diesem Rechner.',
 	'nav.logs': 'Protokoll',

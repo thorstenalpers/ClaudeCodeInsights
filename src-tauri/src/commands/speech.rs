@@ -13,6 +13,12 @@ pub fn recognize_speech(locale: String) -> Result<String> {
     speech::recognize(&locale)
 }
 
+/// The languages Windows can dictate in on this machine.
+#[tauri::command]
+pub fn list_speech_languages() -> Vec<String> {
+    speech::languages()
+}
+
 #[tauri::command]
 pub fn open_speech_settings() -> Result<()> {
     speech::open_settings()

@@ -58,6 +58,7 @@ pub fn run() {
             commands::speech::speech_available,
             commands::speech::recognize_speech,
             commands::speech::open_speech_settings,
+            commands::speech::list_speech_languages,
             commands::speech::list_microphones,
             commands::speech::open_sound_settings,
             commands::live::start_live,

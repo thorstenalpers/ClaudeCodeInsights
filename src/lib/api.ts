@@ -470,5 +470,6 @@ export const api = {
 		invoke<void>('speak_text', { id, speaker, text }),
 	stopSpeaking: () => invoke<void>('stop_speaking'),
 	openSpeechSettings: () => invoke<void>('open_speech_settings'),
+	listSpeechLanguages: () => invoke<string[]>('list_speech_languages'),
 	recognizeSpeech: (locale: string) => invoke<string>('recognize_speech', { locale })
 };

@@ -19,7 +19,7 @@
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
-	import { voice } from '$lib/voice.svelte';
+	import { languageName, voice } from '$lib/voice.svelte';
 
 	let status = $state<CliStatus | null>(null);
 	let providers = $state<ProviderInfo[]>([]);
@@ -264,6 +264,23 @@
 
 			{#if voice.needsPrivacy}
 				<p class="rounded-md border border-amber-500/40 p-2 text-xs">{t('voice.privacy')}</p>
+			{:else if voice.missingLanguage}
+				<div class="flex flex-col items-start gap-2 rounded-md border border-amber-500/40 p-2">
+					<p class="text-xs">
+						{t('voice.language.missing', {
+							language: languageName(voice.missingLanguage),
+							installed: voice.recognizes.map(languageName).join(', ') || t('voice.language.none')
+						})}
+					</p>
+					<Button
+						variant="outline"
+						size="sm"
+						class="h-8 font-normal"
+						onclick={() => void api.openSpeechSettings()}
+					>
+						{t('settings.voice.windows.open')}
+					</Button>
+				</div>
 			{:else if voice.error}
 				<p class="text-xs text-destructive">{t('voice.failed', { message: voice.error })}</p>
 			{/if}

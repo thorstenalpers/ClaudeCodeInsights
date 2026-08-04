@@ -65,6 +65,24 @@ pub fn microphones() -> Vec<Microphone> {
         .unwrap_or_default()
 }
 
+/// Whether one of the installed recogniser languages covers `wanted`.
+///
+/// Matched on the primary subtag: a machine with `de-DE` dictates German for an
+/// app set to plain `de`, and refusing that would send the user looking for a
+/// pack they already have.
+fn supports(installed: &[String], wanted: &str) -> bool {
+    let base = |tag: &str| {
+        tag.to_lowercase()
+            .replace('_', "-")
+            .split('-')
+            .next()
+            .unwrap_or_default()
+            .to_owned()
+    };
+    let wanted = base(wanted);
+    installed.iter().any(|tag| base(tag) == wanted)
+}
+
 /// Opens the page where the default input device is set.
 pub fn open_sound_settings() -> Result<()> {
     #[cfg(windows)]
@@ -108,7 +126,28 @@ mod imp {
         SpeechRecognizer::new().is_ok()
     }
 
+    /// The languages this machine can actually dictate in.
+    ///
+    /// Installed separately from the display language and from the voices, so
+    /// an English Windows with the app set to German has none for it — which is
+    /// the whole of "The requested language is not supported".
+    pub fn languages() -> Vec<String> {
+        SpeechRecognizer::SupportedTopicLanguages()
+            .into_iter()
+            .flatten()
+            .filter_map(|language| language.LanguageTag().ok())
+            .map(|tag| tag.to_string())
+            .collect()
+    }
+
     pub fn recognize(locale: &str) -> Result<String> {
+        let installed = languages();
+        if !installed.is_empty() && !super::supports(&installed, locale) {
+            return Err(Error::BadRequest(format!(
+                "speech-language-missing:{locale}"
+            )));
+        }
+
         let recognizer = match language(locale) {
             Some(language) => SpeechRecognizer::Create(&language),
             None => SpeechRecognizer::new(),
@@ -163,9 +202,13 @@ mod imp {
             "speech recognition needs Windows".to_owned(),
         ))
     }
+
+    pub fn languages() -> Vec<String> {
+        Vec::new()
+    }
 }
 
-pub use imp::{available, open_settings, recognize};
+pub use imp::{available, languages, open_settings, recognize};
 
 #[cfg(test)]
 mod tests {
@@ -190,6 +233,26 @@ mod tests {
         for entry in &found {
             println!("microphone {:40} default={}", entry.name, entry.is_default);
         }
+    }
+
+    #[test]
+    fn a_language_is_matched_on_its_primary_subtag() {
+        let installed = ["en-US".to_owned(), "en-GB".to_owned()];
+        assert!(supports(&installed, "en"));
+        assert!(
+            supports(&installed, "en-AU"),
+            "any English pack dictates en"
+        );
+        assert!(!supports(&installed, "de-DE"));
+        assert!(!supports(&installed, "de"));
+        assert!(supports(&["de-DE".to_owned()], "de_DE"), "underscores too");
+    }
+
+    #[test]
+    fn the_recogniser_languages_can_be_listed() {
+        // On a machine with speech installed this is the answer to "why does
+        // German fail here"; on one without, it must still not panic.
+        println!("recognition languages: {:?}", languages());
     }
 
     #[test]

@@ -572,6 +572,16 @@ export const hi: Messages = {
 	'settings.voice.auto': 'बोले गए आदेश तुरंत चलाएँ',
 	'settings.voice.auto.hint':
 		'इसके बिना पहचाना गया आदेश क्लिक की प्रतीक्षा करता है। दोनों ही स्थितियों में केवल पृष्ठ खोलना, दोबारा स्कैन और थीम बदलना ही बोला जा सकता है — कुछ भी मिटाने या लिखने वाला नहीं।',
+	'settings.voice.recognition': 'Recognition languages',
+	'settings.voice.recognition.hint':
+		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
+	'settings.voice.recognition.none':
+		'Windows has no speech recognition installed at all on this machine.',
+	'settings.voice.recognition.missing':
+		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
+	'voice.language.missing':
+		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
+	'voice.language.none': 'none',
 	'voice.privacy':
 		'जब तक Windows की वाक् सेटिंग चालू न हो, पहचान शुरू नहीं होती: सेटिंग्स › गोपनीयता और सुरक्षा › वाक्। पहचान फिर भी इसी मशीन पर चलती है।',
 	'nav.logs': 'लॉग',

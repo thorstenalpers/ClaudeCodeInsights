@@ -580,6 +580,16 @@ export const fr: Messages = {
 	'settings.voice.auto': 'Exécuter les commandes vocales aussitôt',
 	'settings.voice.auto.hint':
 		'Sans cela, une commande reconnue attend un clic. Dans les deux cas, seules l’ouverture d’une page, la relecture et le changement de thème sont possibles — rien qui supprime ou écrive.',
+	'settings.voice.recognition': 'Recognition languages',
+	'settings.voice.recognition.hint':
+		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
+	'settings.voice.recognition.none':
+		'Windows has no speech recognition installed at all on this machine.',
+	'settings.voice.recognition.missing':
+		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
+	'voice.language.missing':
+		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
+	'voice.language.none': 'none',
 	'voice.privacy':
 		'Windows ne lance pas la reconnaissance tant que son réglage vocal est désactivé : Paramètres › Confidentialité et sécurité › Voix. La reconnaissance reste exécutée sur cette machine.',
 	'nav.logs': 'Journal',

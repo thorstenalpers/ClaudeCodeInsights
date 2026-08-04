@@ -22,7 +22,7 @@
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
-	import { language, packChoice, voice } from '$lib/voice.svelte';
+	import { language, languageName, packChoice, voice } from '$lib/voice.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
 
@@ -32,6 +32,7 @@
 		void voice.check();
 		void voice.loadPacks();
 		void voice.loadMicrophones();
+		void voice.loadSpeechLanguages();
 	});
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
@@ -413,6 +414,36 @@
 						{t('settings.voice.mic.open')}
 					</Button>
 				</div>
+			</div>
+
+			<div class="flex flex-col gap-2 border-t pt-3">
+				<span class="text-xs text-muted-foreground">{t('settings.voice.recognition')}</span>
+				<p class="max-w-md text-xs text-muted-foreground">
+					{t('settings.voice.recognition.hint')}
+				</p>
+				{#if voice.recognizes.length > 0}
+					<div class="flex flex-wrap gap-1">
+						{#each voice.recognizes as tag (tag)}
+							<Badge
+								variant={language(tag) === language(i18n.intlLocale) ? 'default' : 'secondary'}
+								class="font-normal"
+							>
+								{languageName(tag)}
+							</Badge>
+						{/each}
+					</div>
+					{#if !voice.recognizes.some((tag) => language(tag) === language(i18n.intlLocale))}
+						<p class="max-w-md text-xs text-amber-600 dark:text-amber-500">
+							{t('settings.voice.recognition.missing', {
+								language: languageName(i18n.intlLocale)
+							})}
+						</p>
+					{/if}
+				{:else}
+					<p class="max-w-md text-xs text-muted-foreground">
+						{t('settings.voice.recognition.none')}
+					</p>
+				{/if}
 			</div>
 
 			<div class="flex flex-col gap-2 border-t pt-3">

@@ -573,6 +573,16 @@ export const ru: Messages = {
 	'settings.voice.auto': 'Выполнять голосовые команды сразу',
 	'settings.voice.auto.hint':
 		'Без этого распознанная команда ждёт щелчка. В любом случае голосом можно только открыть страницу, пересканировать и сменить тему — ничего, что удаляет или записывает.',
+	'settings.voice.recognition': 'Recognition languages',
+	'settings.voice.recognition.hint':
+		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
+	'settings.voice.recognition.none':
+		'Windows has no speech recognition installed at all on this machine.',
+	'settings.voice.recognition.missing':
+		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
+	'voice.language.missing':
+		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
+	'voice.language.none': 'none',
 	'voice.privacy':
 		'Windows не запустит распознавание, пока не включена речевая настройка: «Параметры › Конфиденциальность и защита › Речь». Само распознавание по-прежнему идёт на этой машине.',
 	'nav.logs': 'Журнал',

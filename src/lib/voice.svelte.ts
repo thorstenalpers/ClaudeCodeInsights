@@ -40,6 +40,16 @@ export function language(tag: string): string {
 	return tag.toLowerCase().replace('_', '-').split('-')[0];
 }
 
+/** A language tag as a person reads it, in the language they are reading in. */
+export function languageName(tag: string): string {
+	try {
+		return new Intl.DisplayNames([i18n.intlLocale], { type: 'language' }).of(tag) ?? tag;
+	} catch {
+		// A tag Windows knows but Intl does not is still worth showing as it is.
+		return tag;
+	}
+}
+
 class Voice {
 	speaks = $state<boolean>(
 		typeof localStorage === 'undefined' ? false : localStorage.getItem(SPEAK_KEY) === 'on'
@@ -65,6 +75,21 @@ class Voice {
 	async loadMicrophones(): Promise<void> {
 		if (!isHosted) return;
 		this.microphones = await api.listMicrophones().catch(() => []);
+	}
+
+	/**
+	 * The languages Windows can dictate in here.
+	 *
+	 * Installed apart from the display language and from the voices, so an
+	 * English Windows has none for German however the app is set.
+	 */
+	recognizes = $state<string[]>([]);
+	/** The language dictation was asked for and has no pack for, if any. */
+	missingLanguage = $state<string | null>(null);
+
+	async loadSpeechLanguages(): Promise<void> {
+		if (!isHosted) return;
+		this.recognizes = await api.listSpeechLanguages().catch(() => []);
 	}
 
 	/** The installed Windows voices, once the engine has listed them. */
@@ -287,11 +312,13 @@ class Voice {
 			const heard = await api.recognizeSpeech(i18n.intlLocale);
 			return heard.trim() === '' ? null : heard;
 		} catch (cause) {
-			// The host marks the one refusal the user can undo; everything else
+			// The host marks the two refusals the user can undo; everything else
 			// is passed through as Windows worded it.
 			const message = cause instanceof Error ? cause.message : String(cause);
 			this.needsPrivacy = message.includes('speech-privacy-not-accepted');
-			this.error = this.needsPrivacy ? null : message;
+			const missing = /speech-language-missing:(\S+)/.exec(message);
+			this.missingLanguage = missing?.[1] ?? null;
+			this.error = this.needsPrivacy || this.missingLanguage ? null : message;
 			return null;
 		} finally {
 			this.listening = false;

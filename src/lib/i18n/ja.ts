@@ -572,6 +572,16 @@ export const ja: Messages = {
 	'settings.voice.auto': '音声コマンドをすぐ実行する',
 	'settings.voice.auto.hint':
 		'これを切ると、聞き取ったコマンドはクリックを待ちます。いずれにせよ音声でできるのはページを開く、再スキャン、テーマの切り替えだけで、削除も書き込みもできません。',
+	'settings.voice.recognition': 'Recognition languages',
+	'settings.voice.recognition.hint':
+		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
+	'settings.voice.recognition.none':
+		'Windows has no speech recognition installed at all on this machine.',
+	'settings.voice.recognition.missing':
+		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
+	'voice.language.missing':
+		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
+	'voice.language.none': 'none',
 	'voice.privacy':
 		'Windows は音声設定を有効にするまで認識を開始しません（設定 › プライバシーとセキュリティ › 音声）。認識自体はこの端末で動きます。',
 	'nav.logs': 'ログ',
