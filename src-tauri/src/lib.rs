@@ -85,8 +85,6 @@ pub fn run() {
             commands::tts::list_voice_packs,
             commands::tts::voice_packs_folder,
             commands::tts::install_voice_pack,
-            commands::tts::search_voice_hub,
-            commands::tts::install_hub_voice,
             commands::tts::cancel_voice_pack,
             commands::tts::remove_voice_pack,
             commands::tts::speak_text,

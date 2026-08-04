@@ -520,13 +520,6 @@ export const ja: Messages = {
 		'パックは {path} にあります。手で置いたものは次回起動時に見つかります。',
 	'settings.voice.packs.hint':
 		'パックはこの端末で動くニューラル音声です。オフラインで話し、費用はかからず、読み上げた文が外に出ることもありません。取得がこのアプリの唯一のダウンロードです。',
-	'settings.voice.hub': 'Hugging Face から',
-	'settings.voice.hub.placeholder': '例: kokoro german',
-	'settings.voice.hub.search': '検索',
-	'settings.voice.hub.none': '見つかりませんでした。作者名や言語で試してください。',
-	'settings.voice.hub.blocked': 'ここでは話せません: {reason}',
-	'settings.voice.hub.hint':
-		'インストールできるのは sherpa-onnx 形式のリポジトリだけです（モデル、tokens.txt、espeak-ng-data フォルダ）。多くの Kokoro リポジトリは Python 用の .npz 音声を持つため、不足しているものを添えて一覧に出ます。',
 	'settings.voice.windows': 'Windows の音声',
 	'settings.voice.windows.hint':
 		'Windows 自身の音声は言語ごとにこのアプリの外で追加します: 設定 › 時刻と言語 › 音声認識 › 音声の管理 › 音声の追加。ここでのダウンロードは不要で、ウィンドウを再起動すると上の一覧に現れます。',

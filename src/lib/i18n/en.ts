@@ -524,14 +524,6 @@ export const en = {
 		'Packs live in {path}. Anything put there by hand is found on the next start.',
 	'settings.voice.packs.hint':
 		'A pack is a neural voice that runs on this machine: it speaks offline, costs nothing, and no sentence you have read out leaves the computer. Fetching one is the only download this app makes.',
-	'settings.voice.hub': 'From Hugging Face',
-	'settings.voice.hub.placeholder': 'e.g. kokoro german',
-	'settings.voice.hub.search': 'Search',
-	'settings.voice.hub.none':
-		'Nothing found. The hub knows a model by its name, so try the author or the language.',
-	'settings.voice.hub.blocked': 'Not speakable here: {reason}',
-	'settings.voice.hub.hint':
-		'Only repositories laid out for sherpa-onnx can be installed: a model, tokens.txt and an espeak-ng-data folder. Most Kokoro repositories carry .npz voices for the Python runtime instead, and are listed with what they lack.',
 	'settings.voice.windows': 'Windows voices',
 	'settings.voice.windows.hint':
 		'The voices Windows itself speaks with are installed per language, outside this app: Settings › Time & language › Speech › Manage voices › Add voices. They need no download here and appear in the list above after the window is restarted.',

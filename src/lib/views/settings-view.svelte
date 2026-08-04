@@ -25,8 +25,6 @@
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
 
-	let hubQuery = $state('');
-
 	$effect(() => {
 		void voice.loadPacks();
 	});
@@ -303,82 +301,6 @@
 				{#if voice.error}
 					<p class="text-xs text-destructive">{voice.error}</p>
 				{/if}
-			</div>
-
-			<div class="flex flex-col gap-2 border-t pt-3">
-				<span class="text-xs text-muted-foreground">{t('settings.voice.hub')}</span>
-				<form
-					class="flex flex-wrap items-center gap-2"
-					onsubmit={(event) => {
-						event.preventDefault();
-						void voice.searchHub(hubQuery);
-					}}
-				>
-					<Input
-						class="h-8 max-w-64 flex-1"
-						bind:value={hubQuery}
-						placeholder={t('settings.voice.hub.placeholder')}
-					/>
-					<Button
-						type="submit"
-						variant="outline"
-						size="sm"
-						class="h-8 font-normal"
-						disabled={voice.hubSearching || !hubQuery.trim()}
-					>
-						{t('settings.voice.hub.search')}
-					</Button>
-				</form>
-
-				{#each voice.hubResults as model (model.repo)}
-					<div class="flex flex-wrap items-center gap-2">
-						<span class="flex-1 text-sm break-all">
-							{model.repo}
-							<span class="text-xs text-muted-foreground">
-								{model.languages.join(', ')}
-								{model.megabytes > 0
-									? ` · ${t('settings.voice.packs.size', { size: model.megabytes })}`
-									: ''}
-							</span>
-						</span>
-						{#if model.blocked}
-							<!-- Named rather than hidden: a reader who came with a link
-							     deserves to know why it is not on offer. -->
-							<span class="text-xs text-muted-foreground">
-								{t('settings.voice.hub.blocked', { reason: model.blocked })}
-							</span>
-						{:else if voice.isInstalling(`hub:${model.repo}`)}
-							<span class="text-xs text-muted-foreground tabular-nums">
-								{voice.percentOf(`hub:${model.repo}`) === null
-									? ''
-									: `${voice.percentOf(`hub:${model.repo}`)}%`}
-							</span>
-							<Button
-								variant="ghost"
-								size="sm"
-								class="h-8 font-normal"
-								onclick={() => void voice.cancel(`hub:${model.repo}`)}
-							>
-								{t('settings.voice.packs.cancel')}
-							</Button>
-						{:else}
-							<Button
-								variant="outline"
-								size="sm"
-								class="h-8 gap-1 font-normal"
-								onclick={() => void voice.install(`hub:${model.repo}`, model.repo, model.megabytes)}
-							>
-								<Download class="size-3.5" />
-								{t('settings.voice.packs.install')}
-							</Button>
-						{/if}
-					</div>
-				{/each}
-
-				{#if voice.hubNote}
-					<p class="max-w-md text-xs text-muted-foreground">{voice.hubNote}</p>
-				{/if}
-				<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.hub.hint')}</p>
 			</div>
 
 			<div class="flex flex-col gap-2 border-t pt-3">

@@ -519,13 +519,6 @@ export const hi: Messages = {
 		'पैकेज {path} में रहते हैं। वहाँ हाथ से रखी चीज़ें अगली बार शुरू होने पर मिल जाती हैं।',
 	'settings.voice.packs.hint':
 		'पैकेज एक न्यूरल आवाज़ है जो इसी मशीन पर चलती है: यह ऑफ़लाइन बोलती है, कुछ नहीं लेती, और पढ़ा गया कोई वाक्य कंप्यूटर से बाहर नहीं जाता। इसे लाना ही इस ऐप का इकलौता डाउनलोड है।',
-	'settings.voice.hub': 'Hugging Face से',
-	'settings.voice.hub.placeholder': 'जैसे kokoro german',
-	'settings.voice.hub.search': 'खोजें',
-	'settings.voice.hub.none': 'कुछ नहीं मिला। लेखक का नाम या भाषा आज़माएँ।',
-	'settings.voice.hub.blocked': 'यहाँ बोला नहीं जा सकता: {reason}',
-	'settings.voice.hub.hint':
-		'केवल sherpa-onnx लेआउट वाले रिपॉज़िटरी इंस्टॉल हो सकते हैं: एक मॉडल, tokens.txt और espeak-ng-data फ़ोल्डर। अधिकतर Kokoro रिपॉज़िटरी Python रनटाइम के लिए .npz आवाज़ें लाते हैं और उनकी कमी के साथ सूचीबद्ध होते हैं।',
 	'settings.voice.windows': 'Windows आवाज़ें',
 	'settings.voice.windows.hint':
 		'Windows की अपनी आवाज़ें इस ऐप के बाहर हर भाषा के लिए इंस्टॉल होती हैं: सेटिंग्स › समय और भाषा › वाक् › आवाज़ें प्रबंधित करें › आवाज़ें जोड़ें। यहाँ कोई डाउनलोड नहीं चाहिए; विंडो के पुनः प्रारंभ के बाद वे ऊपर दिखती हैं।',

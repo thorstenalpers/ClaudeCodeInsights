@@ -523,13 +523,6 @@ export const pt: Messages = {
 		'Os pacotes ficam em {path}. O que puseres lá à mão é encontrado no próximo arranque.',
 	'settings.voice.packs.hint':
 		'Um pacote é uma voz neural que corre nesta máquina: fala offline, não custa nada e nenhuma frase lida sai do computador. Obtê-lo é a única transferência que esta aplicação faz.',
-	'settings.voice.hub': 'Do Hugging Face',
-	'settings.voice.hub.placeholder': 'p. ex. kokoro german',
-	'settings.voice.hub.search': 'Procurar',
-	'settings.voice.hub.none': 'Nada encontrado. Tenta o nome do autor ou a língua.',
-	'settings.voice.hub.blocked': 'Aqui não se consegue falar: {reason}',
-	'settings.voice.hub.hint':
-		'Só se instalam repositórios com a disposição do sherpa-onnx: um modelo, tokens.txt e uma pasta espeak-ng-data. A maioria dos repositórios Kokoro traz vozes .npz para o runtime de Python e é listada com o que lhes falta.',
 	'settings.voice.windows': 'Vozes do Windows',
 	'settings.voice.windows.hint':
 		'As vozes do próprio Windows instalam-se por língua fora desta aplicação: Definições › Hora e idioma › Voz › Gerir vozes › Adicionar vozes. Não precisam de transferência aqui e aparecem acima depois de reiniciar a janela.',

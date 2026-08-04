@@ -36,8 +36,6 @@ pub enum Kind {
 pub enum Origin {
     /// One `.tar.bz2` from the sherpa-onnx release page.
     Archive { url: String },
-    /// A Hugging Face repository, downloaded file by file.
-    Hub { repo: String },
     /// A Kokoro export that has to be assembled before sherpa can speak it.
     ///
     /// The community exports carry the model and a NumPy `.npz` of voices and
@@ -137,37 +135,8 @@ pub struct PackInfo {
     pub voices: u32,
 }
 
-/// Every pack this machine knows: the named ones, plus whatever the user has
-/// pulled from the hub and left a manifest for.
-fn known() -> Vec<Pack> {
-    let mut packs = catalogue();
-    let Ok(root) = voices_dir() else {
-        return packs;
-    };
-    let Ok(entries) = fs::read_dir(root) else {
-        return packs;
-    };
-
-    for entry in entries.flatten() {
-        let manifest = entry.path().join(MANIFEST);
-        if !manifest.is_file() {
-            continue;
-        }
-        let Ok(text) = fs::read_to_string(&manifest) else {
-            continue;
-        };
-        match serde_json::from_str::<Pack>(&text) {
-            Ok(pack) if !packs.iter().any(|known| known.id == pack.id) => packs.push(pack),
-            Ok(_) => (),
-            Err(error) => log::warn!("voice pack: {} is unreadable: {error}", manifest.display()),
-        }
-    }
-
-    packs
-}
-
 fn find(id: &str) -> Option<Pack> {
-    known().into_iter().find(|pack| pack.id == id)
+    catalogue().into_iter().find(|pack| pack.id == id)
 }
 
 /// Where packs are unpacked: this app's own folder, never `~/.claude`.
@@ -225,7 +194,7 @@ pub fn folder() -> Result<String> {
 
 pub fn list() -> Result<Vec<PackInfo>> {
     let root = voices_dir()?;
-    Ok(known()
+    Ok(catalogue()
         .iter()
         .map(|pack| {
             let dir = root.join(&pack.dir);
@@ -295,11 +264,6 @@ pub fn install<R: Runtime>(app: &AppHandle<R>, id: &str) -> Result<PackInfo> {
     fetch(id, &emitter(app))
 }
 
-/// Installs a voice the user found on the hub rather than one this app names.
-pub fn install_from_hub<R: Runtime>(app: &AppHandle<R>, repo: &str) -> Result<PackInfo> {
-    fetch_pack(&crate::hub::as_pack(repo)?, &emitter(app))
-}
-
 fn emitter<R: Runtime>(app: &AppHandle<R>) -> impl Fn(Progress) + use<'_, R> {
     |progress| {
         let _ = app.emit("voice:progress", progress);
@@ -334,7 +298,6 @@ fn fetch_pack(pack: &Pack, report: &dyn Fn(Progress)) -> Result<PackInfo> {
             );
             unpack(bytes, &voices_dir()?)?;
         }
-        Origin::Hub { repo } => crate::hub::install(pack, repo, report)?,
         Origin::KokoroExport {
             repo,
             model,

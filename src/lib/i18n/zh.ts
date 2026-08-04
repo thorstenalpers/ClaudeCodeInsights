@@ -502,13 +502,6 @@ export const zh: Messages = {
 	'settings.voice.packs.folder': '语音包位于 {path}。手动放进去的内容会在下次启动时被找到。',
 	'settings.voice.packs.hint':
 		'语音包是在本机运行的神经语音：离线朗读，不收费用，读出的句子不会离开这台电脑。取用它是本应用唯一的下载。',
-	'settings.voice.hub': '来自 Hugging Face',
-	'settings.voice.hub.placeholder': '例如 kokoro german',
-	'settings.voice.hub.search': '搜索',
-	'settings.voice.hub.none': '没有找到。试试作者名或语言。',
-	'settings.voice.hub.blocked': '这里无法朗读：{reason}',
-	'settings.voice.hub.hint':
-		'只能安装符合 sherpa-onnx 布局的仓库：一个模型、tokens.txt 和 espeak-ng-data 文件夹。多数 Kokoro 仓库带的是给 Python 运行时用的 .npz 声音，会连同缺少的部分一起列出。',
 	'settings.voice.windows': 'Windows 语音',
 	'settings.voice.windows.hint':
 		'Windows 自带的语音按语言在本应用之外安装：设置 › 时间和语言 › 语音 › 管理语音 › 添加语音。这里无需下载，重启窗口后会出现在上面的列表中。',

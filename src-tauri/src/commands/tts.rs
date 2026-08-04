@@ -1,5 +1,4 @@
 use crate::error::Result;
-use crate::hub::{self, HubModel};
 use crate::tts::{self, PackInfo};
 
 #[tauri::command]
@@ -21,22 +20,6 @@ pub fn list_voice_packs() -> Result<Vec<PackInfo>> {
 #[tauri::command]
 pub async fn install_voice_pack(app: tauri::AppHandle, id: String) -> Result<PackInfo> {
     tauri::async_runtime::spawn_blocking(move || tts::install(&app, &id))
-        .await
-        .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
-}
-
-/// Searches Hugging Face for voices, and says which of them are speakable.
-#[tauri::command]
-pub async fn search_voice_hub(query: String) -> Result<Vec<HubModel>> {
-    tauri::async_runtime::spawn_blocking(move || hub::search(&query))
-        .await
-        .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
-}
-
-/// Installs a voice from a Hugging Face repository, file by file.
-#[tauri::command]
-pub async fn install_hub_voice(app: tauri::AppHandle, repo: String) -> Result<PackInfo> {
-    tauri::async_runtime::spawn_blocking(move || tts::install_from_hub(&app, &repo))
         .await
         .map_err(|error| crate::error::Error::BadRequest(error.to_string()))?
 }

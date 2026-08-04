@@ -305,18 +305,6 @@ export type VoicePack = {
 	voices: number;
 };
 
-/** A Hugging Face model, with the verdict on whether this app can speak it. */
-export type HubVoice = {
-	repo: string;
-	likes: number;
-	downloads: number;
-	languages: string[];
-	kind: 'kokoro' | 'vits' | null;
-	megabytes: number;
-	/** Null when installable; otherwise what the repository is missing. */
-	blocked: string | null;
-};
-
 /** How far a run may go before it asks. */
 export type Rule = 'ask' | 'readsFree';
 
@@ -457,8 +445,6 @@ export const api = {
 	listVoicePacks: () => invoke<VoicePack[]>('list_voice_packs'),
 	voicePacksFolder: () => invoke<string>('voice_packs_folder'),
 	installVoicePack: (id: string) => invoke<VoicePack>('install_voice_pack', { id }),
-	searchVoiceHub: (query: string) => invoke<HubVoice[]>('search_voice_hub', { query }),
-	installHubVoice: (repo: string) => invoke<VoicePack>('install_hub_voice', { repo }),
 	cancelVoicePack: (id: string) => invoke<void>('cancel_voice_pack', { id }),
 	removeVoicePack: (id: string) => invoke<void>('remove_voice_pack', { id }),
 	speakText: (id: string, speaker: number, text: string) =>

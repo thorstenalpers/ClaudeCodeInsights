@@ -7,7 +7,7 @@
  * chosen in the same place, because to a reader they are one setting.
  */
 import { toast } from 'svelte-sonner';
-import { api, type HubVoice, type VoicePack } from '$lib/api';
+import { api, type VoicePack } from '$lib/api';
 import { i18n, t } from '$lib/i18n/index.svelte';
 import { isHosted } from '$lib/ipc.svelte';
 import { logs } from '$lib/logs.svelte';
@@ -88,47 +88,14 @@ class Voice {
 		this.folder = await api.voicePacksFolder().catch(() => '');
 	}
 
-	/** What the hub was asked for, and what it answered. */
-	hubResults = $state<HubVoice[]>([]);
-	hubSearching = $state(false);
-	/** Empty until a search has run; a note when it found nothing usable. */
-	hubNote = $state<string | null>(null);
-
-	/** Asks Hugging Face for voices by name, e.g. "kokoro german". */
-	async searchHub(query: string): Promise<void> {
-		if (!isHosted || !query.trim()) return;
-		this.hubSearching = true;
-		this.hubNote = null;
-		logs.info('voice', `searching the hub for ${query}`);
-		try {
-			this.hubResults = await api.searchVoiceHub(query);
-			if (this.hubResults.length === 0) this.hubNote = t('settings.voice.hub.none');
-		} catch (cause) {
-			this.hubResults = [];
-			this.hubNote = cause instanceof Error ? cause.message : String(cause);
-		} finally {
-			this.hubSearching = false;
-		}
-	}
-
-	/**
-	 * Fetches a pack; minutes of download, so the caller shows the state.
-	 *
-	 * `repo` is set when the pack comes from the hub rather than from the list
-	 * this app ships, which is the only difference the download makes.
-	 */
-	async install(id: string, repo?: string, megabytes?: number): Promise<void> {
+	/** Fetches a pack; minutes of download, so the caller shows the state. */
+	async install(id: string): Promise<void> {
 		const pack = this.packs.find((entry) => entry.id === id);
-		await this.fetching(
-			id,
-			pack?.label ?? id.replace(/^hub:/, ''),
-			pack?.megabytes ?? megabytes ?? 0,
-			async () => {
-				const installed = repo ? await api.installHubVoice(repo) : await api.installVoicePack(id);
-				await this.loadPacks();
-				return installed.label;
-			}
-		);
+		await this.fetching(id, pack?.label ?? id, pack?.megabytes ?? 0, async () => {
+			const installed = await api.installVoicePack(id);
+			await this.loadPacks();
+			return installed.label;
+		});
 	}
 
 	/**

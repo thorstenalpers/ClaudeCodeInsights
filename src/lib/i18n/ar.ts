@@ -510,13 +510,6 @@ export const ar: Messages = {
 		'الحزم في {path}. وما تضعه هناك يدويًا يُعثر عليه عند التشغيل التالي.',
 	'settings.voice.packs.hint':
 		'الحزمة صوت عصبي يعمل على هذا الجهاز: ينطق دون اتصال، بلا تكلفة، ولا تغادر أي جملة تُقرأ هذا الحاسوب. جلبها هو التنزيل الوحيد الذي يقوم به هذا التطبيق.',
-	'settings.voice.hub': 'من Hugging Face',
-	'settings.voice.hub.placeholder': 'مثال: kokoro german',
-	'settings.voice.hub.search': 'بحث',
-	'settings.voice.hub.none': 'لم يُعثر على شيء. جرّب اسم المؤلف أو اللغة.',
-	'settings.voice.hub.blocked': 'غير قابل للنطق هنا: {reason}',
-	'settings.voice.hub.hint':
-		'يمكن تثبيت المستودعات بتخطيط sherpa-onnx فقط: نموذج وtokens.txt ومجلد espeak-ng-data. معظم مستودعات Kokoro تحمل أصواتًا بصيغة .npz لبيئة بايثون، وتُدرج مع ما ينقصها.',
 	'settings.voice.windows': 'أصوات Windows',
 	'settings.voice.windows.hint':
 		'تُثبَّت أصوات Windows لكل لغة خارج هذا التطبيق: الإعدادات › الوقت واللغة › الكلام › إدارة الأصوات › إضافة أصوات. لا تحتاج إلى تنزيل هنا وتظهر في القائمة أعلاه بعد إعادة تشغيل النافذة.',
