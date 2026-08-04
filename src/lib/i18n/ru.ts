@@ -597,6 +597,10 @@ export const ru: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows не запустит распознавание, пока не включена речевая настройка: «Параметры › Конфиденциальность и защита › Речь». Само распознавание по-прежнему идёт на этой машине.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Журнал',
 	'nav.logs.description': 'Чем занимались приложение и его хост',
 	'logs.both': 'Оба',

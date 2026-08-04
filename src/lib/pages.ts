@@ -88,6 +88,24 @@ export const PAGES: readonly PageDefinition[] = [
 	}
 ];
 
+export type PageGroup = {
+	/** Named above the entries; dropped when the rail has no room for it. */
+	label: MessageKey;
+	pages: readonly PageDefinition[];
+};
+
+/**
+ * The rail's entries, in the three groups they fall into.
+ *
+ * What is happening, what has happened, and what should happen next — the same
+ * order as before, with the seams named.
+ */
+export const PAGE_GROUPS: readonly PageGroup[] = [
+	{ label: 'nav.group.now', pages: PAGES.slice(0, 2) },
+	{ label: 'nav.group.past', pages: PAGES.slice(2, 8) },
+	{ label: 'nav.group.next', pages: PAGES.slice(8) }
+];
+
 /** Shown in the rail only while the log view is switched on in settings. */
 export const LOG_PAGE: PageDefinition = {
 	href: '/logs',

@@ -26,7 +26,7 @@
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { nav } from '$lib/nav.svelte';
-	import { INFO_PAGE, LOG_PAGE, PAGES, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
+	import { INFO_PAGE, LOG_PAGE, PAGE_GROUPS, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
 	import { scan } from '$lib/scan.svelte';
 	import { theme } from '$lib/theme.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -92,12 +92,36 @@
 		requestAnimationFrame(() => requestAnimationFrame(() => (starting = false)));
 	});
 
-	const railPages = PAGES;
 	// The log sits with the other two that are about the app rather than about
 	// the work, directly above the info it is usually opened next to.
 	const footerPages = $derived(
 		logs.enabled ? [LOG_PAGE, INFO_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
 	);
+	/** The views of the open project, hung under the projects entry. */
+	const subPages = $derived.by(() => {
+		const path = page.params.path;
+		if (!path) return null;
+		const encoded = encodeURIComponent(path);
+		return {
+			parent: '/projects',
+			items: [
+				{ href: resolve('/projects/[path]', { path: encoded }), label: t('nav.overview') },
+				{
+					href: resolve('/projects/[path]/time', { path: encoded }),
+					label: t('projects.detail.time')
+				},
+				{
+					href: resolve('/projects/[path]/sessions', { path: encoded }),
+					label: t('projects.detail.sessions')
+				},
+				{
+					href: resolve('/projects/[path]/files', { path: encoded }),
+					label: t('projects.detail.files')
+				}
+			]
+		};
+	});
+
 	const current = $derived(pageFor(page.url.pathname));
 	const detailSessionId = $derived(page.params.id ?? null);
 	/** The activity a detail page is about, taken from the URL like the rest. */
@@ -141,10 +165,11 @@
 	}}
 >
 	<AppSidebar
-		pages={railPages}
+		groups={PAGE_GROUPS}
 		footer={footerPages}
-		active={activeHref(page.url.pathname)}
+		active={subPages ? page.url.pathname : activeHref(page.url.pathname)}
 		compact={short}
+		sub={subPages}
 	/>
 
 	<Sidebar.Inset class="flex h-dvh min-w-0 flex-col overflow-hidden">

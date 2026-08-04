@@ -602,6 +602,10 @@ export const en = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows will not start recognition until its speech setting is on: Settings › Privacy & security › Speech. Recognition itself still runs on this machine.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Log',
 	'nav.logs.description': 'What the app and its host have been doing',
 	'logs.both': 'Both',

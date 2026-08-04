@@ -602,6 +602,10 @@ export const es: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows no inicia el reconocimiento hasta que su ajuste de voz esté activado: Configuración › Privacidad y seguridad › Voz. El reconocimiento sigue ejecutándose en este equipo.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Registro',
 	'nav.logs.description': 'Lo que han estado haciendo la aplicación y su host',
 	'logs.both': 'Ambos',

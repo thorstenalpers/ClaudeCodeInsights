@@ -1,22 +1,33 @@
 <script lang="ts">
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { resolve } from '$app/paths';
 	import RailToggle from '$lib/components/rail-toggle.svelte';
 	import { t } from '$lib/i18n/index.svelte';
 	import { cn } from '$lib/utils';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import type { PageDefinition } from '$lib/pages';
+	import type { PageDefinition, PageGroup } from '$lib/pages';
 
 	type Props = {
-		pages: readonly PageDefinition[];
+		groups: readonly PageGroup[];
 		/** Pinned at the foot, in the order given. */
 		footer: PageDefinition[];
 		active: string;
-		/** Shorter rows and no gaps, for a window too low to hold the full set. */
+		/** Shorter rows, no gaps and no group names, for a window too low to
+		 *  hold the full set. */
 		compact?: boolean;
+		/**
+		 * The sub-pages of whatever is open, hung under their own entry.
+		 *
+		 * They exist only while something is open — a project has views, but
+		 * only once there is a project — so the rail is given them rather than
+		 * deriving them from a list it could hold on its own.
+		 */
+		sub?: { parent: string; items: { href: string; label: string }[] } | null;
 	};
 
-	let { pages, footer, active, compact = false }: Props = $props();
+	let { groups, footer, active, compact = false, sub = null }: Props = $props();
+
+	let expanded = $state(true);
 
 	/**
 	 * What a menu entry does under the pointer.
@@ -38,6 +49,48 @@
 	].join(' ');
 </script>
 
+{#snippet entry(page: PageDefinition)}
+	<Sidebar.MenuItem>
+		<Sidebar.MenuButton size={compact ? 'sm' : 'default'} isActive={active === page.href}>
+			{#snippet child({ props })}
+				<a
+					{...props}
+					href={resolve(page.href)}
+					class={cn((props as { class?: string }).class, HOVER)}
+				>
+					<page.icon />
+					<span>{t(page.label)}</span>
+				</a>
+			{/snippet}
+		</Sidebar.MenuButton>
+
+		{#if sub && sub.parent === page.href}
+			<!-- Folded away rather than gone: the arrow is the only thing that
+			     stays when the views are hidden, so there is a way back to them. -->
+			<Sidebar.MenuAction onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
+				<ChevronRight class={['transition-transform duration-150', expanded && 'rotate-90']} />
+				<span class="sr-only">{t('nav.subPages')}</span>
+			</Sidebar.MenuAction>
+
+			{#if expanded}
+				<Sidebar.MenuSub class={compact ? 'gap-0' : ''}>
+					{#each sub.items as item (item.href)}
+						<Sidebar.MenuSubItem>
+							<Sidebar.MenuSubButton
+								size={compact ? 'sm' : 'md'}
+								isActive={active === item.href}
+								href={item.href}
+							>
+								<span>{item.label}</span>
+							</Sidebar.MenuSubButton>
+						</Sidebar.MenuSubItem>
+					{/each}
+				</Sidebar.MenuSub>
+			{/if}
+		{/if}
+	</Sidebar.MenuItem>
+{/snippet}
+
 <Sidebar.Root collapsible="icon">
 	<Sidebar.Header>
 		<div class="flex h-8 items-center gap-1 px-1">
@@ -56,69 +109,26 @@
 	     overflow there, so on a low window the last icons were unreachable
 	     rather than merely out of sight. -->
 	<Sidebar.Content class="group-data-[collapsible=icon]:overflow-auto">
-		<Sidebar.Group>
-			<Sidebar.GroupContent>
-				<Sidebar.Menu class={compact ? 'gap-0' : 'gap-1'}>
-					{#each pages as page (page.href)}
-						<Sidebar.MenuItem>
-							<Tooltip.Root>
-								<Tooltip.Trigger>
-									{#snippet child({ props })}
-										<Sidebar.MenuButton
-											{...props}
-											size={compact ? 'sm' : 'default'}
-											isActive={active === page.href}
-										>
-											{#snippet child({ props: buttonProps })}
-												<a
-													{...buttonProps}
-													href={resolve(page.href)}
-													class={cn((buttonProps as { class?: string }).class, HOVER)}
-												>
-													<page.icon />
-													<span>{t(page.label)}</span>
-												</a>
-											{/snippet}
-										</Sidebar.MenuButton>
-									{/snippet}
-								</Tooltip.Trigger>
-								<Tooltip.Content side="right">{t(page.label)}</Tooltip.Content>
-							</Tooltip.Root>
-						</Sidebar.MenuItem>
-					{/each}
-				</Sidebar.Menu>
-			</Sidebar.GroupContent>
-		</Sidebar.Group>
+		{#each groups as group (group.label)}
+			<Sidebar.Group class={compact ? 'py-0' : ''}>
+				{#if !compact}
+					<Sidebar.GroupLabel>{t(group.label)}</Sidebar.GroupLabel>
+				{/if}
+				<Sidebar.GroupContent>
+					<Sidebar.Menu class={compact ? 'gap-0' : 'gap-1'}>
+						{#each group.pages as page (page.href)}
+							{@render entry(page)}
+						{/each}
+					</Sidebar.Menu>
+				</Sidebar.GroupContent>
+			</Sidebar.Group>
+		{/each}
 	</Sidebar.Content>
 
 	<Sidebar.Footer>
 		<Sidebar.Menu class={compact ? 'gap-0' : 'gap-1'}>
 			{#each footer as page (page.href)}
-				<Sidebar.MenuItem>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Sidebar.MenuButton
-									{...props}
-									size={compact ? 'sm' : 'default'}
-									isActive={active === page.href}
-								>
-									{#snippet child({ props: buttonProps })}
-										<a
-											{...buttonProps}
-											href={resolve(page.href)}
-											class={cn((buttonProps as { class?: string }).class, HOVER)}
-										>
-											<page.icon />
-											<span>{t(page.label)}</span>
-										</a>
-									{/snippet}
-								</Sidebar.MenuButton>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content side="right">{t(page.label)}</Tooltip.Content>
-					</Tooltip.Root>
-				</Sidebar.MenuItem>
+				{@render entry(page)}
 			{/each}
 		</Sidebar.Menu>
 	</Sidebar.Footer>

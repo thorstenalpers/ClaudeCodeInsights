@@ -596,6 +596,10 @@ export const hi: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'जब तक Windows की वाक् सेटिंग चालू न हो, पहचान शुरू नहीं होती: सेटिंग्स › गोपनीयता और सुरक्षा › वाक्। पहचान फिर भी इसी मशीन पर चलती है।',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'लॉग',
 	'nav.logs.description': 'ऐप और उसके होस्ट ने क्या किया',
 	'logs.both': 'दोनों',

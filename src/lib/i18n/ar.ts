@@ -586,6 +586,10 @@ export const ar: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'لن يبدأ Windows التعرّف قبل تشغيل إعداد الكلام: الإعدادات › الخصوصية والأمان › الكلام. والتعرّف نفسه يظل على هذا الجهاز.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'السجل',
 	'nav.logs.description': 'ما الذي فعله التطبيق ومضيفه',
 	'logs.both': 'كلاهما',

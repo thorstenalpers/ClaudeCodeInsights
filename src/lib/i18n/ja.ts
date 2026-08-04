@@ -596,6 +596,10 @@ export const ja: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows は音声設定を有効にするまで認識を開始しません（設定 › プライバシーとセキュリティ › 音声）。認識自体はこの端末で動きます。',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'ログ',
 	'nav.logs.description': 'アプリとホストが何をしてきたか',
 	'logs.both': '両方',

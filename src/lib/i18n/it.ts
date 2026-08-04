@@ -605,6 +605,10 @@ export const it: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows non avvia il riconoscimento finché la sua impostazione vocale è disattivata: Impostazioni › Privacy e sicurezza › Voce. Il riconoscimento resta su questa macchina.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Registro',
 	'nav.logs.description': "Che cosa hanno fatto l'app e il suo host",
 	'logs.both': 'Entrambi',

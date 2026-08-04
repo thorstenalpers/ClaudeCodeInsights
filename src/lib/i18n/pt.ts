@@ -601,6 +601,10 @@ export const pt: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'O Windows não inicia o reconhecimento enquanto a definição de voz estiver desligada: Definições › Privacidade e segurança › Voz. O reconhecimento continua a correr nesta máquina.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Registo',
 	'nav.logs.description': 'O que a aplicação e o seu host andaram a fazer',
 	'logs.both': 'Ambos',

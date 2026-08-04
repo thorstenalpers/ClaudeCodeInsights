@@ -604,6 +604,10 @@ export const fr: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows ne lance pas la reconnaissance tant que son réglage vocal est désactivé : Paramètres › Confidentialité et sécurité › Voix. La reconnaissance reste exécutée sur cette machine.',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Journal',
 	'nav.logs.description': "Ce que l'application et son hôte ont fait",
 	'logs.both': 'Les deux',

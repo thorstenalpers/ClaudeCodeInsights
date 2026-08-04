@@ -605,6 +605,10 @@ export const de: Messages = {
 	'voice.model.settings': 'Einstellungen öffnen',
 	'voice.privacy':
 		'Windows startet die Erkennung erst, wenn die Spracheinstellung an ist: Einstellungen › Datenschutz und Sicherheit › Spracherkennung. Die Erkennung selbst läuft weiter auf diesem Rechner.',
+	'nav.group.now': 'Jetzt',
+	'nav.group.past': 'Aufgezeichnet',
+	'nav.group.next': 'Arbeit',
+	'nav.subPages': 'Die Ansichten dieser Seite zeigen',
 	'nav.logs': 'Protokoll',
 	'nav.logs.description': 'Was die App und ihr Host getan haben',
 	'logs.both': 'Beide',

@@ -578,6 +578,10 @@ export const zh: Messages = {
 	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'在“设置 › 隐私和安全性 › 语音”打开语音设置前，Windows 不会开始识别。识别本身仍在本机进行。',
+	'nav.group.now': 'Now',
+	'nav.group.past': 'Recorded',
+	'nav.group.next': 'Work',
+	'nav.subPages': 'Show the views of this page',
 	'nav.logs': '日志',
 	'nav.logs.description': '应用及其宿主做过什么',
 	'logs.both': '两者',
