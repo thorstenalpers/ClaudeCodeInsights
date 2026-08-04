@@ -29,7 +29,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { Separator } from '$lib/components/ui/separator';
-	import { displayPath } from '$lib/format';
+	import { displayPath, folderName } from '$lib/format';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
@@ -180,12 +180,6 @@
 			.catch(() => (knownSessions = []));
 	});
 
-	/** The last folder of a path: the structure above it is not a name. */
-	function folderName(path: string): string {
-		const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
-		return parts.at(-1) ?? path;
-	}
-
 	/** Same directory, two spellings, one entry: `\` and `/` reach the same place. */
 	const sameProject = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
 
@@ -220,7 +214,11 @@
 				seen[key] = project;
 			}
 		}
-		return Object.values(seen).slice(0, SUB_LIMIT);
+		// Alphabetical by the name on screen: a rail is looked *up* in, and the
+		// order it was last worked in is no help for that.
+		return Object.values(seen)
+			.sort((a, b) => folderName(a.path).localeCompare(folderName(b.path)))
+			.slice(0, SUB_LIMIT);
 	});
 
 	const subs = $derived({

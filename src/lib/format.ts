@@ -62,6 +62,17 @@ export function formatTime(iso: string | null): string {
 }
 
 /**
+ * The last folder of a path, which is what a list of projects is read by.
+ *
+ * The structure above it is the same for every checkout on a machine and only
+ * costs width; the whole path stays available as a title.
+ */
+export function folderName(path: string): string {
+	const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
+	return parts.at(-1) ?? path;
+}
+
+/**
  * The clock down to the second.
  *
  * A live stream puts several lines inside the same minute, and without the

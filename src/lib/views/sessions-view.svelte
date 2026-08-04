@@ -22,7 +22,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import Folder from '@lucide/svelte/icons/folder';
-	import { compact, displayPath, exact, formatWhen } from '$lib/format';
+	import { compact, displayPath, exact, folderName, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
@@ -135,18 +135,17 @@
 	let models = $state<string[]>([]);
 	let tags = $state<string[]>([]);
 	let projects = $state<string[]>([]);
-
-	/** The last folder of a path: the structure above it is not a name. */
-	function folderName(path: string): string {
-		const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
-		return parts.at(-1) ?? path;
-	}
 	let branches = $state<string[]>([]);
 	let from = $state<string | null>(null);
 	let to = $state<string | null>(null);
 
 	let result = $state<SessionPage | null>(null);
 	let facets = $state<SessionFacets | null>(null);
+
+	/** The column is looked up in, so it reads alphabetically by folder. */
+	const sortedProjects = $derived(
+		[...(facets?.projects ?? [])].sort((a, b) => folderName(a).localeCompare(folderName(b)))
+	);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
@@ -445,7 +444,7 @@
 							{t('sessions.allProjects')}
 						</button>
 
-						{#each facets.projects as project (project)}
+						{#each sortedProjects as project (project)}
 							<button
 								type="button"
 								class={[
