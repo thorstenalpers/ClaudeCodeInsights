@@ -5,18 +5,9 @@ export const ar: Messages = {
 
 	'nav.overview': 'نظرة عامة',
 	'nav.overview.description': 'الرموز والتكلفة والنشاط في لمحة',
-	'nav.live': 'مباشر',
-	'nav.live.description': 'ما يكتبه Claude Code الآن',
 	'live.following': 'يتابع',
 	'live.stopped': 'لا يتابع',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'لم يُكتب شيء بعد — تمتلئ الصفحة أثناء العمل.',
-	'live.lastAt': 'آخرها {time}',
-	'live.readOnly':
-		'قراءة فقط. جلسة Claude Code العاملة تملك مدخلها الخاص، وهذه النافذة تشاهد ولا تجيب عنك.',
-	'live.idleTitle': 'لا شيء لمتابعته',
-	'live.idleBody': 'لم يُكتب أي نص على هذا الجهاز بعد. شغّل Claude Code مرة ثم عد.',
 	'nav.sessions': 'الجلسات',
 	'nav.sessions.description': 'كل محادثة مع رموزها وتكلفتها',
 	'nav.cost': 'التكلفة والنماذج',
@@ -160,6 +151,7 @@ export const ar: Messages = {
 	'filter.activity': 'النشاط',
 	'filter.tag': 'الوسم',
 	'sessions.search': 'ابحث في الموضوع أو المشروع أو الفرع…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} جلسة',
 	'sessions.loadFailed': 'تعذّر تحميل الجلسات',
 	'sessions.emptyTitle': 'لا توجد جلسات مطابقة',
@@ -609,10 +601,5 @@ export const ar: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': 'تثبيت',
-	'live.unpin': 'إلغاء التثبيت',
-	'live.allProjects': 'الكل ({count})',
-	'live.noProject': 'بدون مشروع',
-	'live.reload': 'إعادة التحميل'
+	'live.asStream': 'As conversation'
 };

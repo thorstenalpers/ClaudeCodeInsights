@@ -2,7 +2,6 @@ import type { Component } from 'svelte';
 import type { Pathname } from '$app/types';
 import type { MessageKey } from '$lib/i18n/en';
 import Activity from '@lucide/svelte/icons/calendar-clock';
-import Live from '@lucide/svelte/icons/radio';
 import Agents from '@lucide/svelte/icons/bot';
 import Assistant from '@lucide/svelte/icons/sparkles';
 import Cost from '@lucide/svelte/icons/circle-dollar-sign';
@@ -31,12 +30,6 @@ export const PAGES: readonly PageDefinition[] = [
 		label: 'nav.overview',
 		description: 'nav.overview.description',
 		icon: Overview
-	},
-	{
-		href: '/live',
-		label: 'nav.live',
-		description: 'nav.live.description',
-		icon: Live
 	},
 	{
 		href: '/sessions',
@@ -116,9 +109,9 @@ export type PageGroup = {
  * order as before, with the seams named.
  */
 export const PAGE_GROUPS: readonly PageGroup[] = [
-	{ label: 'nav.group.now', pages: PAGES.slice(0, 2) },
-	{ label: 'nav.group.past', pages: PAGES.slice(2, 8) },
-	{ label: 'nav.group.next', pages: PAGES.slice(8) }
+	{ label: 'nav.group.now', pages: PAGES.slice(0, 1) },
+	{ label: 'nav.group.past', pages: PAGES.slice(1, 7) },
+	{ label: 'nav.group.next', pages: PAGES.slice(7) }
 ];
 
 /** Shown in the rail only while the log view is switched on in settings. */

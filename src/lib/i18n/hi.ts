@@ -5,19 +5,9 @@ export const hi: Messages = {
 
 	'nav.overview': 'अवलोकन',
 	'nav.overview.description': 'टोकन, लागत और गतिविधि एक नज़र में',
-	'nav.live': 'लाइव',
-	'nav.live.description': 'Claude Code अभी क्या लिख रहा है',
 	'live.following': 'साथ चल रहा है',
 	'live.stopped': 'नहीं चल रहा',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'अभी कुछ नहीं लिखा गया — काम होते ही पृष्ठ भरता जाएगा।',
-	'live.lastAt': 'अंतिम {time}',
-	'live.readOnly':
-		'केवल पढ़ना। चल रहा Claude Code अपना इनपुट स्वयं रखता है; यह विंडो देख सकती है, आपकी ओर से उत्तर नहीं दे सकती।',
-	'live.idleTitle': 'देखने को कुछ नहीं',
-	'live.idleBody':
-		'इस मशीन पर अभी कोई ट्रांसक्रिप्ट नहीं लिखा गया। Claude Code एक बार चलाएँ और लौटें।',
 	'nav.sessions': 'सत्र',
 	'nav.sessions.description': 'हर बातचीत, उसके टोकन और लागत के साथ',
 	'nav.cost': 'लागत और मॉडल',
@@ -162,6 +152,7 @@ export const hi: Messages = {
 	'filter.activity': 'गतिविधि',
 	'filter.tag': 'टैग',
 	'sessions.search': 'विषय, प्रोजेक्ट या ब्रांच खोजें…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} सत्र',
 	'sessions.loadFailed': 'सत्र लोड नहीं हो सके',
 	'sessions.emptyTitle': 'कोई सत्र मेल नहीं खाता',
@@ -619,10 +610,5 @@ export const hi: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': 'पिन करें',
-	'live.unpin': 'हटाएँ',
-	'live.allProjects': 'सभी ({count})',
-	'live.noProject': 'बिना प्रोजेक्ट',
-	'live.reload': 'फिर से लोड करें'
+	'live.asStream': 'As conversation'
 };

@@ -5,19 +5,9 @@ export const fr: Messages = {
 
 	'nav.overview': "Vue d'ensemble",
 	'nav.overview.description': "Jetons, coût et activité en un coup d'œil",
-	'nav.live': 'En direct',
-	'nav.live.description': 'Ce que Claude Code écrit en ce moment',
 	'live.following': 'en suivi',
 	'live.stopped': 'sans suivi',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'Rien d’écrit pour l’instant — la page se remplit au fil du travail.',
-	'live.lastAt': 'dernière fois à {time}',
-	'live.readOnly':
-		'Lecture seule. Un Claude Code en cours possède sa propre entrée ; cette fenêtre peut regarder, pas répondre à votre place.',
-	'live.idleTitle': 'Rien à suivre',
-	'live.idleBody':
-		'Aucune transcription n’a encore été écrite sur cette machine. Lancez Claude Code une fois, puis revenez.',
 	'nav.sessions': 'Sessions',
 	'nav.sessions.description': 'Chaque conversation, avec ses jetons et son coût',
 	'nav.cost': 'Coût et modèles',
@@ -162,6 +152,7 @@ export const fr: Messages = {
 	'filter.activity': 'Activité',
 	'filter.tag': 'Étiquette',
 	'sessions.search': 'Rechercher un sujet, un projet ou une branche…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} sessions',
 	'sessions.loadFailed': 'Impossible de charger les sessions',
 	'sessions.emptyTitle': 'Aucune session ne correspond',
@@ -626,10 +617,5 @@ export const fr: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': 'Épingler',
-	'live.unpin': 'Détacher',
-	'live.allProjects': 'Tous ({count})',
-	'live.noProject': 'Sans projet',
-	'live.reload': 'Recharger'
+	'live.asStream': 'As conversation'
 };

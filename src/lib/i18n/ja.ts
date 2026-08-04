@@ -5,19 +5,9 @@ export const ja: Messages = {
 
 	'nav.overview': '概要',
 	'nav.overview.description': 'トークン、コスト、アクティビティを一目で',
-	'nav.live': 'ライブ',
-	'nav.live.description': 'Claude Code がいま書いているもの',
 	'live.following': '追跡中',
 	'live.stopped': '停止中',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'まだ何も書かれていません。作業が進むとここに流れます。',
-	'live.lastAt': '最終 {time}',
-	'live.readOnly':
-		'読むだけです。動作中の Claude Code は自分の入力を持っており、この画面は見ることはできても代わりに答えることはできません。',
-	'live.idleTitle': '追うものがありません',
-	'live.idleBody':
-		'この端末にはまだ記録がありません。Claude Code を一度動かしてから戻ってください。',
 	'nav.sessions': 'セッション',
 	'nav.sessions.description': 'すべての会話と、そのトークンとコスト',
 	'nav.cost': 'コストとモデル',
@@ -162,6 +152,7 @@ export const ja: Messages = {
 	'filter.activity': 'アクティビティ',
 	'filter.tag': 'タグ',
 	'sessions.search': 'トピック、プロジェクト、ブランチを検索…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} セッション',
 	'sessions.loadFailed': 'セッションを読み込めませんでした',
 	'sessions.emptyTitle': '一致するセッションがありません',
@@ -620,10 +611,5 @@ export const ja: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': '固定',
-	'live.unpin': '解除',
-	'live.allProjects': 'すべて ({count})',
-	'live.noProject': 'プロジェクトなし',
-	'live.reload': '再読み込み'
+	'live.asStream': 'As conversation'
 };

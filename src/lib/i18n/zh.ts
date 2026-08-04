@@ -5,17 +5,9 @@ export const zh: Messages = {
 
 	'nav.overview': '概览',
 	'nav.overview.description': '一览令牌、成本与活动',
-	'nav.live': '实时',
-	'nav.live.description': 'Claude Code 此刻正在写什么',
 	'live.following': '跟随中',
 	'live.stopped': '未跟随',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': '还没有内容——工作进行时页面会自动填充。',
-	'live.lastAt': '最近 {time}',
-	'live.readOnly': '只能旁观。运行中的 Claude Code 拥有自己的输入，这个窗口能看，不能替你回答。',
-	'live.idleTitle': '没有可跟随的内容',
-	'live.idleBody': '本机还没有写过任何记录文件。先启动一次 Claude Code 再回来。',
 	'nav.sessions': '会话',
 	'nav.sessions.description': '每一次对话及其令牌与成本',
 	'nav.cost': '成本与模型',
@@ -159,6 +151,7 @@ export const zh: Messages = {
 	'filter.activity': '活动',
 	'filter.tag': '标签',
 	'sessions.search': '搜索主题、项目或分支…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} 个会话',
 	'sessions.loadFailed': '无法加载会话',
 	'sessions.emptyTitle': '没有匹配的会话',
@@ -600,10 +593,5 @@ export const zh: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': '固定',
-	'live.unpin': '取消固定',
-	'live.allProjects': '全部 ({count})',
-	'live.noProject': '无项目',
-	'live.reload': '重新加载'
+	'live.asStream': 'As conversation'
 };

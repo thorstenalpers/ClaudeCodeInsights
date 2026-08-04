@@ -9,19 +9,9 @@ export const en = {
 
 	'nav.overview': 'Overview',
 	'nav.overview.description': 'Tokens, cost and activity at a glance',
-	'nav.live': 'Live',
-	'nav.live.description': 'What Claude Code is writing right now',
 	'live.following': 'following',
 	'live.stopped': 'not following',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'Nothing has been written yet — the page fills as work happens.',
-	'live.lastAt': 'last at {time}',
-	'live.readOnly':
-		'Read along only. A running Claude Code owns its own input; this window can watch it, not answer for you.',
-	'live.idleTitle': 'Nothing to follow',
-	'live.idleBody':
-		'No transcript has been written on this machine yet. Start Claude Code once, then come back.',
 	'nav.sessions': 'Sessions',
 	'nav.sessions.description': 'Every conversation, with its tokens and cost',
 	'nav.cost': 'Cost & Models',
@@ -165,6 +155,7 @@ export const en = {
 	'filter.activity': 'Activity',
 	'filter.tag': 'Tag',
 	'sessions.search': 'Search topic, project or branch…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': '{count} sessions',
 	'sessions.loadFailed': 'Could not load sessions',
 	'sessions.emptyTitle': 'No sessions match',
@@ -624,12 +615,7 @@ export const en = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': 'Pin',
-	'live.unpin': 'Unpin',
-	'live.allProjects': 'All ({count})',
-	'live.noProject': 'No project',
-	'live.reload': 'Reload'
+	'live.asStream': 'As conversation'
 } as const;
 
 export type MessageKey = keyof typeof en;

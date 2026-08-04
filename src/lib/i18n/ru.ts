@@ -5,19 +5,9 @@ export const ru: Messages = {
 
 	'nav.overview': 'Обзор',
 	'nav.overview.description': 'Токены, стоимость и активность с первого взгляда',
-	'nav.live': 'В реальном времени',
-	'nav.live.description': 'Что Claude Code пишет прямо сейчас',
 	'live.following': 'следим',
 	'live.stopped': 'не следим',
-	'live.sessions': 'Sessions',
-	'live.lines': '{count} lines',
 	'live.waiting': 'Пока ничего не записано — страница заполняется по ходу работы.',
-	'live.lastAt': 'последнее в {time}',
-	'live.readOnly':
-		'Только чтение. Работающий Claude Code владеет своим вводом; это окно может смотреть, но не отвечать за вас.',
-	'live.idleTitle': 'Следить не за чем',
-	'live.idleBody':
-		'На этой машине ещё не записано ни одной стенограммы. Запустите Claude Code и вернитесь.',
 	'nav.sessions': 'Сессии',
 	'nav.sessions.description': 'Каждый разговор с его токенами и стоимостью',
 	'nav.cost': 'Стоимость и модели',
@@ -162,6 +152,7 @@ export const ru: Messages = {
 	'filter.activity': 'Активность',
 	'filter.tag': 'Метка',
 	'sessions.search': 'Поиск по теме, проекту или ветке…',
+	'sessions.allProjects': 'All projects',
 	'sessions.count': 'Сессий: {count}',
 	'sessions.loadFailed': 'Не удалось загрузить сессии',
 	'sessions.emptyTitle': 'Нет подходящих сессий',
@@ -620,10 +611,5 @@ export const ru: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation',
-	'live.pin': 'Закрепить',
-	'live.unpin': 'Открепить',
-	'live.allProjects': 'Все ({count})',
-	'live.noProject': 'Без проекта',
-	'live.reload': 'Обновить'
+	'live.asStream': 'As conversation'
 };

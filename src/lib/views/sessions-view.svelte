@@ -21,6 +21,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import Folder from '@lucide/svelte/icons/folder';
 	import { compact, displayPath, exact, formatWhen } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
@@ -134,6 +135,12 @@
 	let models = $state<string[]>([]);
 	let tags = $state<string[]>([]);
 	let projects = $state<string[]>([]);
+
+	/** The last folder of a path: the structure above it is not a name. */
+	function folderName(path: string): string {
+		const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
+		return parts.at(-1) ?? path;
+	}
 	let branches = $state<string[]>([]);
 	let from = $state<string | null>(null);
 	let to = $state<string | null>(null);
@@ -415,190 +422,236 @@
 				</Card.Header>
 			</Card.Root>
 		{:else if result}
-			<div
-				class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
-			>
-				<Table.Root>
-					<Table.Header class="sticky top-0 z-10 bg-background">
-						<Table.Row>
-							{#each COLUMNS as column (column.id)}
-								<Table.Head class={[column.class, column.numeric && 'text-right']}>
-									<div class={['flex items-center gap-1', column.numeric && 'justify-end']}>
-										{#if column.sort}
-											<button
-												type="button"
-												class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-												title={t('common.multiSortHint')}
-												onclick={() => toggleSort(column)}
-											>
-												{t(column.label)}
-												{#if sort === column.sort}
-													{#if descending}
-														<ArrowDown class="size-3" />
-													{:else}
-														<ArrowUp class="size-3" />
+			<div class="flex min-h-0 flex-1 gap-3">
+				<!-- The projects behind the listed sessions. A checkout is the cut a
+				     reader makes first, and it is the same filter the column header
+				     offers — one state, two ways in. -->
+				{#if facets && facets.projects.length > 1}
+					<aside
+						class="hidden w-56 shrink-0 flex-col overflow-auto rounded-md border p-1 @2xl:flex"
+						aria-label={t('nav.projects')}
+					>
+						<button
+							type="button"
+							class={[
+								'rounded-md px-2 py-1 text-left text-xs',
+								projects.length === 0 ? 'bg-primary/10 font-medium' : 'hover:bg-accent'
+							]}
+							onclick={() => {
+								projects = [];
+								page = 0;
+							}}
+						>
+							{t('sessions.allProjects')}
+						</button>
+
+						{#each facets.projects as project (project)}
+							<button
+								type="button"
+								class={[
+									'flex items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs',
+									projects.includes(project) ? 'bg-primary/10 font-medium' : 'hover:bg-accent'
+								]}
+								title={project}
+								onclick={() => {
+									projects = projects.includes(project) ? [] : [project];
+									page = 0;
+								}}
+							>
+								<Folder class="size-3.5 shrink-0 text-muted-foreground" />
+								<span class="min-w-0 flex-1 truncate">{folderName(project)}</span>
+							</button>
+						{/each}
+					</aside>
+				{/if}
+
+				<div
+					class="min-h-0 flex-1 overflow-auto rounded-md border [&_td]:py-1 [&_td]:text-[13px] [&_th]:h-8 [&>[data-slot=table-container]]:overflow-visible"
+				>
+					<Table.Root>
+						<Table.Header class="sticky top-0 z-10 bg-background">
+							<Table.Row>
+								{#each COLUMNS as column (column.id)}
+									<Table.Head class={[column.class, column.numeric && 'text-right']}>
+										<div class={['flex items-center gap-1', column.numeric && 'justify-end']}>
+											{#if column.sort}
+												<button
+													type="button"
+													class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+													title={t('common.multiSortHint')}
+													onclick={() => toggleSort(column)}
+												>
+													{t(column.label)}
+													{#if sort === column.sort}
+														{#if descending}
+															<ArrowDown class="size-3" />
+														{:else}
+															<ArrowUp class="size-3" />
+														{/if}
 													{/if}
-												{/if}
-											</button>
-										{:else}
-											{t(column.label)}
-										{/if}
+												</button>
+											{:else}
+												{t(column.label)}
+											{/if}
 
-										<Tooltip.Root>
-											<Tooltip.Trigger>
-												{#snippet child({ props })}
-													<button
-														{...props}
-														type="button"
-														aria-label={`${t(column.label)} — ${t('common.whatIsThis')}`}
-														class="rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground"
-													>
-														<Info class="size-3" />
-													</button>
-												{/snippet}
-											</Tooltip.Trigger>
-											<Tooltip.Content class="max-w-72 text-xs font-normal">
-												{t(column.info)}
-											</Tooltip.Content>
-										</Tooltip.Root>
-
-										{#if facets && columnFilter(column.id)}
-											{@const filter = columnFilter(column.id)!}
-											<DropdownMenu.Root>
-												<DropdownMenu.Trigger>
+											<Tooltip.Root>
+												<Tooltip.Trigger>
 													{#snippet child({ props })}
 														<button
 															{...props}
 															type="button"
-															aria-label={`${t(column.label)} — ${t('common.filter')}`}
-															class={[
-																'rounded p-0.5 transition-colors hover:text-foreground',
-																filter.chosen.length > 0
-																	? 'text-primary'
-																	: 'text-muted-foreground/60'
-															]}
+															aria-label={`${t(column.label)} — ${t('common.whatIsThis')}`}
+															class="rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground"
 														>
-															<Filter class="size-3" />
+															<Info class="size-3" />
 														</button>
 													{/snippet}
-												</DropdownMenu.Trigger>
-
-												<DropdownMenu.Content class="max-h-80 w-56 overflow-y-auto">
-													<DropdownMenu.Label class="flex items-center justify-between gap-2">
-														{t('common.filter')}
-														{#if filter.chosen.length > 0}
-															<button
-																type="button"
-																class="text-xs font-normal text-muted-foreground hover:text-foreground"
-																onclick={filter.clear}
-															>
-																{t('common.clearFilter')}
-															</button>
-														{/if}
-													</DropdownMenu.Label>
-													<DropdownMenu.Separator />
-
-													{#each filter.options as option (option)}
-														<DropdownMenu.CheckboxItem
-															checked={filter.chosen.includes(option)}
-															onCheckedChange={() => filter.toggle(option)}
-															closeOnSelect={false}
-														>
-															<span class="truncate">{filter.display(option)}</span>
-														</DropdownMenu.CheckboxItem>
-													{/each}
-												</DropdownMenu.Content>
-											</DropdownMenu.Root>
-										{/if}
-									</div>
-								</Table.Head>
-							{/each}
-						</Table.Row>
-					</Table.Header>
-
-					<Table.Body>
-						{#each result.rows as row (row.sessionId)}
-							<Table.Row
-								class="cursor-pointer"
-								onclick={() => openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
-							>
-								<Table.Cell class="max-w-[16rem] @2xl:max-w-[22rem]">
-									<div class="flex items-center gap-2">
-										<span class="truncate font-medium">
-											{row.topic ?? row.sessionId.slice(0, 8)}
-										</span>
-										{#if row.hasSubagents}
-											<Tooltip.Root>
-												<Tooltip.Trigger>
-													{#snippet child({ props })}
-														<Users {...props} class="size-3.5 shrink-0 text-muted-foreground" />
-													{/snippet}
 												</Tooltip.Trigger>
-												<Tooltip.Content>{t('sessions.subagents')}</Tooltip.Content>
+												<Tooltip.Content class="max-w-72 text-xs font-normal">
+													{t(column.info)}
+												</Tooltip.Content>
 											</Tooltip.Root>
-										{/if}
-									</div>
-									{#if row.tags.length > 0}
-										<div class="mt-1 flex flex-wrap gap-1">
-											{#each row.tags as tag (tag)}
-												<Badge variant="outline" class="h-4 px-1 text-[10px] font-normal">
-													{tag}
-												</Badge>
-											{/each}
+
+											{#if facets && columnFilter(column.id)}
+												{@const filter = columnFilter(column.id)!}
+												<DropdownMenu.Root>
+													<DropdownMenu.Trigger>
+														{#snippet child({ props })}
+															<button
+																{...props}
+																type="button"
+																aria-label={`${t(column.label)} — ${t('common.filter')}`}
+																class={[
+																	'rounded p-0.5 transition-colors hover:text-foreground',
+																	filter.chosen.length > 0
+																		? 'text-primary'
+																		: 'text-muted-foreground/60'
+																]}
+															>
+																<Filter class="size-3" />
+															</button>
+														{/snippet}
+													</DropdownMenu.Trigger>
+
+													<DropdownMenu.Content class="max-h-80 w-56 overflow-y-auto">
+														<DropdownMenu.Label class="flex items-center justify-between gap-2">
+															{t('common.filter')}
+															{#if filter.chosen.length > 0}
+																<button
+																	type="button"
+																	class="text-xs font-normal text-muted-foreground hover:text-foreground"
+																	onclick={filter.clear}
+																>
+																	{t('common.clearFilter')}
+																</button>
+															{/if}
+														</DropdownMenu.Label>
+														<DropdownMenu.Separator />
+
+														{#each filter.options as option (option)}
+															<DropdownMenu.CheckboxItem
+																checked={filter.chosen.includes(option)}
+																onCheckedChange={() => filter.toggle(option)}
+																closeOnSelect={false}
+															>
+																<span class="truncate">{filter.display(option)}</span>
+															</DropdownMenu.CheckboxItem>
+														{/each}
+													</DropdownMenu.Content>
+												</DropdownMenu.Root>
+											{/if}
 										</div>
-									{/if}
-								</Table.Cell>
-
-								<Table.Cell class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}>
-									<span class="block truncate"
-										>{row.projectName ? displayPath(row.projectName) : '—'}</span
-									>
-									{#if row.gitBranch}
-										<span class="block truncate font-mono text-xs opacity-70">{row.gitBranch}</span>
-									{/if}
-								</Table.Cell>
-
-								<Table.Cell class={CLASS.activity}>
-									<ActivityBadge activity={row.activity} profile={row.profile} />
-								</Table.Cell>
-
-								<Table.Cell class="whitespace-nowrap text-muted-foreground">
-									{formatWhen(row.lastTs)}
-								</Table.Cell>
-								<Table.Cell class="text-right whitespace-nowrap tabular-nums">
-									{row.model ? region.format(costOf(row.model, row)) : t('common.none')}
-								</Table.Cell>
-								<Table.Cell class={[CLASS.duration, 'text-right whitespace-nowrap tabular-nums']}>
-									{formatDuration(row.durationMinutes)}
-								</Table.Cell>
-								<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
-									{row.turnCount}
-								</Table.Cell>
-								<Table.Cell
-									class={[CLASS.input, 'text-right tabular-nums']}
-									title={exact(row.inputTokens)}
-								>
-									{compact(row.inputTokens)}
-								</Table.Cell>
-								<Table.Cell
-									class={[CLASS.output, 'text-right tabular-nums']}
-									title={exact(row.outputTokens)}
-								>
-									{compact(row.outputTokens)}
-								</Table.Cell>
-								<Table.Cell
-									class={[CLASS.cacheRead, 'text-right tabular-nums']}
-									title={exact(row.cacheReadTokens)}
-								>
-									{compact(row.cacheReadTokens)}
-								</Table.Cell>
-								<Table.Cell class={[CLASS.model, 'whitespace-nowrap text-muted-foreground']}>
-									{shortModel(row.model)}
-								</Table.Cell>
+									</Table.Head>
+								{/each}
 							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
+						</Table.Header>
+
+						<Table.Body>
+							{#each result.rows as row (row.sessionId)}
+								<Table.Row
+									class="cursor-pointer"
+									onclick={() => openSession(row.sessionId, row.topic ?? row.sessionId.slice(0, 8))}
+								>
+									<Table.Cell class="max-w-[16rem] @2xl:max-w-[22rem]">
+										<div class="flex items-center gap-2">
+											<span class="truncate font-medium">
+												{row.topic ?? row.sessionId.slice(0, 8)}
+											</span>
+											{#if row.hasSubagents}
+												<Tooltip.Root>
+													<Tooltip.Trigger>
+														{#snippet child({ props })}
+															<Users {...props} class="size-3.5 shrink-0 text-muted-foreground" />
+														{/snippet}
+													</Tooltip.Trigger>
+													<Tooltip.Content>{t('sessions.subagents')}</Tooltip.Content>
+												</Tooltip.Root>
+											{/if}
+										</div>
+										{#if row.tags.length > 0}
+											<div class="mt-1 flex flex-wrap gap-1">
+												{#each row.tags as tag (tag)}
+													<Badge variant="outline" class="h-4 px-1 text-[10px] font-normal">
+														{tag}
+													</Badge>
+												{/each}
+											</div>
+										{/if}
+									</Table.Cell>
+
+									<Table.Cell class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}>
+										<span class="block truncate"
+											>{row.projectName ? displayPath(row.projectName) : '—'}</span
+										>
+										{#if row.gitBranch}
+											<span class="block truncate font-mono text-xs opacity-70"
+												>{row.gitBranch}</span
+											>
+										{/if}
+									</Table.Cell>
+
+									<Table.Cell class={CLASS.activity}>
+										<ActivityBadge activity={row.activity} profile={row.profile} />
+									</Table.Cell>
+
+									<Table.Cell class="whitespace-nowrap text-muted-foreground">
+										{formatWhen(row.lastTs)}
+									</Table.Cell>
+									<Table.Cell class="text-right whitespace-nowrap tabular-nums">
+										{row.model ? region.format(costOf(row.model, row)) : t('common.none')}
+									</Table.Cell>
+									<Table.Cell class={[CLASS.duration, 'text-right whitespace-nowrap tabular-nums']}>
+										{formatDuration(row.durationMinutes)}
+									</Table.Cell>
+									<Table.Cell class={[CLASS.turns, 'text-right tabular-nums']}>
+										{row.turnCount}
+									</Table.Cell>
+									<Table.Cell
+										class={[CLASS.input, 'text-right tabular-nums']}
+										title={exact(row.inputTokens)}
+									>
+										{compact(row.inputTokens)}
+									</Table.Cell>
+									<Table.Cell
+										class={[CLASS.output, 'text-right tabular-nums']}
+										title={exact(row.outputTokens)}
+									>
+										{compact(row.outputTokens)}
+									</Table.Cell>
+									<Table.Cell
+										class={[CLASS.cacheRead, 'text-right tabular-nums']}
+										title={exact(row.cacheReadTokens)}
+									>
+										{compact(row.cacheReadTokens)}
+									</Table.Cell>
+									<Table.Cell class={[CLASS.model, 'whitespace-nowrap text-muted-foreground']}>
+										{shortModel(row.model)}
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
 			</div>
 
 			<div class="flex shrink-0 flex-wrap items-center justify-between gap-2">

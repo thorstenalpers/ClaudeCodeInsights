@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Brain from '@lucide/svelte/icons/brain';
-	import { api, type TranscriptPage, type TranscriptTurn } from '$lib/api';
+	import CircleDot from '@lucide/svelte/icons/circle-dot';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+	import { api, type LiveTurn, type TranscriptPage, type TranscriptTurn } from '$lib/api';
+	import { Badge } from '$lib/components/ui/badge';
 	import ToolCallCard from '$lib/components/tool-call-card.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
@@ -55,6 +58,65 @@
 		};
 	});
 
+	/**
+	 * The session as it is still being written.
+	 *
+	 * The transcript above comes from the database, which knows what the last
+	 * scan saw. The host follows the files that are being appended to right now
+	 * and pushes each new line; the ones belonging to this session are added
+	 * here, so an open session reads on rather than stopping at the last scan.
+	 */
+	let live = $state<TranscriptTurn[]>([]);
+	let following = $state(false);
+
+	$effect(() => {
+		const id = sessionId;
+		if (!isHosted) return;
+
+		let stop: UnlistenFn | undefined;
+		let cancelled = false;
+		live = [];
+
+		void (async () => {
+			// The tail is already on screen from the transcript; only what comes
+			// after starting to watch is new.
+			await api.startLive(0).catch(() => []);
+			if (cancelled) return;
+			following = true;
+
+			stop = await listen<LiveTurn>('live:turn', (event) => {
+				if (event.payload.sessionId !== id) return;
+				live = [...live, asTurn(event.payload, live.length)];
+			});
+		})();
+
+		return () => {
+			cancelled = true;
+			stop?.();
+			void api.stopLive();
+			following = false;
+		};
+	});
+
+	/** A live line in the shape the transcript below already draws. */
+	function asTurn(line: LiveTurn, index: number): TranscriptTurn {
+		return {
+			index: -1 - index,
+			role: line.role === 'user' ? 'user' : 'assistant',
+			timestamp: line.timestamp,
+			text: line.text,
+			thinking: null,
+			toolCalls: line.tools.map((name) => ({
+				name,
+				input: '',
+				inputTruncated: false,
+				result: null,
+				resultTruncated: false,
+				isError: false
+			}))
+		};
+	}
+
 	async function loadMore() {
 		if (!page) return;
 		const next = await api.getTranscript(sessionId, page.turns.length, PAGE);
@@ -66,7 +128,7 @@
 	// through as a bare timestamp with nothing under it.
 	const visible = $derived(
 		page
-			? page.turns.filter(
+			? [...page.turns, ...live].filter(
 					(turn) =>
 						turn.text !== null ||
 						(showThinking && turn.thinking !== null) ||
@@ -147,9 +209,21 @@
 			<ResetView show={table.dirty} onreset={() => table.reset()} />
 		{/if}
 
+		{#if following}
+			<!-- Only while lines are actually arriving: a badge that is always on
+			     says nothing about whether this session is still being written. -->
+			<Badge variant={live.length > 0 ? 'default' : 'outline'} class="gap-1 font-normal">
+				<CircleDot class="size-3" />
+				{live.length > 0 ? t('live.following') : t('live.stopped')}
+			</Badge>
+		{/if}
+
 		{#if page}
 			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-				{t('transcript.turnCount', { shown: page.turns.length, total: page.total })}
+				{t('transcript.turnCount', {
+					shown: page.turns.length + live.length,
+					total: page.total + live.length
+				})}
 			</span>
 		{/if}
 	</div>
