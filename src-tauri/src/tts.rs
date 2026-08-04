@@ -332,8 +332,7 @@ fn fetch_pack(pack: &Pack, report: &dyn Fn(Progress)) -> Result<PackInfo> {
                 "voice pack '{id}': {} bytes fetched, unpacking",
                 bytes.len()
             );
-            let decoder = bzip2::read::BzDecoder::new(Cursor::new(bytes));
-            tar::Archive::new(decoder).unpack(voices_dir()?)?;
+            unpack(bytes, &voices_dir()?)?;
         }
         Origin::Hub { repo } => crate::hub::install(pack, repo, report)?,
         Origin::KokoroExport {
@@ -417,6 +416,45 @@ pub(crate) fn download(
     }
 
     Ok(bytes)
+}
+
+/// Unpacks a `.tar.bz2` into a folder, entry by entry.
+///
+/// Not `Archive::unpack`: that canonicalises the destination, which on Windows
+/// yields a `\\?\` path, and a verbatim path takes no forward slashes — so
+/// every archive whose entries carry them fails with "trying to unpack outside
+/// of destination path". Joining the components here sidesteps the whole thing.
+pub(crate) fn unpack(bytes: Vec<u8>, into: &Path) -> Result<()> {
+    use std::path::Component;
+
+    let decoder = bzip2::read::BzDecoder::new(Cursor::new(bytes));
+    let mut archive = tar::Archive::new(decoder);
+
+    for entry in archive.entries()? {
+        let mut entry = entry?;
+        let path = entry.path()?.into_owned();
+
+        // The addresses are this app's own, but an archive that writes outside
+        // the folder it was unpacked into is never what was wanted.
+        if path
+            .components()
+            .any(|part| matches!(part, Component::ParentDir | Component::RootDir))
+        {
+            log::warn!("archive entry {} climbs out of the folder", path.display());
+            continue;
+        }
+
+        let target = into.join(&path);
+        if entry.header().entry_type().is_dir() {
+            fs::create_dir_all(&target)?;
+            continue;
+        }
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        std::io::copy(&mut entry, &mut fs::File::create(&target)?)?;
+    }
+    Ok(())
 }
 
 fn installed_info(pack: &Pack, dir: &Path) -> PackInfo {
@@ -510,7 +548,15 @@ pub fn speak(id: &str, speaker: i32, text: &str) -> Result<()> {
     if text.trim().is_empty() {
         return Ok(());
     }
+    let (samples, rate) = synthesise(id, speaker, text)?;
+    play(&samples, rate)
+}
 
+/// The samples a voice makes of a sentence, and the rate they are at.
+///
+/// Split from the playing so the dictation probe can put a spoken sentence
+/// through the recogniser without a speaker or a person in the room.
+pub(crate) fn synthesise(id: &str, speaker: i32, text: &str) -> Result<(Vec<f32>, u32)> {
     let pack = find(id).ok_or_else(|| Error::BadRequest(format!("unknown voice pack '{id}'")))?;
     engine_for(&pack)?;
 
@@ -533,7 +579,7 @@ pub fn speak(id: &str, speaker: i32, text: &str) -> Result<()> {
         )
         .ok_or_else(|| Error::BadRequest("the voice could not speak".to_owned()))?;
 
-    play(audio.samples(), audio.sample_rate() as u32)
+    Ok((audio.samples().to_vec(), audio.sample_rate() as u32))
 }
 
 /// Set while the reader should stop; cleared when the next sentence starts.

@@ -18,7 +18,6 @@ use sherpa_onnx::{
     OfflineWhisperModelConfig, SileroVadModelConfig, VadModelConfig, VoiceActivityDetector,
 };
 use std::fs;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -131,24 +130,28 @@ pub fn folder() -> Result<String> {
 
 /// Fetches a model and the endpointer beside it.
 pub fn install<R: Runtime>(app: &AppHandle<R>, id: &str) -> Result<ModelInfo> {
+    fetch(id, &|progress| {
+        let _ = app.emit("voice:progress", progress);
+    })
+}
+
+/// The download itself, reporting through a callback rather than an app handle,
+/// so the probe below can run it with no window behind it.
+fn fetch(id: &str, report: &dyn Fn(Progress)) -> Result<ModelInfo> {
     let model =
         find(id).ok_or_else(|| Error::BadRequest(format!("unknown speech model '{id}'")))?;
-    let report = |progress: Progress| {
-        let _ = app.emit("voice:progress", progress);
-    };
 
     if !is_installed(model) {
         let url = format!("{RELEASE}/sherpa-onnx-{}.tar.bz2", model.id);
         log::info!("speech model '{id}': fetching {url}");
-        let bytes = crate::tts::download(&url, id, 0, None, &report)?;
-        let decoder = bzip2::read::BzDecoder::new(Cursor::new(bytes));
-        tar::Archive::new(decoder).unpack(models_dir()?)?;
+        let bytes = crate::tts::download(&url, id, 0, None, report)?;
+        crate::tts::unpack(bytes, &models_dir()?)?;
     }
 
     let vad = models_dir()?.join(VAD_FILE);
     if !vad.is_file() {
         log::info!("speech model '{id}': fetching the endpointer");
-        let bytes = crate::tts::download(&format!("{RELEASE}/{VAD_FILE}"), id, 0, None, &report)?;
+        let bytes = crate::tts::download(&format!("{RELEASE}/{VAD_FILE}"), id, 0, None, report)?;
         fs::write(&vad, bytes)?;
     }
 
@@ -227,11 +230,16 @@ pub fn listen(device: Option<&str>, model_id: &str, locale: &str) -> Result<Stri
         return Ok(String::new());
     }
 
+    read(&dir, model, locale, &heard)
+}
+
+/// Runs one stretch of 16 kHz mono audio through the model.
+fn read(dir: &Path, model: &Model, locale: &str, samples: &[f32]) -> Result<String> {
     let recognizer = OfflineRecognizer::create(&OfflineRecognizerConfig {
         model_config: OfflineModelConfig {
             whisper: OfflineWhisperModelConfig {
-                encoder: pick(&dir, model.stem, "encoder").map(path_string),
-                decoder: pick(&dir, model.stem, "decoder").map(path_string),
+                encoder: pick(dir, model.stem, "encoder").map(path_string),
+                decoder: pick(dir, model.stem, "decoder").map(path_string),
                 // Whisper guesses the language when it is not told, and guesses
                 // wrong on a short phrase often enough to be worth telling.
                 language: Some(primary(locale)),
@@ -247,7 +255,7 @@ pub fn listen(device: Option<&str>, model_id: &str, locale: &str) -> Result<Stri
     .ok_or_else(|| Error::BadRequest("the speech model could not be loaded".to_owned()))?;
 
     let stream = recognizer.create_stream();
-    stream.accept_waveform(RATE, &heard);
+    stream.accept_waveform(RATE, samples);
     recognizer.decode(&stream);
 
     Ok(stream
@@ -417,11 +425,73 @@ mod tests {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// Which model the probes below work on; the small one unless asked.
+    fn probed() -> String {
+        std::env::var("MODEL").unwrap_or_else(|_| "whisper-tiny".to_owned())
+    }
+
     #[test]
     #[ignore = "downloads a model of a hundred megabytes or more"]
     fn a_model_installs() {
-        let id = std::env::var("MODEL").unwrap_or_else(|_| "whisper-tiny".to_owned());
-        let model = find(&id).unwrap();
-        println!("installed: {}", is_installed(model));
+        let id = probed();
+        let installed = fetch(&id, &|progress| {
+            if progress.received % (16 * 1024 * 1024) < 1024 * 1024 {
+                println!("{} MB", progress.received / 1048576);
+            }
+        })
+        .unwrap();
+        println!("installed {} at {}", installed.label, folder().unwrap());
+    }
+
+    #[test]
+    #[ignore = "needs an installed model"]
+    fn a_model_reads_a_recording() {
+        // The archive brings its own samples, which is the only way to prove
+        // the decoding path without a person at a microphone.
+        let model = find(&probed()).unwrap();
+        let dir = model_dir(model).unwrap();
+        let wav = std::env::var("WAV")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| dir.join("test_wavs").join("0.wav"));
+        let locale = std::env::var("LOCALE").unwrap_or_else(|_| "en".to_owned());
+
+        let audio =
+            sherpa_onnx::Wave::read(&wav.to_string_lossy()).expect("the sample is readable");
+        assert_eq!(
+            audio.sample_rate(),
+            RATE,
+            "the samples are already at 16 kHz"
+        );
+
+        let heard = read(&dir, model, &locale, audio.samples()).unwrap();
+        println!("{} heard: {heard:?}", wav.display());
+        assert!(!heard.is_empty(), "a spoken sample must come back as words");
+    }
+
+    #[test]
+    #[ignore = "needs an installed model and the German voice pack"]
+    fn german_comes_back_as_german() {
+        // The point of this whole path: a language Windows has no pack for.
+        // The app's own voice speaks the sentence, the recogniser reads it,
+        // and nothing in between leaves the machine.
+        let sentence = "Der Bericht zeigt die Kosten der letzten Woche.";
+        let (spoken, rate) =
+            crate::tts::synthesise("hub:Godelaune/Kokoro-82M-ONNX-German-Martin", 0, sentence)
+                .expect("the German voice is installed");
+
+        let samples = match LinearResampler::create(rate as i32, RATE) {
+            Some(resampler) => resampler.resample(&spoken, true),
+            None => spoken,
+        };
+
+        let model = find(&probed()).unwrap();
+        let heard = read(&model_dir(model).unwrap(), model, "de", &samples).unwrap();
+        println!("said:  {sentence}");
+        println!("heard: {heard}");
+
+        let words = ["bericht", "kosten", "woche"];
+        let lowered = heard.to_lowercase();
+        let found = words.iter().filter(|word| lowered.contains(**word)).count();
+        assert!(found >= 2, "expected German words back, got {heard:?}");
     }
 }
