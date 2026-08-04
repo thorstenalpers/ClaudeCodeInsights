@@ -15,7 +15,7 @@
 				"label": "main",
 				"title": "Claude Insights",
 				"width": 1280,
-				"height": 840,
+				"height": 672,
 				"minWidth": 380,
 				"minHeight": 480,
 				"resizable": true,

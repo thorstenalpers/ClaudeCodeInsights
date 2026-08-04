@@ -100,6 +100,24 @@ fn languages(tags: &[String]) -> Vec<String> {
         .collect()
 }
 
+/// The two files a Kokoro export carries: the model, and its table of voices.
+///
+/// The rest — the token table, espeak's data, the metadata — is the same for
+/// every Kokoro voice and is supplied on installation, which is why an export
+/// that has these two is installable rather than blocked.
+fn export_files(files: &[TreeEntry]) -> Option<(String, String)> {
+    let root = |entry: &&TreeEntry| !entry.path.contains('/');
+    let model = files
+        .iter()
+        .filter(root)
+        .find(|entry| entry.path.ends_with(".onnx"))?;
+    let voices = files.iter().filter(root).find(|entry| {
+        entry.path.ends_with(".npz")
+            || (entry.path.ends_with(".bin") && entry.path.contains("voice"))
+    })?;
+    Some((model.path.clone(), voices.path.clone()))
+}
+
 /// What sherpa needs, judged from the file list alone.
 fn judge(files: &[TreeEntry]) -> (Option<Kind>, Option<String>) {
     let has = |name: &str| files.iter().any(|entry| entry.path == name);
@@ -112,6 +130,12 @@ fn judge(files: &[TreeEntry]) -> (Option<Kind>, Option<String>) {
 
     if !any_onnx {
         return (None, Some("no .onnx model".to_owned()));
+    }
+
+    // An export is missing everything a Piper voice would be blocked for, and
+    // none of it has to come from the repository.
+    if !has("tokens.txt") && export_files(files).is_some() {
+        return (Some(Kind::Kokoro), None);
     }
 
     let mut missing = Vec::new();
@@ -211,15 +235,29 @@ pub fn as_pack(repo: &str) -> Result<Pack> {
 
     let hit: SearchHit = get_json(&format!("https://huggingface.co/api/models/{repo}"))?;
     let bytes: u64 = files.iter().map(|entry| entry.size).sum();
+
+    // An export is assembled rather than copied: the same origin the one voice
+    // in the catalogue carries, now reachable for anything the search finds.
+    let origin = match export_files(&files) {
+        Some((model, voices)) if !files.iter().any(|entry| entry.path == "tokens.txt") => {
+            Origin::KokoroExport {
+                repo: repo.to_owned(),
+                model,
+                voices,
+            }
+        }
+        _ => Origin::Hub {
+            repo: repo.to_owned(),
+        },
+    };
+
     Ok(Pack {
         id: format!("hub:{repo}"),
         language: languages(&hit.tags).join(","),
         label: repo.to_owned(),
         megabytes: (bytes / (1024 * 1024)) as u32,
         kind,
-        origin: Origin::Hub {
-            repo: repo.to_owned(),
-        },
+        origin,
         dir: folder_for(repo),
     })
 }
@@ -305,7 +343,13 @@ pub fn assemble_kokoro(
 
     let table = crate::tts::download(&file_url(repo, voices), &pack.id, done, Some(total), report)?;
     done += table.len() as u64;
-    let (flat, speakers, style_dim) = flatten_voices(&table)?;
+    // Some exports ship the table already flat, which is what sherpa wants; the
+    // shape is then the file's own length and nothing has to be unpacked.
+    let (flat, speakers, style_dim) = if voices.ends_with(".npz") {
+        flatten_voices(&table)?
+    } else {
+        shape_of(table)
+    };
     fs::write(dir.join("voices.bin"), flat)?;
 
     // The token table is tiny and never in the export; the mirror's is the one
@@ -342,6 +386,14 @@ pub fn assemble_kokoro(
 
 fn file_url(repo: &str, path: &str) -> String {
     format!("https://huggingface.co/{repo}/resolve/main/{path}")
+}
+
+/// The speaker count and shape of a table that is already flat.
+fn shape_of(table: Vec<u8>) -> (Vec<u8>, u32, String) {
+    const PER_SPEAKER: usize = 510 * 256 * 4;
+    let speakers = (table.len() / PER_SPEAKER).max(1) as u32;
+    let rows = table.len() / (256 * 4 * speakers as usize);
+    (table, speakers, format!("{rows},1,256"))
 }
 
 /// Reads the one array out of a `.npz` and returns it as sherpa's flat table.
@@ -478,10 +530,45 @@ mod tests {
     }
 
     #[test]
-    fn the_python_kokoro_layout_says_what_it_lacks() {
-        // The repository the user asked about: a model and .npz voices, nothing
-        // sherpa can phonemise with.
-        let files = vec![file("kokoro-martin.onnx"), file("voices-martin.npz")];
+    fn an_export_is_installable_and_says_which_files_it_is_built_from() {
+        // The shape that used to be refused: a model and a table of voices, and
+        // nothing else sherpa needs — all of which the installer supplies.
+        let files = [file("kokoro-martin.onnx"), file("voices-martin.npz")];
+        let (kind, blocked) = judge(&files);
+        assert_eq!(kind, Some(Kind::Kokoro));
+        assert!(blocked.is_none(), "an export is buildable, not blocked");
+        assert_eq!(
+            export_files(&files),
+            Some((
+                "kokoro-martin.onnx".to_owned(),
+                "voices-martin.npz".to_owned()
+            ))
+        );
+
+        // The same when the table already comes flat.
+        let flat = [file("kokoro-v1.0.onnx"), file("voices-v1.0.bin")];
+        assert!(judge(&flat).1.is_none());
+        assert_eq!(export_files(&flat).unwrap().1, "voices-v1.0.bin");
+
+        // A model alone is still not a voice.
+        assert!(export_files(&[file("model.onnx")]).is_none());
+        // Nor is one hidden in a subfolder, where the installer would not look.
+        assert!(export_files(&[file("onnx/model.onnx"), file("onnx/voices.npz")]).is_none());
+    }
+
+    #[test]
+    fn a_flat_table_is_measured_rather_than_unpacked() {
+        let (table, speakers, shape) = shape_of(vec![0_u8; 510 * 256 * 4 * 2]);
+        assert_eq!(speakers, 2);
+        assert_eq!(shape, "510,1,256");
+        assert_eq!(table.len(), 510 * 256 * 4 * 2, "the bytes are handed on");
+    }
+
+    #[test]
+    fn a_model_with_nothing_to_phonemise_with_says_what_it_lacks() {
+        // A model on its own is still refused: there is no table of voices to
+        // build a Kokoro pack from, and no data to speak a Piper one with.
+        let files = vec![file("model.onnx"), file("config.json")];
         let (kind, blocked) = judge(&files);
         assert_eq!(kind, Some(Kind::Vits));
         assert_eq!(
@@ -581,6 +668,20 @@ mod tests {
             found.iter().any(|model| model.blocked.is_none()),
             "a sherpa mirror must come back installable: {found:?}"
         );
+    }
+
+    #[test]
+    #[ignore = "reaches the network"]
+    fn the_search_offers_the_german_exports() {
+        let query = std::env::var("QUERY").unwrap_or_else(|_| "kokoro german".to_owned());
+        for model in search(&query).unwrap() {
+            println!(
+                "{:55} {:?} {}",
+                model.repo,
+                model.kind,
+                model.blocked.as_deref().unwrap_or("installable")
+            );
+        }
     }
 
     #[test]

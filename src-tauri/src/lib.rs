@@ -19,6 +19,30 @@ pub mod tts;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 use tauri_plugin_log::{Target, TargetKind};
 
+/// Sits the window above the middle of the screen rather than in it.
+///
+/// Centred is where `center` in the config leaves it, and on a wide screen that
+/// puts the title bar low enough to be in the way of everything else open. A
+/// fifth of the window's own height up is the whole adjustment.
+fn lift_window(app: &tauri::AppHandle) {
+    use tauri::{Manager, PhysicalPosition};
+
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let (Ok(Some(monitor)), Ok(size)) = (window.current_monitor(), window.outer_size()) else {
+        return;
+    };
+
+    let screen = monitor.size();
+    let position = monitor.position();
+    let x = position.x + (screen.width as i32 - size.width as i32) / 2;
+    let middle = position.y + (screen.height as i32 - size.height as i32) / 2;
+    let y = (middle - size.height as i32 / 5).max(position.y);
+
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
 pub fn run() {
     tauri::Builder::default()
         .manage(state::ScanGuard::default())
@@ -101,6 +125,7 @@ pub fn run() {
                     .build(),
             )?;
 
+            lift_window(app.handle());
             commands::scan::scan_on_first_launch(app.handle());
 
             Ok(())
