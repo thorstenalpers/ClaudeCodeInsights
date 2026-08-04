@@ -84,7 +84,8 @@ export const de: Messages = {
 	'orchestration.ask': 'Die Sitzung will {tool} benutzen',
 	'orchestration.ask.allow': 'Erlauben',
 	'orchestration.ask.deny': 'Ablehnen',
-	'orchestration.rule.readsFree': 'Lesende Werkzeuge ohne Nachfrage durchlassen (Read, Grep, Glob)',
+	'orchestration.rule.readsFree':
+		'Lesende Werkzeuge ohne Nachfrage durchlassen (Read, Grep, Glob und die Abfragen dieser App)',
 	'orchestration.rules': 'Regeln für einen Lauf',
 	'orchestration.rules.description':
 		'Gespeichert, noch nicht befolgt: von hier startet keine Sitzung, solange der Sitzungs-Läufer fehlt.',

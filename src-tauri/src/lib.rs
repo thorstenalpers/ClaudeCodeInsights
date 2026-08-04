@@ -8,6 +8,7 @@ pub mod live;
 pub mod orchestration;
 pub mod paths;
 pub mod projects;
+pub mod session_tools;
 pub mod sessions;
 pub mod speech;
 pub mod state;

@@ -10,8 +10,9 @@
 //! here may decide on its own that a command is harmless.
 
 use crate::error::{Error, Result};
+use crate::session_tools;
 use claude_agent_sdk_rs::{
-    ClaudeAgentOptions, ClaudeClient, ContentBlock, Message, PermissionResult,
+    ClaudeAgentOptions, ClaudeClient, ContentBlock, McpServers, Message, PermissionResult,
     PermissionResultAllow, PermissionResultDeny,
 };
 use serde::{Deserialize, Serialize};
@@ -156,6 +157,12 @@ fn asks() -> &'static Mutex<HashMap<String, oneshot::Sender<bool>>> {
 /// Tools that only look. Everything else waits for a person, whatever the rule.
 const READ_ONLY: [&str; 5] = ["Read", "Grep", "Glob", "NotebookRead", "WebFetch"];
 
+/// Whether a tool may go through without asking, under the relaxed rule. The
+/// app's own tools count: they read the database this app wrote and nothing else.
+fn only_looks(tool: &str) -> bool {
+    READ_ONLY.contains(&tool) || session_tools::READ_ONLY.contains(&tool)
+}
+
 pub fn list() -> Vec<RunInfo> {
     runs()
         .lock()
@@ -256,6 +263,12 @@ fn options<R: Runtime>(app: &AppHandle<R>, id: &str, request: &RunRequest) -> Cl
         cwd: Some(std::path::PathBuf::from(&request.project)),
         model: request.model.clone(),
         max_budget_usd: request.budget_usd,
+        // In-process, so the session can ask this app about its project without
+        // a second binary or an entry in the user's config.
+        mcp_servers: McpServers::Dict(HashMap::from([(
+            session_tools::SERVER.to_owned(),
+            session_tools::server(&request.project),
+        )])),
         ..Default::default()
     };
     if let Some(path) = &request.cli_path {
@@ -271,7 +284,7 @@ fn options<R: Runtime>(app: &AppHandle<R>, id: &str, request: &RunRequest) -> Cl
         let handle = handle.clone();
         let run = run.clone();
         Box::pin(async move {
-            if rule == Rule::ReadsFree && READ_ONLY.contains(&tool.as_str()) {
+            if rule == Rule::ReadsFree && only_looks(&tool) {
                 return PermissionResult::Allow(PermissionResultAllow::default());
             }
 

@@ -83,7 +83,8 @@ export const it: Messages = {
 	'orchestration.ask': 'The session wants to use {tool}',
 	'orchestration.ask.allow': 'Allow',
 	'orchestration.ask.deny': 'Deny',
-	'orchestration.rule.readsFree': 'Let reading tools through without asking (Read, Grep, Glob)',
+	'orchestration.rule.readsFree':
+		'Let reading tools through without asking (Read, Grep, Glob, and the queries this app answers itself)',
 	'orchestration.rules': 'Rules for a run',
 	'orchestration.rules.description':
 		'Stored, not yet obeyed: nothing starts a session from here until the session runner exists.',
