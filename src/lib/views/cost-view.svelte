@@ -3,6 +3,7 @@
 	import ChartPanel from '$lib/components/chart-panel.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import { Badge } from '$lib/components/ui/badge';
+	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
@@ -15,15 +16,7 @@
 	import { compact, exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
-	import {
-		SUBSCRIPTIONS,
-		billing,
-		costOf,
-		isPriced,
-		plan,
-		uncachedCostOf,
-		type BillingMode
-	} from '$lib/pricing.svelte';
+	import { SUBSCRIPTIONS, billing, costOf, isPriced, plan } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { createTable } from '$lib/table.svelte';
@@ -148,15 +141,17 @@
 		const column = (date: string) =>
 			by === 'month' ? date.slice(0, 7) : by === 'week' ? weekOf(date) : date;
 
+		const points = series.points.filter((point) => !onlyModel || point.model === onlyModel);
+
 		const labels: string[] = [];
-		for (const point of series.points) {
+		for (const point of points) {
 			const label = column(point.date);
 			if (!labels.includes(label)) labels.push(label);
 		}
 		labels.sort();
 
 		const byKey: Record<string, number[]> = {};
-		for (const point of series.points) {
+		for (const point of points) {
 			const index = labels.indexOf(column(point.date));
 			if (index === -1) continue;
 			byKey[point.key] ??= Array<number>(labels.length).fill(0);
@@ -203,11 +198,9 @@
 	);
 
 	const priced = $derived(
-		(rows ?? []).map((row) => ({
-			row,
-			cost: costOf(row.model, row),
-			uncached: uncachedCostOf(row.model, row)
-		}))
+		(rows ?? [])
+			.filter((row) => !onlyModel || row.model === onlyModel)
+			.map((row) => ({ row, cost: costOf(row.model, row) }))
 	);
 
 	const table = createTable<(typeof priced)[number]>(
@@ -226,9 +219,24 @@
 	);
 
 	const totalCost = $derived(priced.reduce((sum, entry) => sum + entry.cost, 0));
-	const totalSaved = $derived(
-		priced.reduce((sum, entry) => sum + Math.max(0, entry.uncached - entry.cost), 0)
+
+	const totals = $derived(
+		priced.reduce(
+			(sum, { row }) => ({
+				input: sum.input + row.inputTokens,
+				output: sum.output + row.outputTokens,
+				cacheRead: sum.cacheRead + row.cacheReadTokens,
+				cacheWrite: sum.cacheWrite + row.cacheWriteTokens,
+				turns: sum.turns + row.turns
+			}),
+			{ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, turns: 0 }
+		)
 	);
+	const totalTokens = $derived(totals.input + totals.output + totals.cacheRead + totals.cacheWrite);
+	const totalTurns = $derived(totals.turns);
+
+	/** The model the whole page is narrowed to, or null for all of them. */
+	let onlyModel = $state<string | null>(null);
 
 	function money(value: number): string {
 		return region.format(value);
@@ -244,8 +252,6 @@
 			dashed: true
 		}))
 	]);
-
-	const BILLING: BillingMode[] = ['api', 'subscription'];
 
 	function shortModel(model: string): string {
 		return model.replace(/^claude-/, '');
@@ -276,52 +282,62 @@
 			</Card.Header>
 		</Card.Root>
 	{:else if rows}
-		<div class="flex shrink-0 flex-wrap items-center gap-3">
-			<Input placeholder={t('common.search')} class="max-w-48" bind:value={table.query} />
-			<span class="text-lg font-semibold tabular-nums">
-				{t(billing.mode === 'subscription' ? 'cost.totalEquivalent' : 'cost.total', {
-					amount: money(totalCost)
-				})}
-			</span>
-			{#if totalSaved > 0}
-				<Badge variant="secondary" class="font-normal">
-					{t('cost.saved', { amount: money(totalSaved) })}
-				</Badge>
-			{/if}
-			<DropdownMenu.Root>
-				<DropdownMenu.Trigger>
-					{#snippet child({ props })}
-						<Button {...props} variant="outline" size="sm">
-							{t(`settings.billing.${billing.mode}`)}
-							<ChevronDown class="size-3.5 opacity-60" />
-						</Button>
-					{/snippet}
-				</DropdownMenu.Trigger>
-				<DropdownMenu.Content align="start" class="w-64">
-					{#each BILLING as option (option)}
-						<DropdownMenu.Item onSelect={() => billing.set(option)}>
-							<span class="flex flex-1 flex-col gap-0.5">
-								<span>{t(`settings.billing.${option}`)}</span>
-								<span class="text-xs text-muted-foreground">
-									{t(`settings.billing.${option}Hint`)}
-								</span>
-							</span>
-							{#if billing.mode === option}
-								<Check class="size-4" />
-							{/if}
-						</DropdownMenu.Item>
-					{/each}
-				</DropdownMenu.Content>
-			</DropdownMenu.Root>
+		<!-- What was spent and what it was worth, each with the sentence that
+		     makes the number mean something. A figure at API rates under a
+		     subscription is the one that gets misread, so it says so itself. -->
+		<div class="grid shrink-0 gap-2 @2xl:grid-cols-3">
+			<div class="rounded-lg border bg-card p-3">
+				<p class="text-xs text-muted-foreground">{t('cost.summary.tokens')}</p>
+				<p class="text-2xl leading-tight font-semibold tabular-nums" title={exact(totalTokens)}>
+					{compact(totalTokens)}
+				</p>
+				<p class="mt-1 text-xs text-muted-foreground">
+					{t('cost.summary.tokens.hint', {
+						input: compact(totals.input),
+						output: compact(totals.output),
+						cache: compact(totals.cacheRead + totals.cacheWrite)
+					})}
+				</p>
+			</div>
 
-			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
-				{t('cost.count', { count: exact(rows.length) })}
-			</span>
+			<div class="rounded-lg border bg-card p-3">
+				<p class="text-xs text-muted-foreground">{t('cost.summary.cost')}</p>
+				<p class="text-2xl leading-tight font-semibold tabular-nums">{money(totalCost)}</p>
+				<p class="mt-1 text-xs text-muted-foreground">
+					{t(
+						billing.mode === 'subscription'
+							? 'cost.summary.cost.subscription'
+							: 'cost.summary.cost.api'
+					)}
+				</p>
+			</div>
+
+			<div class="rounded-lg border bg-card p-3">
+				<p class="text-xs text-muted-foreground">{t('cost.summary.turns')}</p>
+				<p class="text-2xl leading-tight font-semibold tabular-nums">{exact(totalTurns)}</p>
+				<p class="mt-1 text-xs text-muted-foreground">
+					{t('cost.summary.turns.hint', { models: exact(priced.length) })}
+				</p>
+			</div>
 		</div>
 
 		<div class="flex shrink-0 flex-wrap items-center gap-2">
 			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
 			<ResetView show={table.dirty} onreset={() => table.reset()} />
+			{#if onlyModel}
+				<Button
+					variant="secondary"
+					size="sm"
+					class="h-8 font-normal"
+					onclick={() => (onlyModel = null)}
+				>
+					{shortModel(onlyModel)}
+					<X class="size-3.5 opacity-60" />
+				</Button>
+			{/if}
+			<span class="ml-auto text-xs text-muted-foreground tabular-nums">
+				{t('cost.count', { count: exact(priced.length) })}
+			</span>
 		</div>
 
 		<div
@@ -358,7 +374,17 @@
 						<Table.Row>
 							<Table.Cell class="font-medium">
 								<div class="flex items-center gap-2">
-									{shortModel(entry.row.model)}
+									<!-- The name is the control, not the row: a row that reacts
+									     everywhere has no way to say what a click will do. -->
+									<button
+										type="button"
+										class="rounded-sm underline-offset-4 hover:underline"
+										title={t('cost.only', { model: shortModel(entry.row.model) })}
+										onclick={() =>
+											(onlyModel = onlyModel === entry.row.model ? null : entry.row.model)}
+									>
+										{shortModel(entry.row.model)}
+									</button>
 									{#if !isPriced(entry.row.model)}
 										<Badge variant="outline" class="font-normal">{t('cost.unpriced')}</Badge>
 									{/if}

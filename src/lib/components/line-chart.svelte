@@ -6,7 +6,7 @@
 	 * and a dependency that renders in canvas would neither inherit the theme
 	 * colours nor survive the window's content policy.
 	 */
-	type Line = { key: string; values: (number | null)[]; dashed?: boolean };
+	type Line = { key: string; values: (number | null)[]; dashed?: boolean; color?: string };
 
 	type Props = {
 		labels: string[];
@@ -112,7 +112,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="relative flex flex-col gap-2">
 	<svg
 		viewBox="0 0 {W} {height}"
 		class="w-full"
@@ -146,7 +146,7 @@
 			{#if area}
 				<path
 					d={fill(line.values)}
-					fill="var({CHART_VARS[index % CHART_VARS.length]})"
+					fill={line.color ?? `var(${CHART_VARS[index % CHART_VARS.length]})`}
 					fill-opacity="0.18"
 					stroke="none"
 				/>
@@ -154,7 +154,7 @@
 			<path
 				d={path(line.values)}
 				fill="none"
-				stroke="var({CHART_VARS[index % CHART_VARS.length]})"
+				stroke={line.color ?? `var(${CHART_VARS[index % CHART_VARS.length]})`}
 				stroke-width="2"
 				stroke-linejoin="round"
 				stroke-linecap="round"
@@ -167,7 +167,7 @@
 						cx={x(column)}
 						cy={y(value)}
 						r={hovered === column ? 3.5 : 2}
-						fill="var({CHART_VARS[index % CHART_VARS.length]})"
+						fill={line.color ?? `var(${CHART_VARS[index % CHART_VARS.length]})`}
 					/>
 				{/if}
 			{/each}
@@ -186,32 +186,42 @@
 		{/if}
 	</svg>
 
+	<!-- The same card the bars show, at the column under the pointer: reading a
+	     value off a legend below means looking away from the place being asked
+	     about. It sits on the far side once past the middle, so it never covers
+	     what it describes. -->
+	{#if hovered !== null}
+		{@const at = hovered}
+		{@const past = at > labels.length / 2}
+		<div
+			class="pointer-events-none absolute top-1 z-10 min-w-32 rounded-md border bg-popover p-2 text-popover-foreground shadow-md"
+			style="left: {(x(at) / W) * 100}%; transform: translateX({past ? '-100%' : '0'})
+				translateX({past ? '-8px' : '8px'})"
+		>
+			<div class="flex flex-col gap-0.5 text-xs">
+				<span class="font-medium">{labels[at]}</span>
+				{#each series as line, index (line.key)}
+					{@const value = line.values[at]}
+					{#if value !== null && value !== undefined}
+						<div class="flex items-center gap-2">
+							<span
+								class="size-2 shrink-0 rounded-[2px]"
+								style="background: {line.color ?? `var(${CHART_VARS[index % CHART_VARS.length]})`}"
+							></span>
+							<span class="flex-1 truncate">{line.key}</span>
+							<span class="tabular-nums">{format(value)}</span>
+						</div>
+					{/if}
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	<div class="flex w-full text-[10px] text-muted-foreground">
 		{#each labels as label, index (label)}
 			<span class="flex-1 truncate text-center">
 				{index === 0 || index === labels.length - 1 || labels.length <= 12 ? label : ''}
 			</span>
 		{/each}
-	</div>
-
-	<div class="flex flex-wrap items-center gap-3 text-xs">
-		{#each series as line, index (line.key)}
-			<span class="flex items-center gap-1.5">
-				<span
-					class="h-0.5 w-4 shrink-0 rounded-full"
-					style="background: var({CHART_VARS[index % CHART_VARS.length]})"
-				></span>
-				<span class="text-muted-foreground">{line.key}</span>
-				{#if hovered !== null}
-					{@const value = line.values[hovered]}
-					{#if value !== null && value !== undefined}
-						<span class="tabular-nums">{format(value)}</span>
-					{/if}
-				{/if}
-			</span>
-		{/each}
-		{#if hovered !== null}
-			<span class="text-muted-foreground tabular-nums">{labels[hovered]}</span>
-		{/if}
 	</div>
 </div>

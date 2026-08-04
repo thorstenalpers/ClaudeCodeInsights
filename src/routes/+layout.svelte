@@ -95,7 +95,7 @@
 	// The log sits with the other two that are about the app rather than about
 	// the work, directly above the info it is usually opened next to.
 	const footerPages = $derived(
-		logs.enabled ? [LOG_PAGE, INFO_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
+		logs.enabled ? [INFO_PAGE, LOG_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
 	);
 	/** The views of the open project, hung under the projects entry. */
 	const subPages = $derived.by(() => {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
-	type Series = { key: string; values: number[] };
+	type Series = { key: string; values: number[]; color?: string };
 
 	type Props = {
 		/** One label per column, in order. */
@@ -80,7 +80,8 @@
 								<div class="flex items-center gap-2">
 									<span
 										class="size-2 shrink-0 rounded-[2px]"
-										style="background: var({CHART_VARS[layer % CHART_VARS.length]})"
+										style="background: {entry.color ??
+											`var(${CHART_VARS[layer % CHART_VARS.length]})`}"
 									></span>
 									<span class="flex-1">{entry.key}</span>
 									<span class="tabular-nums">{format(value)}</span>

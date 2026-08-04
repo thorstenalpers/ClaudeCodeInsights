@@ -22,6 +22,8 @@
 
 	type Entry = { key: string; values: number[]; dashed?: boolean };
 
+	const CHART_VARS = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'];
+
 	type Props = {
 		labels: string[];
 		series: Entry[];
@@ -58,7 +60,16 @@
 
 	const chosen = $derived(picked ?? type);
 	const current = $derived(TYPES.find((entry) => entry.id === chosen) ?? TYPES[0]);
-	const drawn = $derived(series.filter((entry) => !hidden.includes(entry.key)));
+	// The colour travels with the entry: taken from its place in the chart it
+	// would shift to another series' colour the moment one is put away.
+	const drawn = $derived(
+		series
+			.map((entry, index) => ({
+				...entry,
+				color: `var(${CHART_VARS[index % CHART_VARS.length]})`
+			}))
+			.filter((entry) => !hidden.includes(entry.key))
+	);
 
 	function toggle(key: string) {
 		hidden = hidden.includes(key) ? hidden.filter((entry) => entry !== key) : [...hidden, key];
@@ -90,48 +101,40 @@
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 
-		<DropdownMenu.Root>
-			<DropdownMenu.Trigger>
-				{#snippet child({ props })}
-					<Button
-						{...props}
-						variant={hidden.length > 0 ? 'default' : 'outline'}
-						size="sm"
-						class="h-8 gap-1 font-normal"
-						disabled={series.length === 0}
-					>
-						{t('chart.series')}
-						<span class="tabular-nums">{drawn.length}/{series.length}</span>
-						<ChevronDown class="size-3.5 opacity-60" />
-					</Button>
-				{/snippet}
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Content align="start" class="max-h-80 w-56 overflow-y-auto">
-				<DropdownMenu.Label class="flex items-center justify-between gap-2">
-					{t('chart.series')}
-					{#if hidden.length > 0}
-						<button
-							type="button"
-							class="text-xs font-normal text-muted-foreground hover:text-foreground"
-							onclick={() => (hidden = [])}
-						>
-							{t('chart.series.all')}
-						</button>
-					{/if}
-				</DropdownMenu.Label>
-				<DropdownMenu.Separator />
-
-				{#each series as entry (entry.key)}
-					<DropdownMenu.CheckboxItem
-						checked={!hidden.includes(entry.key)}
-						onCheckedChange={() => toggle(entry.key)}
-						closeOnSelect={false}
-					>
-						<span class="truncate">{display(entry.key)}</span>
-					</DropdownMenu.CheckboxItem>
-				{/each}
-			</DropdownMenu.Content>
-		</DropdownMenu.Root>
+		<!-- The legend is the control: clicking a name draws it or puts it away.
+		     A menu of checkboxes says the same thing one click further off, and
+		     it does not show the colour the name stands for. -->
+		<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+			{#each series as entry, index (entry.key)}
+				{@const off = hidden.includes(entry.key)}
+				<button
+					type="button"
+					class={[
+						'flex items-center gap-1.5 rounded-sm text-xs transition-opacity',
+						off ? 'opacity-40' : 'hover:opacity-70'
+					]}
+					title={t(off ? 'chart.series.show' : 'chart.series.hide')}
+					onclick={() => toggle(entry.key)}
+				>
+					<span
+						class="h-0.5 w-4 shrink-0 rounded-full"
+						style="background: var({CHART_VARS[index % CHART_VARS.length]})"
+					></span>
+					<span class={off ? 'text-muted-foreground line-through' : 'text-muted-foreground'}>
+						{display(entry.key)}
+					</span>
+				</button>
+			{/each}
+			{#if hidden.length > 0}
+				<button
+					type="button"
+					class="text-xs text-muted-foreground underline-offset-4 hover:underline"
+					onclick={() => (hidden = [])}
+				>
+					{t('chart.series.all')}
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	{#if drawn.length === 0}

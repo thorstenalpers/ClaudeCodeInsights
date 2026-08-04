@@ -280,6 +280,8 @@ export const de: Messages = {
 	'chart.type.line': 'Linie',
 	'chart.type.area': 'Fläche',
 	'chart.series': 'Reihen',
+	'chart.series.show': 'Diese Reihe zeichnen',
+	'chart.series.hide': 'Diese Reihe ausblenden',
 	'chart.series.all': 'Alle',
 	'chart.noSeries': 'Nichts ausgewählt, was gezeichnet werden könnte.',
 
@@ -309,6 +311,16 @@ export const de: Messages = {
 	'cost.whatIf.note': 'Dieselben Tokens, gerechnet als hätte ein Modell die ganze Arbeit gemacht.',
 	'cost.whatIf.diff': '{amount} gegenüber dem tatsächlich Genutzten',
 	'cost.month': 'Monat',
+	'cost.summary.tokens': 'Token',
+	'cost.summary.tokens.hint': '{input} rein · {output} raus · {cache} Cache',
+	'cost.summary.cost': 'Zu API-Preisen',
+	'cost.summary.cost.api':
+		'Was diese Token kosten, je Modell zu den veröffentlichten API-Preisen berechnet.',
+	'cost.summary.cost.subscription':
+		'Was diese Token über die API gekostet hätten. Du zahlst ein Abo, das hier ist also keine Rechnung — es ist der Gegenwert der Arbeit.',
+	'cost.summary.turns': 'Turns',
+	'cost.summary.turns.hint': 'über {models} Modelle',
+	'cost.only': 'Nur {model} zeigen',
 	'cost.count': '{count} Modelle',
 	'cost.total': '{amount} insgesamt',
 	'cost.saved': '{amount} durch den Cache gespart',
