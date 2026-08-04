@@ -9,6 +9,8 @@ export const ar: Messages = {
 	'nav.live.description': 'ما يكتبه Claude Code الآن',
 	'live.following': 'يتابع',
 	'live.stopped': 'لا يتابع',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': 'لم يُكتب شيء بعد — تمتلئ الصفحة أثناء العمل.',
 	'live.lastAt': 'آخرها {time}',
 	'live.readOnly':

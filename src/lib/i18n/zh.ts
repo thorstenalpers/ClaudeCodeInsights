@@ -9,6 +9,8 @@ export const zh: Messages = {
 	'nav.live.description': 'Claude Code 此刻正在写什么',
 	'live.following': '跟随中',
 	'live.stopped': '未跟随',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': '还没有内容——工作进行时页面会自动填充。',
 	'live.lastAt': '最近 {time}',
 	'live.readOnly': '只能旁观。运行中的 Claude Code 拥有自己的输入，这个窗口能看，不能替你回答。',

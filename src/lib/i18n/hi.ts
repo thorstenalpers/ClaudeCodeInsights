@@ -9,6 +9,8 @@ export const hi: Messages = {
 	'nav.live.description': 'Claude Code अभी क्या लिख रहा है',
 	'live.following': 'साथ चल रहा है',
 	'live.stopped': 'नहीं चल रहा',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': 'अभी कुछ नहीं लिखा गया — काम होते ही पृष्ठ भरता जाएगा।',
 	'live.lastAt': 'अंतिम {time}',
 	'live.readOnly':

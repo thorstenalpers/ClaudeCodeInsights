@@ -62,6 +62,24 @@ export function formatTime(iso: string | null): string {
 }
 
 /**
+ * The clock down to the second.
+ *
+ * A live stream puts several lines inside the same minute, and without the
+ * seconds they read as one moment: the order is visible but not the pace.
+ */
+export function formatSecond(iso: string | null): string {
+	if (!iso) return '';
+	const date = new Date(iso);
+	return Number.isNaN(date.getTime())
+		? ''
+		: date.toLocaleTimeString(i18n.intlLocale, {
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit'
+			});
+}
+
+/**
  * One spelling for every Windows path on screen.
  *
  * Both separators reach the same directory, and a list that mixes them reads

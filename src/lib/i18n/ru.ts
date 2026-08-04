@@ -9,6 +9,8 @@ export const ru: Messages = {
 	'nav.live.description': 'Что Claude Code пишет прямо сейчас',
 	'live.following': 'следим',
 	'live.stopped': 'не следим',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': 'Пока ничего не записано — страница заполняется по ходу работы.',
 	'live.lastAt': 'последнее в {time}',
 	'live.readOnly':

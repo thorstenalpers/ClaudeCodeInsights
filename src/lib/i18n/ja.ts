@@ -9,6 +9,8 @@ export const ja: Messages = {
 	'nav.live.description': 'Claude Code がいま書いているもの',
 	'live.following': '追跡中',
 	'live.stopped': '停止中',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': 'まだ何も書かれていません。作業が進むとここに流れます。',
 	'live.lastAt': '最終 {time}',
 	'live.readOnly':

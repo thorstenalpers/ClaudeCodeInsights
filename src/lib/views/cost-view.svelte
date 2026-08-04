@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { api, type ModelRow, type Series } from '$lib/api';
 	import ChartPanel from '$lib/components/chart-panel.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
@@ -8,7 +7,6 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import Settings from '@lucide/svelte/icons/settings';
 	import Check from '@lucide/svelte/icons/check';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -18,10 +16,8 @@
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import {
-		PLANS,
 		SUBSCRIPTIONS,
 		billing,
-		type PlanId,
 		costOf,
 		isPriced,
 		plan,
@@ -248,9 +244,6 @@
 			dashed: true
 		}))
 	]);
-
-	let newFrom = $state(new Date().toISOString().slice(0, 7));
-	let newPlan = $state<PlanId>(plan.id);
 
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
@@ -508,18 +501,7 @@
 
 			<Card.Root data-size="sm" class="shrink-0">
 				<Card.Header class="gap-2">
-					<div class="flex flex-wrap items-center justify-between gap-2">
-						<Card.Title class="text-base">{t('cost.plans.title')}</Card.Title>
-						<!-- The tariff is chosen once, in the settings; repeating the
-						     choice here made two places disagree about the same fact. -->
-						<a
-							href={resolve('/settings')}
-							class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm font-normal transition-colors hover:bg-accent"
-						>
-							<Settings class="size-3.5 opacity-60" />
-							{t(`cost.plan.${plan.id}`)}
-						</a>
-					</div>
+					<Card.Title class="text-base">{t('cost.plans.title')}</Card.Title>
 					<Card.Description>
 						{t('cost.plans.hint')}
 					</Card.Description>
@@ -539,36 +521,10 @@
 
 					<p class="text-xs text-muted-foreground">{t('cost.plans.description')}</p>
 
-					<div class="flex flex-wrap items-end gap-2">
-						<label class="flex flex-col gap-1 text-xs text-muted-foreground">
-							{t('cost.plans.from')}
-							<Input type="month" class="h-8 w-40" bind:value={newFrom} />
-						</label>
-						<div class="flex flex-wrap gap-1">
-							{#each PLANS as entry (entry.id)}
-								<Button
-									variant={newPlan === entry.id ? 'default' : 'outline'}
-									size="sm"
-									class="h-8 font-normal"
-									onclick={() => (newPlan = entry.id)}
-								>
-									{t(`cost.plan.${entry.id}`)}
-								</Button>
-							{/each}
-						</div>
-						<Button
-							size="sm"
-							class="h-8"
-							disabled={!/^\d{4}-\d{2}$/.test(newFrom)}
-							onclick={() => plan.record(newFrom, newPlan)}
-						>
-							{t('cost.plans.add')}
-						</Button>
-					</div>
-
-					{#if plan.periods.length === 0}
-						<p class="text-xs text-muted-foreground">{t('cost.plans.empty')}</p>
-					{:else}
+					<!-- A tariff that was recorded earlier still prices its months, and
+					     can still be taken back; entering a new one belongs with the
+					     tariff itself, in the settings. -->
+					{#if plan.periods.length > 0}
 						<div class="flex flex-wrap gap-1">
 							{#each plan.periods as period (period.from)}
 								<Badge variant="secondary" class="gap-1 font-normal">

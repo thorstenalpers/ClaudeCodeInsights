@@ -9,6 +9,8 @@ export const de: Messages = {
 	'nav.live.description': 'Was Claude Code gerade schreibt',
 	'live.following': 'folgt mit',
 	'live.stopped': 'folgt nicht',
+	'live.sessions': 'Sitzungen',
+	'live.lines': '{count} Zeilen',
 	'live.waiting': 'Noch nichts geschrieben — die Seite füllt sich, während gearbeitet wird.',
 	'live.lastAt': 'zuletzt um {time}',
 	'live.readOnly':

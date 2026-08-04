@@ -13,6 +13,8 @@ export const en = {
 	'nav.live.description': 'What Claude Code is writing right now',
 	'live.following': 'following',
 	'live.stopped': 'not following',
+	'live.sessions': 'Sessions',
+	'live.lines': '{count} lines',
 	'live.waiting': 'Nothing has been written yet — the page fills as work happens.',
 	'live.lastAt': 'last at {time}',
 	'live.readOnly':
