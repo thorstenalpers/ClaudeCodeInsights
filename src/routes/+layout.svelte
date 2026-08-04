@@ -7,6 +7,14 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import {
+		api,
+		type ActivityRow,
+		type ModelRow,
+		type ProjectRow,
+		type SessionRow,
+		type ToolRow
+	} from '$lib/api';
 	import AppMark from '$lib/components/app-mark.svelte';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import RailToggle from '$lib/components/rail-toggle.svelte';
@@ -97,29 +105,88 @@
 	const footerPages = $derived(
 		logs.enabled ? [INFO_PAGE, LOG_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
 	);
-	/** The views of the open project, hung under the projects entry. */
-	const subPages = $derived.by(() => {
-		const path = page.params.path;
-		if (!path) return null;
-		const encoded = encodeURIComponent(path);
-		return {
-			parent: '/projects',
-			items: [
-				{ href: resolve('/projects/[path]', { path: encoded }), label: t('nav.overview') },
-				{
-					href: resolve('/projects/[path]/time', { path: encoded }),
-					label: t('projects.detail.time')
-				},
-				{
-					href: resolve('/projects/[path]/sessions', { path: encoded }),
-					label: t('projects.detail.sessions')
-				},
-				{
-					href: resolve('/projects/[path]/files', { path: encoded }),
-					label: t('projects.detail.files')
-				}
-			]
-		};
+	/**
+	 * What hangs under each rail entry: the things this machine has, not views
+	 * of them. Projects come from the same `~/.claude.json` the projects page
+	 * lists; the rest from the scan.
+	 *
+	 * Capped and sorted by weight, because the rail is a way in rather than an
+	 * inventory: past a dozen the list is longer than the navigation above it.
+	 */
+	const SUB_LIMIT = 12;
+
+	let knownProjects = $state<ProjectRow[]>([]);
+	let knownActivities = $state<ActivityRow[]>([]);
+	let knownModels = $state<ModelRow[]>([]);
+	let knownTools = $state<ToolRow[]>([]);
+	let knownSessions = $state<SessionRow[]>([]);
+
+	$effect(() => {
+		void scan.dataVersion;
+		if (!isHosted) return;
+		void api
+			.listProjects()
+			.then((report) => (knownProjects = report.projects))
+			.catch(() => (knownProjects = []));
+		void api
+			.listActivities()
+			.then((rows) => (knownActivities = rows))
+			.catch(() => (knownActivities = []));
+		void api
+			.listModels()
+			.then((rows) => (knownModels = rows))
+			.catch(() => (knownModels = []));
+		void api
+			.listTools()
+			.then((rows) => (knownTools = rows))
+			.catch(() => (knownTools = []));
+		void api
+			.listSessions({ page: 1, pageSize: SUB_LIMIT, sort: 'lastTs', descending: true })
+			.then((found) => (knownSessions = found.rows))
+			.catch(() => (knownSessions = []));
+	});
+
+	/** The last folder of a path: the structure above it is not a name. */
+	function folderName(path: string): string {
+		const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
+		return parts.at(-1) ?? path;
+	}
+
+	const subs = $derived({
+		'/projects': knownProjects
+			.filter((project) => project.registered || project.sessions > 0)
+			.slice(0, SUB_LIMIT)
+			.map((project) => ({
+				href: `/projects/${encodeURIComponent(project.path)}`,
+				label: folderName(project.path),
+				title: displayPath(project.path)
+			})),
+		'/activity': knownActivities.slice(0, SUB_LIMIT).map((row) => ({
+			href: `/activity/${encodeURIComponent(row.activity)}`,
+			label: activityLabel(row.activity)
+		})),
+		// The models have no page of their own: the entry narrows the one page
+		// they all live on, and the first entry is that page whole.
+		'/cost':
+			knownModels.length === 0
+				? []
+				: [
+						{ href: '/cost', label: t('nav.cost.all') },
+						...knownModels.slice(0, SUB_LIMIT).map((row) => ({
+							href: `/cost?model=${encodeURIComponent(row.model)}`,
+							label: row.model.replace(/^claude-/, ''),
+							title: row.model
+						}))
+					],
+		'/tools': knownTools.slice(0, SUB_LIMIT).map((row) => ({
+			href: `/tools?tool=${encodeURIComponent(row.name)}`,
+			label: row.name
+		})),
+		'/sessions': knownSessions.map((row) => ({
+			href: `/sessions/${encodeURIComponent(row.sessionId)}`,
+			label: row.topic || row.sessionId.slice(0, 8),
+			title: row.topic ?? row.sessionId
+		}))
 	});
 
 	const current = $derived(pageFor(page.url.pathname));
@@ -167,9 +234,10 @@
 	<AppSidebar
 		groups={PAGE_GROUPS}
 		footer={footerPages}
-		active={subPages ? page.url.pathname : activeHref(page.url.pathname)}
+		active={activeHref(page.url.pathname)}
+		path={page.url.pathname}
 		compact={short}
-		sub={subPages}
+		{subs}
 	/>
 
 	<Sidebar.Inset class="flex h-dvh min-w-0 flex-col overflow-hidden">

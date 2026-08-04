@@ -278,6 +278,8 @@ export const zh: Messages = {
 	'chart.noSeries': '未选择任何要绘制的内容。',
 
 	'cost.history': '随时间变化',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': '按 API 价格计算，各模型每月的花费。',
 	'cost.history.hint.day': '按 API 价格计算，各模型每天的花费。',
 	'cost.history.tokens': '每个模型每月使用了多少令牌。',
@@ -556,6 +558,7 @@ export const zh: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': '日志',
 	'nav.logs.description': '应用及其宿主做过什么',

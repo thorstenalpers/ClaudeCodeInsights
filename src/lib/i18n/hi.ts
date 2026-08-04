@@ -284,6 +284,8 @@ export const hi: Messages = {
 	'chart.noSeries': 'बनाने के लिए कुछ भी चयनित नहीं है।',
 
 	'cost.history': 'समय के साथ',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'API दरों पर, हर मॉडल का प्रति माह खर्च।',
 	'cost.history.hint.day': 'API दरों पर, हर मॉडल का प्रति दिन खर्च।',
 	'cost.history.tokens': 'हर मॉडल ने प्रति माह कितने टोकन इस्तेमाल किए।',
@@ -573,6 +575,7 @@ export const hi: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'लॉग',
 	'nav.logs.description': 'ऐप और उसके होस्ट ने क्या किया',

@@ -88,6 +88,9 @@ export const PAGES: readonly PageDefinition[] = [
 	}
 ];
 
+/** One entry hung under a rail entry: a project, an activity, a model. */
+export type SubEntry = { href: string; label: string; title?: string };
+
 export type PageGroup = {
 	/** Named above the entries; dropped when the rail has no room for it. */
 	label: MessageKey;

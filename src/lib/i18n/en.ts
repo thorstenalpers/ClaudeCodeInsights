@@ -287,6 +287,8 @@ export const en = {
 	'chart.noSeries': 'Nothing selected to draw.',
 
 	'cost.history': 'Over time',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'What each model cost per month, at API rates.',
 	'cost.history.hint.day': 'What each model cost per day, at API rates.',
 	'cost.history.tokens': 'How many tokens each model used per month.',
@@ -578,6 +580,7 @@ export const en = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Log',
 	'nav.logs.description': 'What the app and its host have been doing',

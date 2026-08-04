@@ -286,6 +286,8 @@ export const de: Messages = {
 	'chart.noSeries': 'Nichts ausgewählt, was gezeichnet werden könnte.',
 
 	'cost.history': 'Im Zeitverlauf',
+	'cost.history.arithmetic':
+		'Jeder Turn wird mit dem Modell bepreist, das ihn beantwortet hat, zu den Preisen je Million Token aus den Einstellungen — Eingabe, Ausgabe, Cache-Lesen und Cache-Schreiben jeweils zu ihrem eigenen Satz.',
 	'cost.history.hint': 'Was jedes Modell pro Monat gekostet hat, zu API-Preisen.',
 	'cost.history.hint.day': 'Was jedes Modell pro Tag gekostet hat, zu API-Preisen.',
 	'cost.history.tokens': 'Wie viele Tokens jedes Modell pro Monat verbraucht hat.',
@@ -581,6 +583,7 @@ export const de: Messages = {
 	'nav.group.now': 'Jetzt',
 	'nav.group.past': 'Aufgezeichnet',
 	'nav.group.next': 'Arbeit',
+	'nav.cost.all': 'Alle Modelle',
 	'nav.subPages': 'Die Ansichten dieser Seite zeigen',
 	'nav.logs': 'Protokoll',
 	'nav.logs.description': 'Was die App und ihr Host getan haben',

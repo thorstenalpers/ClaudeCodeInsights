@@ -1,18 +1,20 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import type { ResolvedPathname } from '$app/types';
+	import { page } from '$app/state';
 	import { api, type ModelRow, type Series } from '$lib/api';
 	import ChartPanel from '$lib/components/chart-panel.svelte';
+	import DateRangeMenu from '$lib/components/date-range-menu.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Table from '$lib/components/ui/table';
-	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import Check from '@lucide/svelte/icons/check';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { compact, exact } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
@@ -59,8 +61,6 @@
 
 	let rows = $state<ModelRow[] | null>(null);
 	let series = $state<Series | null>(null);
-	/** null means "as used": every model priced as itself. */
-	let asModel = $state<string | null>(null);
 	let error = $state<string | null>(null);
 	let loading = $state(true);
 
@@ -96,7 +96,7 @@
 
 		let cancelled = false;
 		api
-			.getSeries({ groupBy: 'model' })
+			.getSeries({ groupBy: 'model', from, to })
 			.then((value) => {
 				if (!cancelled) series = value;
 			})
@@ -118,6 +118,10 @@
 	const MEASURES: Measure[] = ['cost', 'tokens'];
 
 	let measure = $state<Measure>('cost');
+
+	/** The span the history covers; null on both means everything scanned. */
+	let from = $state<string | null>(null);
+	let to = $state<string | null>(null);
 
 	// Days and an area by default: the question is usually "what happened
 	// lately", and a filled shape answers it faster than a line.
@@ -157,7 +161,7 @@
 			byKey[point.key] ??= Array<number>(labels.length).fill(0);
 			byKey[point.key][index] +=
 				measure === 'cost'
-					? costOf(asModel ?? point.model, point)
+					? costOf(point.model, point)
 					: point.inputTokens + point.outputTokens + point.cacheReadTokens + point.cacheWriteTokens;
 		}
 
@@ -185,16 +189,6 @@
 		monthlyTotals.length > 0
 			? monthlyTotals.reduce((sum, value) => sum + value, 0) / monthlyTotals.length
 			: 0
-	);
-
-	const whatIfTotal = $derived.by(() => {
-		const target = asModel;
-		if (!series || !target) return null;
-		return series.points.reduce((sum, point) => sum + costOf(target, point), 0);
-	});
-
-	const actualTotal = $derived(
-		series ? series.points.reduce((sum, point) => sum + costOf(point.model, point), 0) : 0
 	);
 
 	const priced = $derived(
@@ -235,8 +229,23 @@
 	const totalTokens = $derived(totals.input + totals.output + totals.cacheRead + totals.cacheWrite);
 	const totalTurns = $derived(totals.turns);
 
-	/** The model the whole page is narrowed to, or null for all of them. */
-	let onlyModel = $state<string | null>(null);
+	/**
+	 * The model the whole page is narrowed to, or null for all of them.
+	 *
+	 * Read from the address so the rail's model entries lead here, and written
+	 * back when the table's own control is used.
+	 */
+	const onlyModel = $derived(page.url.searchParams.get('model'));
+
+	function only(model: string | null): void {
+		// The rail links here with the model in the address, so narrowing goes
+		// through the address as well and one place decides what is shown.
+		const query = model ? `?model=${encodeURIComponent(model)}` : '';
+		void goto(`${resolve('/cost')}${query}` as ResolvedPathname, {
+			replaceState: true,
+			noScroll: true
+		});
+	}
 
 	function money(value: number): string {
 		return region.format(value);
@@ -325,12 +334,7 @@
 			<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
 			<ResetView show={table.dirty} onreset={() => table.reset()} />
 			{#if onlyModel}
-				<Button
-					variant="secondary"
-					size="sm"
-					class="h-8 font-normal"
-					onclick={() => (onlyModel = null)}
-				>
+				<Button variant="secondary" size="sm" class="h-8 font-normal" onclick={() => only(null)}>
 					{shortModel(onlyModel)}
 					<X class="size-3.5 opacity-60" />
 				</Button>
@@ -380,8 +384,7 @@
 										type="button"
 										class="rounded-sm underline-offset-4 hover:underline"
 										title={t('cost.only', { model: shortModel(entry.row.model) })}
-										onclick={() =>
-											(onlyModel = onlyModel === entry.row.model ? null : entry.row.model)}
+										onclick={() => only(onlyModel === entry.row.model ? null : entry.row.model)}
 									>
 										{shortModel(entry.row.model)}
 									</button>
@@ -434,6 +437,15 @@
 						<Card.Title class="text-base">{t('cost.history')}</Card.Title>
 
 						<div class="flex flex-wrap items-center gap-2">
+							<DateRangeMenu
+								{from}
+								{to}
+								onChange={(nextFrom: string | null, nextTo: string | null) => {
+									from = nextFrom;
+									to = nextTo;
+								}}
+							/>
+
 							<div class="flex gap-1">
 								{#each MEASURES as option (option)}
 									<Button
@@ -465,39 +477,6 @@
 									</Button>
 								{/each}
 							</div>
-
-							<!-- Repricing moves money, not tokens: the control would sit
-							     there doing nothing while the chart shows counts. -->
-							{#if measure === 'cost'}
-								<span class="text-xs text-muted-foreground">{t('cost.whatIf')}</span>
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger>
-										{#snippet child({ props })}
-											<Button {...props} variant="outline" size="sm" class="h-8 font-normal">
-												{asModel ? shortModel(asModel) : t('cost.whatIf.actual')}
-												<ChevronDown class="size-3.5 opacity-60" />
-											</Button>
-										{/snippet}
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end" class="w-56">
-										<DropdownMenu.Item onSelect={() => (asModel = null)}>
-											<span class="flex-1">{t('cost.whatIf.actual')}</span>
-											{#if asModel === null}
-												<Check class="size-4" />
-											{/if}
-										</DropdownMenu.Item>
-										<DropdownMenu.Separator />
-										{#each rows ?? [] as row (row.model)}
-											<DropdownMenu.Item onSelect={() => (asModel = row.model)}>
-												<span class="flex-1 truncate">{shortModel(row.model)}</span>
-												{#if asModel === row.model}
-													<Check class="size-4" />
-												{/if}
-											</DropdownMenu.Item>
-										{/each}
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-							{/if}
 						</div>
 					</div>
 
@@ -506,11 +485,7 @@
 							{t(grain === 'month' ? 'cost.history.tokens' : 'cost.history.tokens.day')}
 						{:else}
 							{t(grain === 'month' ? 'cost.history.hint' : 'cost.history.hint.day')}
-						{/if}
-						{#if measure === 'cost' && asModel && whatIfTotal !== null}
-							· {t('cost.whatIf.note')} · {t('cost.whatIf.diff', {
-								amount: `${whatIfTotal >= actualTotal ? '+' : '−'}${money(Math.abs(whatIfTotal - actualTotal))}`
-							})}
+							· {t('cost.history.arithmetic')}
 						{/if}
 					</Card.Description>
 				</Card.Header>

@@ -284,6 +284,8 @@ export const ru: Messages = {
 	'chart.noSeries': 'Нечего рисовать: ничего не выбрано.',
 
 	'cost.history': 'По времени',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'Во сколько обошлась каждая модель за месяц, по тарифам API.',
 	'cost.history.hint.day': 'Во сколько обошлась каждая модель за день, по тарифам API.',
 	'cost.history.tokens': 'Сколько токенов израсходовала каждая модель за месяц.',
@@ -574,6 +576,7 @@ export const ru: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Журнал',
 	'nav.logs.description': 'Чем занимались приложение и его хост',

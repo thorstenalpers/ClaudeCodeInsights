@@ -280,6 +280,8 @@ export const ar: Messages = {
 	'chart.noSeries': 'لم يتم اختيار أي شيء لعرضه.',
 
 	'cost.history': 'عبر الزمن',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'ما كلّفه كل نموذج شهريًا، بأسعار الواجهة البرمجية.',
 	'cost.history.hint.day': 'ما كلّفه كل نموذج يوميًا، بأسعار الواجهة البرمجية.',
 	'cost.history.tokens': 'عدد الرموز التي استهلكها كل نموذج شهريًا.',
@@ -564,6 +566,7 @@ export const ar: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'السجل',
 	'nav.logs.description': 'ما الذي فعله التطبيق ومضيفه',

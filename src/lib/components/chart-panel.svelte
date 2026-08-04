@@ -4,6 +4,11 @@
 	 * draws. Same data, three readings — a stack answers "how much altogether",
 	 * bars side by side answer "which is bigger", a line answers "where it is
 	 * going".
+	 *
+	 * Drawn by layerchart through the shadcn wrapper, so the tooltip, the
+	 * clickable legend and the axis ticks are the library's rather than this
+	 * app's. Callers still pass labels and series — every page here holds its
+	 * numbers that way, and layerchart wants one row per label.
 	 */
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -11,16 +16,17 @@
 	import ChartColumn from '@lucide/svelte/icons/chart-column';
 	import ChartColumnStacked from '@lucide/svelte/icons/chart-column-stacked';
 	import ChartLine from '@lucide/svelte/icons/chart-line';
-	import BarChart from '$lib/components/bar-chart.svelte';
-	import LineChart from '$lib/components/line-chart.svelte';
+	import { scaleBand, scalePoint } from 'd3-scale';
+	import { AreaChart, BarChart } from 'layerchart';
 	import { Button } from '$lib/components/ui/button';
+	import * as Chart from '$lib/components/ui/chart';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
 
 	export type ChartType = 'stacked' | 'bars' | 'line' | 'area';
 
-	type Entry = { key: string; values: number[]; dashed?: boolean };
+	type Entry = { key: string; values: (number | null)[]; dashed?: boolean };
 
 	const CHART_VARS = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'];
 
@@ -31,7 +37,7 @@
 		/** The shape the data reads best in before anyone touches the control. */
 		type?: ChartType;
 		height?: number;
-		/** Shortens a key for the menu; the chart itself keeps the full name. */
+		/** Shortens a key for the legend; the data keeps the full name. */
 		display?: (key: string) => string;
 		/** The shapes worth offering. A chart whose series must not be added
 		 *  together has no business offering a stack. */
@@ -43,7 +49,7 @@
 		series,
 		format,
 		type = 'stacked',
-		height,
+		height = 200,
 		display = (key) => key,
 		types
 	}: Props = $props();
@@ -60,26 +66,38 @@
 	/** Null until the reader picks, so the caller's default still applies. */
 	let picked = $state<ChartType | null>(null);
 
-	// Hidden rather than shown: a series that appears later — a model used for
-	// the first time — is drawn instead of silently missing.
-	let hidden = $state<string[]>([]);
-
 	const chosen = $derived(picked ?? type);
 	const current = $derived(TYPES.find((entry) => entry.id === chosen) ?? TYPES[0]);
-	// The colour travels with the entry: taken from its place in the chart it
-	// would shift to another series' colour the moment one is put away.
-	const drawn = $derived(
-		series
-			.map((entry, index) => ({
-				...entry,
-				color: `var(${CHART_VARS[index % CHART_VARS.length]})`
-			}))
-			.filter((entry) => !hidden.includes(entry.key))
+
+	const colour = (index: number) => `var(${CHART_VARS[index % CHART_VARS.length]})`;
+
+	// Room for the labels rather than none: a chart that draws to its own edge
+	// puts the axis text outside the card it sits in.
+	const PADDING = { top: 8, right: 24, bottom: 24, left: 56 };
+
+	/** One row per label, which is the shape layerchart reads. */
+	const data = $derived(
+		labels.map((label, index) => {
+			const row: Record<string, string | number | null> = { label };
+			for (const entry of series) row[entry.key] = entry.values[index] ?? null;
+			return row;
+		})
 	);
 
-	function toggle(key: string) {
-		hidden = hidden.includes(key) ? hidden.filter((entry) => entry !== key) : [...hidden, key];
-	}
+	const drawn = $derived(
+		series.map((entry, index) => ({
+			key: entry.key,
+			label: display(entry.key),
+			color: colour(index)
+		}))
+	);
+
+	/** What the tooltip and the legend call each series, and in which colour. */
+	const config = $derived(
+		Object.fromEntries(
+			series.map((entry, index) => [entry.key, { label: display(entry.key), color: colour(index) }])
+		) as Chart.ChartConfig
+	);
 </script>
 
 <div class="flex flex-col gap-2">
@@ -106,48 +124,48 @@
 				{/each}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
-
-		<!-- The legend is the control: clicking a name draws it or puts it away.
-		     A menu of checkboxes says the same thing one click further off, and
-		     it does not show the colour the name stands for. -->
-		<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-			{#each series as entry, index (entry.key)}
-				{@const off = hidden.includes(entry.key)}
-				<button
-					type="button"
-					class={[
-						'flex items-center gap-1.5 rounded-sm text-xs transition-opacity',
-						off ? 'opacity-40' : 'hover:opacity-70'
-					]}
-					title={t(off ? 'chart.series.show' : 'chart.series.hide')}
-					onclick={() => toggle(entry.key)}
-				>
-					<span
-						class="h-0.5 w-4 shrink-0 rounded-full"
-						style="background: var({CHART_VARS[index % CHART_VARS.length]})"
-					></span>
-					<span class={off ? 'text-muted-foreground line-through' : 'text-muted-foreground'}>
-						{display(entry.key)}
-					</span>
-				</button>
-			{/each}
-			{#if hidden.length > 0}
-				<button
-					type="button"
-					class="text-xs text-muted-foreground underline-offset-4 hover:underline"
-					onclick={() => (hidden = [])}
-				>
-					{t('chart.series.all')}
-				</button>
-			{/if}
-		</div>
 	</div>
 
-	{#if drawn.length === 0}
+	{#if series.length === 0}
 		<p class="py-8 text-center text-xs text-muted-foreground">{t('chart.noSeries')}</p>
-	{:else if chosen === 'line' || chosen === 'area'}
-		<LineChart {labels} series={drawn} {format} {height} area={chosen === 'area'} />
 	{:else}
-		<BarChart {labels} series={drawn} {format} stacked={chosen === 'stacked'} {height} />
+		<!-- The legend is the library's, and it is the control: a click on a name
+		     puts that series away and back. -->
+		<Chart.Container {config} class="aspect-auto w-full" style="height: {height}px">
+			{#if chosen === 'line' || chosen === 'area'}
+				<AreaChart
+					legend
+					padding={PADDING}
+					{data}
+					x="label"
+					xScale={scalePoint()}
+					series={drawn}
+					seriesLayout="overlap"
+					props={{
+						area: { line: { class: 'stroke-2' }, fillOpacity: chosen === 'area' ? 0.25 : 0 },
+						yAxis: { format }
+					}}
+				>
+					{#snippet tooltip()}
+						<Chart.Tooltip indicator="line" />
+					{/snippet}
+				</AreaChart>
+			{:else}
+				<BarChart
+					legend
+					padding={PADDING}
+					{data}
+					x="label"
+					xScale={scaleBand().padding(0.25)}
+					series={drawn}
+					seriesLayout={chosen === 'stacked' ? 'stack' : 'group'}
+					props={{ yAxis: { format } }}
+				>
+					{#snippet tooltip()}
+						<Chart.Tooltip />
+					{/snippet}
+				</BarChart>
+			{/if}
+		</Chart.Container>
 	{/if}
 </div>

@@ -5,7 +5,7 @@
 	import { t } from '$lib/i18n/index.svelte';
 	import { cn } from '$lib/utils';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import type { PageDefinition, PageGroup } from '$lib/pages';
+	import type { PageDefinition, PageGroup, SubEntry } from '$lib/pages';
 
 	type Props = {
 		groups: readonly PageGroup[];
@@ -16,18 +16,25 @@
 		 *  hold the full set. */
 		compact?: boolean;
 		/**
-		 * The sub-pages of whatever is open, hung under their own entry.
+		 * What hangs under an entry, by that entry's address.
 		 *
-		 * They exist only while something is open — a project has views, but
-		 * only once there is a project — so the rail is given them rather than
-		 * deriving them from a list it could hold on its own.
+		 * The rail is given them rather than reading them itself: they are the
+		 * projects, activities, models, sessions and tools this machine has, and
+		 * that is the pages' business, not the navigation's.
 		 */
-		sub?: { parent: string; items: { href: string; label: string }[] } | null;
+		subs?: Record<string, SubEntry[]>;
+		/** The address on screen, which is what a sub-entry matches against. */
+		path?: string;
 	};
 
-	let { groups, footer, active, compact = false, sub = null }: Props = $props();
+	let { groups, footer, active, compact = false, subs = {}, path = '' }: Props = $props();
 
-	let expanded = $state(true);
+	/** Which entries are folded open; an entry not named here is closed. */
+	let open = $state<string[]>([]);
+
+	function fold(href: string): void {
+		open = open.includes(href) ? open.filter((entry) => entry !== href) : [...open, href];
+	}
 
 	/**
 	 * What a menu entry does under the pointer.
@@ -64,24 +71,27 @@
 			{/snippet}
 		</Sidebar.MenuButton>
 
-		{#if sub && sub.parent === page.href}
+		{@const children = subs[page.href] ?? []}
+		{#if children.length > 0}
+			{@const shown = open.includes(page.href) || path.startsWith(`${page.href}/`)}
 			<!-- Folded away rather than gone: the arrow is the only thing that
 			     stays when the views are hidden, so there is a way back to them. -->
-			<Sidebar.MenuAction onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
-				<ChevronRight class={['transition-transform duration-150', expanded && 'rotate-90']} />
+			<Sidebar.MenuAction onclick={() => fold(page.href)} aria-expanded={shown}>
+				<ChevronRight class={['transition-transform duration-150', shown && 'rotate-90']} />
 				<span class="sr-only">{t('nav.subPages')}</span>
 			</Sidebar.MenuAction>
 
-			{#if expanded}
+			{#if shown}
 				<Sidebar.MenuSub class={compact ? 'gap-0' : ''}>
-					{#each sub.items as item (item.href)}
+					{#each children as item (item.href)}
 						<Sidebar.MenuSubItem>
 							<Sidebar.MenuSubButton
 								size={compact ? 'sm' : 'md'}
-								isActive={active === item.href}
+								isActive={item.href === path}
 								href={item.href}
+								title={item.title ?? item.label}
 							>
-								<span>{item.label}</span>
+								<span class="truncate">{item.label}</span>
 							</Sidebar.MenuSubButton>
 						</Sidebar.MenuSubItem>
 					{/each}

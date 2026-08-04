@@ -12,6 +12,7 @@
 	import { costOfSplit } from '$lib/pricing.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
+	import { page } from '$app/state';
 	import { createTable } from '$lib/table.svelte';
 
 	const COLUMNS = [
@@ -44,6 +45,13 @@
 	);
 
 	let rows = $state<ToolRow[] | null>(null);
+
+	// The rail's tool entries lead here with the name in the address; the search
+	// box is where it lands, so one control shows what is being looked at.
+	$effect(() => {
+		const wanted = page.url.searchParams.get('tool');
+		if (wanted) table.query = wanted;
+	});
 	let error = $state<string | null>(null);
 	let loading = $state(true);
 

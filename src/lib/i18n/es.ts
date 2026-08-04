@@ -285,6 +285,8 @@ export const es: Messages = {
 	'chart.noSeries': 'No hay nada seleccionado para dibujar.',
 
 	'cost.history': 'A lo largo del tiempo',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'Lo que costó cada modelo al mes, a tarifas de API.',
 	'cost.history.hint.day': 'Lo que costó cada modelo al día, a tarifas de API.',
 	'cost.history.tokens': 'Cuántos tokens usó cada modelo por mes.',
@@ -578,6 +580,7 @@ export const es: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Registro',
 	'nav.logs.description': 'Lo que han estado haciendo la aplicación y su host',

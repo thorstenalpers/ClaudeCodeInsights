@@ -285,6 +285,8 @@ export const ja: Messages = {
 	'chart.noSeries': '描画する項目が選択されていません。',
 
 	'cost.history': '時系列',
+	'cost.history.arithmetic':
+		'Each turn is priced by the model that answered it, at the rates per million tokens from the settings — input, output, cache read and cache write each at their own rate.',
 	'cost.history.hint': 'API 料金で見た、モデルごとの月額。',
 	'cost.history.hint.day': 'API 料金で見た、モデルごとの日額。',
 	'cost.history.tokens': '各モデルが月ごとに使ったトークン数。',
@@ -574,6 +576,7 @@ export const ja: Messages = {
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
+	'nav.cost.all': 'All models',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'ログ',
 	'nav.logs.description': 'アプリとホストが何をしてきたか',
