@@ -507,8 +507,6 @@ export const ru: Messages = {
 	'settings.voice.input': 'Ввод',
 	'settings.voice.input.manual': 'Клавиатура',
 	'settings.voice.input.manualHint': 'Наберите вопрос. По умолчанию.',
-	'settings.voice.input.speech': 'Голос',
-	'settings.voice.input.speechHint': 'Нажмите микрофон и говорите.',
 	'settings.voice.output': 'Читать ответы вслух',
 	'settings.voice.packs': 'Голосовые пакеты',
 	'settings.voice.packs.size': 'Загрузка {size} МБ',
@@ -529,12 +527,6 @@ export const ru: Messages = {
 	'settings.voice.hub.blocked': 'Здесь не озвучить: {reason}',
 	'settings.voice.hub.hint':
 		'Установить можно только репозитории в раскладке sherpa-onnx: модель, tokens.txt и папка espeak-ng-data. Большинство репозиториев Kokoro несут голоса .npz для среды Python и перечисляются с указанием того, чего им не хватает.',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Голоса Windows',
 	'settings.voice.windows.hint':
 		'Собственные голоса Windows ставятся по языкам вне этого приложения: Параметры › Время и язык › Речь › Управление голосами › Добавить голоса. Здесь ничего скачивать не нужно; после перезапуска окна они появятся в списке выше.',
@@ -549,9 +541,6 @@ export const ru: Messages = {
 		'В Windows нет голоса для этого языка. Добавьте его в «Параметры › Время и язык › Речь»; естественные голоса там лучше.',
 	'settings.voice.output.off': 'Выкл.',
 	'settings.voice.output.on': 'Вкл.',
-	'settings.voice.unavailable': 'Распознавание речи Windows на этой машине недоступно.',
-	'voice.listen': 'Говорить',
-	'voice.listening': 'Слушаю…',
 	'voice.stop': 'Стоп',
 	'voice.speak': 'Прочитать вслух',
 	'voice.failed': 'Распознавание речи не удалось: {message}',
@@ -575,30 +564,6 @@ export const ru: Messages = {
 	'settings.voice.auto': 'Выполнять голосовые команды сразу',
 	'settings.voice.auto.hint':
 		'Без этого распознанная команда ждёт щелчка. В любом случае голосом можно только открыть страницу, пересканировать и сменить тему — ничего, что удаляет или записывает.',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'Windows не запустит распознавание, пока не включена речевая настройка: «Параметры › Конфиденциальность и защита › Речь». Само распознавание по-прежнему идёт на этой машине.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

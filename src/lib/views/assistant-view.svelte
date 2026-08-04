@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Mic from '@lucide/svelte/icons/mic';
 	import Square from '@lucide/svelte/icons/square';
 	import Send from '@lucide/svelte/icons/send';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -19,7 +18,7 @@
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
 	import { region } from '$lib/region.svelte';
 	import { scan } from '$lib/scan.svelte';
-	import { languageName, voice } from '$lib/voice.svelte';
+	import { voice } from '$lib/voice.svelte';
 
 	let status = $state<CliStatus | null>(null);
 	let providers = $state<ProviderInfo[]>([]);
@@ -33,7 +32,6 @@
 
 	$effect(() => {
 		if (!isHosted) return;
-		void voice.ready();
 		void cli.path;
 		void api.getCliStatus(cli.configured).then((value) => (status = value));
 		void api.listProviders().then((value) => (providers = value));
@@ -75,32 +73,6 @@
 		} finally {
 			busy = false;
 		}
-	}
-
-	// A spoken sentence is a command as often as a question, so it is routed
-	// before it is answered; a recognised command asks via toast first.
-	async function dictate() {
-		const heard = await voice.listen();
-		if (!heard) return;
-
-		busy = true;
-		try {
-			const routed = await assistant.obey(heard);
-			if (routed.clarify) {
-				question = heard;
-				answer = routed.clarify;
-				if (voice.speaks) void voice.speak(routed.clarify);
-			}
-			if (routed.handled) return;
-		} catch (cause) {
-			error = errorMessage(cause);
-			return;
-		} finally {
-			busy = false;
-		}
-
-		question = heard;
-		await ask();
 	}
 </script>
 
@@ -248,59 +220,13 @@
 					</Button>
 				{/if}
 
-				<!-- The recogniser in this app waits for silence and can be cut
-				     short; Windows' own decides when a phrase is over. -->
-				<Button
-					variant="outline"
-					disabled={busy ||
-						(voice.listening && voice.engine !== 'onDevice') ||
-						(voice.engine === 'windows' && voice.available === false)}
-					title={voice.engine === 'windows' && voice.available === false
-						? t('settings.voice.unavailable')
-						: t('voice.listen')}
-					onclick={() => (voice.listening ? voice.stopListening() : dictate())}
-				>
-					{#if voice.listening && voice.engine === 'onDevice'}
-						<Square class="size-4 text-destructive" />
-						{t('voice.stop')}
-					{:else}
-						<Mic class={['size-4', voice.listening && 'text-destructive']} />
-						{voice.listening ? t('voice.listening') : t('voice.listen')}
-					{/if}
-				</Button>
 				<Button disabled={busy || !question.trim()} onclick={ask}>
 					<Send class="size-4" />
 					{busy ? t('assistant.asking') : t('assistant.ask')}
 				</Button>
 			</div>
 
-			{#if voice.needsModel}
-				<div class="flex flex-col items-start gap-2 rounded-md border border-amber-500/40 p-2">
-					<p class="text-xs">{t('voice.model.missing')}</p>
-					<Button variant="outline" size="sm" class="h-8 font-normal" href={resolve('/settings')}>
-						{t('voice.model.settings')}
-					</Button>
-				</div>
-			{:else if voice.needsPrivacy}
-				<p class="rounded-md border border-amber-500/40 p-2 text-xs">{t('voice.privacy')}</p>
-			{:else if voice.missingLanguage}
-				<div class="flex flex-col items-start gap-2 rounded-md border border-amber-500/40 p-2">
-					<p class="text-xs">
-						{t('voice.language.missing', {
-							language: languageName(voice.missingLanguage),
-							installed: voice.recognizes.map(languageName).join(', ') || t('voice.language.none')
-						})}
-					</p>
-					<Button
-						variant="outline"
-						size="sm"
-						class="h-8 font-normal"
-						onclick={() => void api.openSpeechSettings()}
-					>
-						{t('settings.voice.windows.open')}
-					</Button>
-				</div>
-			{:else if voice.error}
+			{#if voice.error}
 				<p class="text-xs text-destructive">{t('voice.failed', { message: voice.error })}</p>
 			{/if}
 		</div>

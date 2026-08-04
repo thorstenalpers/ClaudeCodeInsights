@@ -511,8 +511,6 @@ export const en = {
 	'settings.voice.input': 'Input',
 	'settings.voice.input.manual': 'Keyboard',
 	'settings.voice.input.manualHint': 'Type your question. The default.',
-	'settings.voice.input.speech': 'Voice',
-	'settings.voice.input.speechHint': 'Press the microphone and speak.',
 	'settings.voice.output': 'Read answers aloud',
 	'settings.voice.packs': 'Voice packs',
 	'settings.voice.packs.size': '{size} MB download',
@@ -534,12 +532,6 @@ export const en = {
 	'settings.voice.hub.blocked': 'Not speakable here: {reason}',
 	'settings.voice.hub.hint':
 		'Only repositories laid out for sherpa-onnx can be installed: a model, tokens.txt and an espeak-ng-data folder. Most Kokoro repositories carry .npz voices for the Python runtime instead, and are listed with what they lack.',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows voices',
 	'settings.voice.windows.hint':
 		'The voices Windows itself speaks with are installed per language, outside this app: Settings › Time & language › Speech › Manage voices › Add voices. They need no download here and appear in the list above after the window is restarted.',
@@ -554,9 +546,6 @@ export const en = {
 		'Windows has no voice installed for this language. Add one under Settings › Time & language › Speech; the natural voices there are the better ones.',
 	'settings.voice.output.off': 'Off',
 	'settings.voice.output.on': 'On',
-	'settings.voice.unavailable': 'Windows speech recognition is not available on this machine.',
-	'voice.listen': 'Speak',
-	'voice.listening': 'Listening…',
 	'voice.stop': 'Stop',
 	'voice.speak': 'Read aloud',
 	'voice.failed': 'Speech recognition failed: {message}',
@@ -580,30 +569,6 @@ export const en = {
 	'settings.voice.auto': 'Carry spoken commands out at once',
 	'settings.voice.auto.hint':
 		'Without this, a heard command waits for a click first. Either way, only opening a page, rescanning and switching the theme can be spoken — nothing that deletes or writes.',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'Windows will not start recognition until its speech setting is on: Settings › Privacy & security › Speech. Recognition itself still runs on this machine.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

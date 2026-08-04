@@ -1,10 +1,5 @@
 /**
- * Talking to the assistant, and being talked back to.
- *
- * The microphone only listens when its button is pressed: dictation that
- * starts itself is a microphone nobody asked for. Recognition runs through
- * Windows' own on-device recogniser in the host, not through a web speech
- * service, so nothing said here leaves the machine.
+ * Being talked back to by the assistant.
  *
  * Reading back has two engines. The WebView's own synthesis uses the voices
  * Windows has installed, which on most machines is English and nothing else.
@@ -12,24 +7,13 @@
  * chosen in the same place, because to a reader they are one setting.
  */
 import { toast } from 'svelte-sonner';
-import { api, type HubVoice, type Microphone, type SpeechModel, type VoicePack } from '$lib/api';
+import { api, type HubVoice, type VoicePack } from '$lib/api';
 import { i18n, t } from '$lib/i18n/index.svelte';
 import { isHosted } from '$lib/ipc.svelte';
 import { logs } from '$lib/logs.svelte';
 
 const SPEAK_KEY = 'claudeadmin.voiceOutput';
 const VOICE_KEY = 'claudeadmin.voiceName';
-const ENGINE_KEY = 'claudeadmin.speechEngine';
-const DEVICE_KEY = 'claudeadmin.speechDevice';
-const MODEL_KEY = 'claudeadmin.speechModel';
-
-/** Which recogniser dictation goes through. */
-export type Engine = 'windows' | 'onDevice';
-
-function stored(key: string, fallback: string): string {
-	if (typeof localStorage === 'undefined') return fallback;
-	return localStorage.getItem(key) ?? fallback;
-}
 
 /** A pack speaker is stored as `pack:<id>:<speaker>` in the same setting the
  *  Windows voices use, so one choice covers both kinds. */
@@ -65,86 +49,9 @@ class Voice {
 	speaks = $state<boolean>(
 		typeof localStorage === 'undefined' ? false : localStorage.getItem(SPEAK_KEY) === 'on'
 	);
-	listening = $state(false);
 	/** True while something is being read out, so it can be stopped again. */
 	speaking = $state(false);
 	error = $state<string | null>(null);
-	/** null until the host has been asked; false when Windows has no recogniser. */
-	available = $state<boolean | null>(null);
-	/** Windows will not listen until its speech privacy setting is on. */
-	needsPrivacy = $state(false);
-
-	/**
-	 * The capture devices Windows knows.
-	 *
-	 * Listed, not chosen from: the recogniser takes no device and always hears
-	 * the default one. Seeing which that is answers most of "the microphone
-	 * does nothing" on its own.
-	 */
-	microphones = $state<Microphone[]>([]);
-
-	async loadMicrophones(): Promise<void> {
-		if (!isHosted) return;
-		this.microphones = await api.listMicrophones().catch(() => []);
-	}
-
-	/**
-	 * The languages Windows can dictate in here.
-	 *
-	 * Installed apart from the display language and from the voices, so an
-	 * English Windows has none for German however the app is set.
-	 */
-	recognizes = $state<string[]>([]);
-	/** The language dictation was asked for and has no pack for, if any. */
-	missingLanguage = $state<string | null>(null);
-
-	async loadSpeechLanguages(): Promise<void> {
-		if (!isHosted) return;
-		this.recognizes = await api.listSpeechLanguages().catch(() => []);
-	}
-
-	/**
-	 * Which recogniser listens.
-	 *
-	 * Windows' own takes no device and only speaks the languages it has packs
-	 * for; the one in this app records from a chosen microphone and reads a
-	 * downloaded model, which is what makes German work on an English Windows.
-	 */
-	engine = $state<Engine>(stored(ENGINE_KEY, 'windows') === 'onDevice' ? 'onDevice' : 'windows');
-	/** The capture device by name; empty means whatever Windows hands out. */
-	device = $state<string>(stored(DEVICE_KEY, ''));
-	/** The speech model the in-app recogniser reads. */
-	model = $state<string>(stored(MODEL_KEY, 'whisper-tiny'));
-	/** The models this app offers, with the installed ones marked. */
-	models = $state<SpeechModel[]>([]);
-	/** Set when dictation was asked for before its model was there. */
-	needsModel = $state(false);
-
-	setEngine(next: Engine): void {
-		this.engine = next;
-		localStorage.setItem(ENGINE_KEY, next);
-	}
-
-	setDevice(next: string): void {
-		this.device = next;
-		if (next === '') localStorage.removeItem(DEVICE_KEY);
-		else localStorage.setItem(DEVICE_KEY, next);
-	}
-
-	setModel(next: string): void {
-		this.model = next;
-		localStorage.setItem(MODEL_KEY, next);
-	}
-
-	async loadSpeechModels(): Promise<void> {
-		if (!isHosted) return;
-		this.models = await api.listSpeechModels().catch(() => []);
-	}
-
-	/** True once the chosen model is on disk, which is what dictation needs. */
-	get modelReady(): boolean {
-		return this.models.some((entry) => entry.id === this.model && entry.installed);
-	}
 
 	/** The installed Windows voices, once the engine has listed them. */
 	voices = $state<SpeechSynthesisVoice[]>([]);
@@ -224,28 +131,11 @@ class Voice {
 		);
 	}
 
-	/** Fetches a speech model for the dictation that runs in this app. */
-	async installModel(id: string): Promise<void> {
-		const model = this.models.find((entry) => entry.id === id);
-		await this.fetching(id, model?.label ?? id, model?.megabytes ?? 0, async () => {
-			const installed = await api.installSpeechModel(id);
-			await this.loadSpeechModels();
-			return installed.label;
-		});
-	}
-
-	async removeModel(id: string): Promise<void> {
-		if (!isHosted) return;
-		await api.removeSpeechModel(id).catch(() => {});
-		await this.loadSpeechModels();
-	}
-
 	/**
 	 * One download with its notice: the bar, the cancel and the outcome.
 	 *
-	 * Shared by the voices and the speech models because to a reader they are
-	 * the same thing happening — hundreds of megabytes with no other sign of
-	 * life — and the host reports both on the same event.
+	 * Hundreds of megabytes with no other sign of life, so the state is said out
+	 * loud rather than left to a disabled button.
 	 */
 	private async fetching(
 		id: string,
@@ -386,68 +276,6 @@ class Voice {
 		this.speaks = next;
 		localStorage.setItem(SPEAK_KEY, next ? 'on' : 'off');
 		if (!next) this.silence();
-	}
-
-	/**
-	 * Everything a page needs before it can describe dictation.
-	 *
-	 * The assistant asks too, not only the settings page: without it the
-	 * refusal there could name no installed language and no model, having
-	 * never asked for either.
-	 */
-	async ready(): Promise<void> {
-		await Promise.all([
-			this.check(),
-			this.loadMicrophones(),
-			this.loadSpeechLanguages(),
-			this.loadSpeechModels()
-		]);
-	}
-
-	async check(): Promise<void> {
-		if (!isHosted) {
-			this.available = false;
-			return;
-		}
-		this.available = await api.speechAvailable().catch(() => false);
-	}
-
-	/** Resolves with what was heard, or null when nothing was. */
-	async listen(): Promise<string | null> {
-		if (!isHosted || this.listening) return null;
-		this.listening = true;
-		this.error = null;
-		this.needsModel = false;
-		try {
-			const heard =
-				this.engine === 'onDevice'
-					? await api.dictate(this.device || null, this.model, i18n.intlLocale)
-					: await api.recognizeSpeech(i18n.intlLocale);
-			return heard.trim() === '' ? null : heard;
-		} catch (cause) {
-			// The host marks the refusals the user can undo; everything else is
-			// passed through as it was worded.
-			const message = cause instanceof Error ? cause.message : String(cause);
-			this.needsModel = message.includes('speech-model-missing');
-			this.needsPrivacy = message.includes('speech-privacy-not-accepted');
-			const missing = /speech-language-missing:(\S+)/.exec(message);
-			this.missingLanguage = missing?.[1] ?? null;
-			this.error = this.needsPrivacy || this.missingLanguage || this.needsModel ? null : message;
-			return null;
-		} finally {
-			this.listening = false;
-		}
-	}
-
-	/**
-	 * Ends a dictation the app is running itself.
-	 *
-	 * Windows' recogniser decides for itself when a phrase is over and has no
-	 * such button; the one here waits for silence and can be cut short.
-	 */
-	stopListening(): void {
-		if (!isHosted || this.engine !== 'onDevice') return;
-		void api.stopDictating().catch(() => {});
 	}
 
 	speak(text: string): void {

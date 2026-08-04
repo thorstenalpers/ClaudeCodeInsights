@@ -1,5 +1,4 @@
 pub mod analysis;
-pub mod asr;
 pub mod assistant;
 pub mod commands;
 pub mod error;
@@ -80,18 +79,7 @@ pub fn run() {
             commands::usage::get_rhythm,
             commands::usage::get_series,
             commands::usage::get_series_facets,
-            commands::speech::speech_available,
-            commands::speech::recognize_speech,
             commands::speech::open_speech_settings,
-            commands::speech::list_speech_languages,
-            commands::speech::list_speech_models,
-            commands::speech::speech_models_folder,
-            commands::speech::install_speech_model,
-            commands::speech::remove_speech_model,
-            commands::speech::dictate,
-            commands::speech::stop_dictating,
-            commands::speech::list_microphones,
-            commands::speech::open_sound_settings,
             commands::live::start_live,
             commands::live::stop_live,
             commands::tts::list_voice_packs,

@@ -510,8 +510,6 @@ export const pt: Messages = {
 	'settings.voice.input': 'Entrada',
 	'settings.voice.input.manual': 'Teclado',
 	'settings.voice.input.manualHint': 'Escreve a tua pergunta. A predefinição.',
-	'settings.voice.input.speech': 'Voz',
-	'settings.voice.input.speechHint': 'Prime o microfone e fala.',
 	'settings.voice.output': 'Ler as respostas em voz alta',
 	'settings.voice.packs': 'Pacotes de voz',
 	'settings.voice.packs.size': '{size} MB de transferência',
@@ -532,12 +530,6 @@ export const pt: Messages = {
 	'settings.voice.hub.blocked': 'Aqui não se consegue falar: {reason}',
 	'settings.voice.hub.hint':
 		'Só se instalam repositórios com a disposição do sherpa-onnx: um modelo, tokens.txt e uma pasta espeak-ng-data. A maioria dos repositórios Kokoro traz vozes .npz para o runtime de Python e é listada com o que lhes falta.',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Vozes do Windows',
 	'settings.voice.windows.hint':
 		'As vozes do próprio Windows instalam-se por língua fora desta aplicação: Definições › Hora e idioma › Voz › Gerir vozes › Adicionar vozes. Não precisam de transferência aqui e aparecem acima depois de reiniciar a janela.',
@@ -552,10 +544,6 @@ export const pt: Messages = {
 		'O Windows não tem nenhuma voz instalada para este idioma. Adicione uma em Definições › Hora e idioma › Voz; as vozes naturais são as melhores.',
 	'settings.voice.output.off': 'Desligado',
 	'settings.voice.output.on': 'Ligado',
-	'settings.voice.unavailable':
-		'O reconhecimento de voz do Windows não está disponível nesta máquina.',
-	'voice.listen': 'Falar',
-	'voice.listening': 'A ouvir…',
 	'voice.stop': 'Parar',
 	'voice.speak': 'Ler em voz alta',
 	'voice.failed': 'O reconhecimento de voz falhou: {message}',
@@ -579,30 +567,6 @@ export const pt: Messages = {
 	'settings.voice.auto': 'Executar os comandos de voz de imediato',
 	'settings.voice.auto.hint':
 		'Sem isto, um comando reconhecido espera por um clique. De qualquer forma, só é possível abrir uma página, reanalisar e mudar o tema — nada que apague ou escreva.',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'O Windows não inicia o reconhecimento enquanto a definição de voz estiver desligada: Definições › Privacidade e segurança › Voz. O reconhecimento continua a correr nesta máquina.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

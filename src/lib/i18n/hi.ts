@@ -506,8 +506,6 @@ export const hi: Messages = {
 	'settings.voice.input': 'इनपुट',
 	'settings.voice.input.manual': 'कीबोर्ड',
 	'settings.voice.input.manualHint': 'अपना प्रश्न टाइप करें। डिफ़ॉल्ट।',
-	'settings.voice.input.speech': 'आवाज़',
-	'settings.voice.input.speechHint': 'माइक दबाएँ और बोलें।',
 	'settings.voice.output': 'उत्तर पढ़कर सुनाएँ',
 	'settings.voice.packs': 'आवाज़ पैकेज',
 	'settings.voice.packs.size': '{size} MB डाउनलोड',
@@ -528,12 +526,6 @@ export const hi: Messages = {
 	'settings.voice.hub.blocked': 'यहाँ बोला नहीं जा सकता: {reason}',
 	'settings.voice.hub.hint':
 		'केवल sherpa-onnx लेआउट वाले रिपॉज़िटरी इंस्टॉल हो सकते हैं: एक मॉडल, tokens.txt और espeak-ng-data फ़ोल्डर। अधिकतर Kokoro रिपॉज़िटरी Python रनटाइम के लिए .npz आवाज़ें लाते हैं और उनकी कमी के साथ सूचीबद्ध होते हैं।',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows आवाज़ें',
 	'settings.voice.windows.hint':
 		'Windows की अपनी आवाज़ें इस ऐप के बाहर हर भाषा के लिए इंस्टॉल होती हैं: सेटिंग्स › समय और भाषा › वाक् › आवाज़ें प्रबंधित करें › आवाज़ें जोड़ें। यहाँ कोई डाउनलोड नहीं चाहिए; विंडो के पुनः प्रारंभ के बाद वे ऊपर दिखती हैं।',
@@ -548,9 +540,6 @@ export const hi: Messages = {
 		'इस भाषा के लिए Windows में कोई आवाज़ नहीं है। सेटिंग्स › समय और भाषा › वाक् में जोड़ें; वहाँ की नैचुरल आवाज़ें बेहतर हैं।',
 	'settings.voice.output.off': 'बंद',
 	'settings.voice.output.on': 'चालू',
-	'settings.voice.unavailable': 'इस मशीन पर Windows वाक् पहचान उपलब्ध नहीं है।',
-	'voice.listen': 'बोलें',
-	'voice.listening': 'सुन रहा है…',
 	'voice.stop': 'रोकें',
 	'voice.speak': 'पढ़कर सुनाएँ',
 	'voice.failed': 'वाक् पहचान विफल: {message}',
@@ -574,30 +563,6 @@ export const hi: Messages = {
 	'settings.voice.auto': 'बोले गए आदेश तुरंत चलाएँ',
 	'settings.voice.auto.hint':
 		'इसके बिना पहचाना गया आदेश क्लिक की प्रतीक्षा करता है। दोनों ही स्थितियों में केवल पृष्ठ खोलना, दोबारा स्कैन और थीम बदलना ही बोला जा सकता है — कुछ भी मिटाने या लिखने वाला नहीं।',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'जब तक Windows की वाक् सेटिंग चालू न हो, पहचान शुरू नहीं होती: सेटिंग्स › गोपनीयता और सुरक्षा › वाक्। पहचान फिर भी इसी मशीन पर चलती है।',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

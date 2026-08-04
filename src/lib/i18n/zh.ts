@@ -490,8 +490,6 @@ export const zh: Messages = {
 	'settings.voice.input': '输入',
 	'settings.voice.input.manual': '键盘',
 	'settings.voice.input.manualHint': '打字提问，默认方式。',
-	'settings.voice.input.speech': '语音',
-	'settings.voice.input.speechHint': '按下麦克风说话。',
 	'settings.voice.output': '朗读回答',
 	'settings.voice.packs': '语音包',
 	'settings.voice.packs.size': '需下载 {size} MB',
@@ -511,12 +509,6 @@ export const zh: Messages = {
 	'settings.voice.hub.blocked': '这里无法朗读：{reason}',
 	'settings.voice.hub.hint':
 		'只能安装符合 sherpa-onnx 布局的仓库：一个模型、tokens.txt 和 espeak-ng-data 文件夹。多数 Kokoro 仓库带的是给 Python 运行时用的 .npz 声音，会连同缺少的部分一起列出。',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows 语音',
 	'settings.voice.windows.hint':
 		'Windows 自带的语音按语言在本应用之外安装：设置 › 时间和语言 › 语音 › 管理语音 › 添加语音。这里无需下载，重启窗口后会出现在上面的列表中。',
@@ -531,9 +523,6 @@ export const zh: Messages = {
 		'Windows 没有为该语言安装语音。可在“设置 › 时间和语言 › 语音”中添加；其中的自然语音更好。',
 	'settings.voice.output.off': '关闭',
 	'settings.voice.output.on': '开启',
-	'settings.voice.unavailable': '这台机器上没有可用的 Windows 语音识别。',
-	'voice.listen': '说话',
-	'voice.listening': '正在聆听…',
 	'voice.stop': '停止',
 	'voice.speak': '朗读',
 	'voice.failed': '语音识别失败：{message}',
@@ -556,30 +545,6 @@ export const zh: Messages = {
 	'settings.voice.auto': '立即执行语音命令',
 	'settings.voice.auto.hint':
 		'不开启时，识别到的命令要先点一下才执行。无论如何，语音只能打开页面、重新扫描和切换主题，不能删除或写入。',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'在“设置 › 隐私和安全性 › 语音”打开语音设置前，Windows 不会开始识别。识别本身仍在本机进行。',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

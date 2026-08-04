@@ -497,8 +497,6 @@ export const ar: Messages = {
 	'settings.voice.input': 'الإدخال',
 	'settings.voice.input.manual': 'لوحة المفاتيح',
 	'settings.voice.input.manualHint': 'اكتب سؤالك. الوضع الافتراضي.',
-	'settings.voice.input.speech': 'الصوت',
-	'settings.voice.input.speechHint': 'اضغط الميكروفون وتكلّم.',
 	'settings.voice.output': 'قراءة الإجابات بصوت عالٍ',
 	'settings.voice.packs': 'حزم الأصوات',
 	'settings.voice.packs.size': 'تنزيل {size} م.ب',
@@ -519,12 +517,6 @@ export const ar: Messages = {
 	'settings.voice.hub.blocked': 'غير قابل للنطق هنا: {reason}',
 	'settings.voice.hub.hint':
 		'يمكن تثبيت المستودعات بتخطيط sherpa-onnx فقط: نموذج وtokens.txt ومجلد espeak-ng-data. معظم مستودعات Kokoro تحمل أصواتًا بصيغة .npz لبيئة بايثون، وتُدرج مع ما ينقصها.',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'أصوات Windows',
 	'settings.voice.windows.hint':
 		'تُثبَّت أصوات Windows لكل لغة خارج هذا التطبيق: الإعدادات › الوقت واللغة › الكلام › إدارة الأصوات › إضافة أصوات. لا تحتاج إلى تنزيل هنا وتظهر في القائمة أعلاه بعد إعادة تشغيل النافذة.',
@@ -539,9 +531,6 @@ export const ar: Messages = {
 		'لا يوجد صوت مثبَّت لهذه اللغة في Windows. أضِف صوتًا من الإعدادات › الوقت واللغة › الكلام؛ والأصوات الطبيعية هناك أفضل.',
 	'settings.voice.output.off': 'إيقاف',
 	'settings.voice.output.on': 'تشغيل',
-	'settings.voice.unavailable': 'تعرّف Windows على الكلام غير متاح على هذا الجهاز.',
-	'voice.listen': 'تحدّث',
-	'voice.listening': 'يستمع…',
 	'voice.stop': 'إيقاف',
 	'voice.speak': 'اقرأ بصوت',
 	'voice.failed': 'فشل التعرّف على الكلام: {message}',
@@ -564,30 +553,6 @@ export const ar: Messages = {
 	'settings.voice.auto': 'تنفيذ الأوامر الصوتية فورًا',
 	'settings.voice.auto.hint':
 		'بدون ذلك ينتظر الأمر المسموع نقرة أولًا. وفي الحالتين لا يمكن بالصوت سوى فتح صفحة وإعادة الفحص وتبديل السمة — لا شيء يحذف أو يكتب.',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'لن يبدأ Windows التعرّف قبل تشغيل إعداد الكلام: الإعدادات › الخصوصية والأمان › الكلام. والتعرّف نفسه يظل على هذا الجهاز.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',

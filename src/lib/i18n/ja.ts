@@ -507,8 +507,6 @@ export const ja: Messages = {
 	'settings.voice.input': '入力',
 	'settings.voice.input.manual': 'キーボード',
 	'settings.voice.input.manualHint': '質問を入力します。既定です。',
-	'settings.voice.input.speech': '音声',
-	'settings.voice.input.speechHint': 'マイクを押して話します。',
 	'settings.voice.output': '回答を読み上げる',
 	'settings.voice.packs': '音声パック',
 	'settings.voice.packs.size': '{size} MB のダウンロード',
@@ -529,12 +527,6 @@ export const ja: Messages = {
 	'settings.voice.hub.blocked': 'ここでは話せません: {reason}',
 	'settings.voice.hub.hint':
 		'インストールできるのは sherpa-onnx 形式のリポジトリだけです（モデル、tokens.txt、espeak-ng-data フォルダ）。多くの Kokoro リポジトリは Python 用の .npz 音声を持つため、不足しているものを添えて一覧に出ます。',
-	'settings.voice.mic': 'Microphone',
-	'settings.voice.mic.hint':
-		'Dictation listens to whatever Windows has set as the default input; it cannot be picked here, only there. If nothing is heard, this is the first thing to check.',
-	'settings.voice.mic.default': 'Default',
-	'settings.voice.mic.none': 'Windows lists no capture device at all.',
-	'settings.voice.mic.open': 'Open Windows sound settings',
 	'settings.voice.windows': 'Windows の音声',
 	'settings.voice.windows.hint':
 		'Windows 自身の音声は言語ごとにこのアプリの外で追加します: 設定 › 時刻と言語 › 音声認識 › 音声の管理 › 音声の追加。ここでのダウンロードは不要で、ウィンドウを再起動すると上の一覧に現れます。',
@@ -549,9 +541,6 @@ export const ja: Messages = {
 		'この言語の音声が Windows にありません。設定 › 時刻と言語 › 音声 で追加できます。ナチュラル音声のほうが自然です。',
 	'settings.voice.output.off': 'オフ',
 	'settings.voice.output.on': 'オン',
-	'settings.voice.unavailable': 'この端末では Windows 音声認識を利用できません。',
-	'voice.listen': '話す',
-	'voice.listening': '聞いています…',
 	'voice.stop': '停止',
 	'voice.speak': '読み上げる',
 	'voice.failed': '音声認識に失敗しました: {message}',
@@ -574,30 +563,6 @@ export const ja: Messages = {
 	'settings.voice.auto': '音声コマンドをすぐ実行する',
 	'settings.voice.auto.hint':
 		'これを切ると、聞き取ったコマンドはクリックを待ちます。いずれにせよ音声でできるのはページを開く、再スキャン、テーマの切り替えだけで、削除も書き込みもできません。',
-	'settings.voice.recognition': 'Recognition languages',
-	'settings.voice.recognition.hint':
-		'Dictation needs a speech pack for the language the app is set to, installed separately from the display language and from the voices: Settings › Time & language › Speech › Speech language.',
-	'settings.voice.recognition.none':
-		'Windows has no speech recognition installed at all on this machine.',
-	'settings.voice.recognition.missing':
-		'Nothing here speaks {language}, so dictation will refuse while the app is set to it.',
-	'voice.language.missing':
-		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
-	'voice.language.none': 'none',
-	'settings.voice.engine': 'Recogniser',
-	'settings.voice.engine.hint':
-		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
-	'settings.voice.engine.windows': 'Windows',
-	'settings.voice.engine.onDevice': 'In this app',
-	'settings.voice.engine.noModel':
-		'No model is here yet, so dictation has nothing to read with. Download one above.',
-	'settings.voice.mic.pick':
-		'Dictation records from this device. The system default is what Windows itself would hand out.',
-	'settings.voice.mic.system': 'System default',
-	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
-	'voice.model.settings': 'Open settings',
-	'voice.privacy':
-		'Windows は音声設定を有効にするまで認識を開始しません（設定 › プライバシーとセキュリティ › 音声）。認識自体はこの端末で動きます。',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
