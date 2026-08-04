@@ -23,6 +23,10 @@
 	const kind = $derived.by(() => {
 		if (!voice.speaks) return null;
 		if (voice.voices.length === 0) return null;
+		// Nobody picked this language: it is the system's, and being told that
+		// Windows has no voice for its own language is news about nothing the
+		// user did. Only a language chosen in settings is worth a notice.
+		if (i18n.setting === 'system') return null;
 		if (matching.length === 0) return 'missing';
 		// An explicit pick outlives the language it was made for; the automatic
 		// choice already follows along and needs no notice.

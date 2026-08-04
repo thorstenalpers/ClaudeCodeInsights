@@ -53,7 +53,7 @@
 	<Sidebar.Content>
 		<Sidebar.Group>
 			<Sidebar.GroupContent>
-				<Sidebar.Menu>
+				<Sidebar.Menu class="gap-1">
 					{#each pages as page (page.href)}
 						<Sidebar.MenuItem>
 							<Tooltip.Root>
@@ -83,7 +83,7 @@
 	</Sidebar.Content>
 
 	<Sidebar.Footer>
-		<Sidebar.Menu>
+		<Sidebar.Menu class="gap-1">
 			{#each footer as page (page.href)}
 				<Sidebar.MenuItem>
 					<Tooltip.Root>

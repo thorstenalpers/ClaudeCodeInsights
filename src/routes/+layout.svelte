@@ -80,7 +80,12 @@
 		requestAnimationFrame(() => requestAnimationFrame(() => (starting = false)));
 	});
 
-	const railPages = $derived(logs.enabled ? [...PAGES, LOG_PAGE] : PAGES);
+	const railPages = PAGES;
+	// The log sits with the other two that are about the app rather than about
+	// the work, directly above the info it is usually opened next to.
+	const footerPages = $derived(
+		logs.enabled ? [LOG_PAGE, INFO_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
+	);
 	const current = $derived(pageFor(page.url.pathname));
 	const detailSessionId = $derived(page.params.id ?? null);
 	/** The activity a detail page is about, taken from the URL like the rest. */
@@ -123,11 +128,7 @@
 		if (!narrow) preferred = open;
 	}}
 >
-	<AppSidebar
-		pages={railPages}
-		footer={[INFO_PAGE, SETTINGS_PAGE]}
-		active={activeHref(page.url.pathname)}
-	/>
+	<AppSidebar pages={railPages} footer={footerPages} active={activeHref(page.url.pathname)} />
 
 	<Sidebar.Inset class="flex h-dvh min-w-0 flex-col overflow-hidden">
 		<header class="@container flex h-12 shrink-0 items-center gap-2 border-b px-3">
