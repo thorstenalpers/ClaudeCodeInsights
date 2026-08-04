@@ -294,7 +294,7 @@ export const en = {
 	'cost.measure.cost': 'Prices',
 	'cost.measure.tokens': 'Tokens',
 	'cost.plans.hint':
-		'Every plan as a flat line against what the months actually cost at API rates.',
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'By month',
 	'cost.byWeek': 'By week',
 	'cost.byDay': 'By day',
@@ -504,7 +504,10 @@ export const en = {
 	'cost.column.plan': 'Plan',
 	'cost.plans.title': 'Subscription cost vs API cost',
 	'cost.plans.description':
-		'What the plan cost each month against what the same months would have cost on the API. Nothing on this machine records a plan change, so the history is the one thing here you have to tell it.',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'At API rates',
 	'cost.plans.fee': 'Plan fee',
 	'cost.plans.add': 'Record a change',

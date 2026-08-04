@@ -33,6 +33,9 @@
 		height?: number;
 		/** Shortens a key for the menu; the chart itself keeps the full name. */
 		display?: (key: string) => string;
+		/** The shapes worth offering. A chart whose series must not be added
+		 *  together has no business offering a stack. */
+		types?: ChartType[];
 	};
 
 	let {
@@ -41,15 +44,18 @@
 		format,
 		type = 'stacked',
 		height,
-		display = (key) => key
+		display = (key) => key,
+		types
 	}: Props = $props();
 
-	const TYPES: { id: ChartType; label: MessageKey; icon: typeof ChartColumn }[] = [
+	const ALL: { id: ChartType; label: MessageKey; icon: typeof ChartColumn }[] = [
 		{ id: 'stacked', label: 'chart.type.stacked', icon: ChartColumnStacked },
 		{ id: 'bars', label: 'chart.type.bars', icon: ChartColumn },
 		{ id: 'line', label: 'chart.type.line', icon: ChartLine },
 		{ id: 'area', label: 'chart.type.area', icon: ChartArea }
 	];
+
+	const TYPES = $derived(types ? ALL.filter((entry) => types.includes(entry.id)) : ALL);
 
 	/** Null until the reader picks, so the caller's default still applies. */
 	let picked = $state<ChartType | null>(null);

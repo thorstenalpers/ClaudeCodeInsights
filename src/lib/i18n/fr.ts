@@ -294,7 +294,7 @@ export const fr: Messages = {
 	'cost.measure.cost': 'Prix',
 	'cost.measure.tokens': 'Jetons',
 	'cost.plans.hint':
-		'Chaque forfait en ligne droite face au coût réel des mois aux tarifs de l’API.',
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'Par mois',
 	'cost.byWeek': 'Par semaine',
 	'cost.byDay': 'Par jour',
@@ -505,7 +505,10 @@ export const fr: Messages = {
 	'cost.column.plan': 'Forfait',
 	'cost.plans.title': 'Coût de l’abonnement face au coût de l’API',
 	'cost.plans.description':
-		'Ce que le forfait a coûté chaque mois face à ce que ces mêmes mois auraient coûté via l’API. Rien sur cette machine ne consigne un changement de forfait : l’historique est la seule chose que vous devez saisir.',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'Aux tarifs API',
 	'cost.plans.fee': 'Forfait',
 	'cost.plans.add': 'Enregistrer un changement',

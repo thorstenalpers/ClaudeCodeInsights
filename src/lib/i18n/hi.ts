@@ -291,7 +291,7 @@ export const hi: Messages = {
 	'cost.measure.cost': 'क़ीमतें',
 	'cost.measure.tokens': 'टोकन',
 	'cost.plans.hint':
-		'हर प्लान एक सीधी रेखा के रूप में, API दरों पर महीनों के असली खर्च के मुकाबले।',
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'महीने के अनुसार',
 	'cost.byWeek': 'साप्ताहिक',
 	'cost.byDay': 'दिन के अनुसार',
@@ -499,7 +499,10 @@ export const hi: Messages = {
 	'cost.column.plan': 'योजना',
 	'cost.plans.title': 'सदस्यता लागत बनाम API लागत',
 	'cost.plans.description':
-		'हर महीने प्लान की लागत बनाम उन्हीं महीनों की API दरों पर लागत। इस मशीन पर प्लान बदलने का कोई रिकॉर्ड नहीं है, इसलिए इतिहास आपको खुद बताना होगा।',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'API दरों पर',
 	'cost.plans.fee': 'योजना शुल्क',
 	'cost.plans.add': 'बदलाव दर्ज करें',

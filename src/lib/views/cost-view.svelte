@@ -540,10 +540,54 @@
 									plan: t(`cost.plan.${plan.id}`)
 								})}
 					</Card.Description>
+
+					<!-- Every tariff with the same figure, not only the one in force: the
+					     question behind this card is which of them fits, and that cannot be
+					     answered by a line squashed against the axis. -->
+					<div class="flex flex-wrap gap-2 pt-1">
+						{#each SUBSCRIPTIONS as entry (entry.id)}
+							{@const fee = plan.monthlyOf(entry.id)}
+							{@const over = averageMonth - fee}
+							<div
+								class={[
+									'min-w-36 flex-1 rounded-lg border p-2',
+									entry.id === plan.id && 'border-primary/40 bg-primary/5'
+								]}
+							>
+								<p class="flex items-center gap-1.5 text-xs text-muted-foreground">
+									{t(`cost.plan.${entry.id}`)}
+									{#if entry.id === plan.id}
+										<Badge variant="secondary" class="h-4 px-1 text-[10px] font-normal">
+											{t('cost.plans.current')}
+										</Badge>
+									{/if}
+								</p>
+								<p class="text-sm font-semibold tabular-nums">{money(fee)}</p>
+								<p
+									class={[
+										'text-xs tabular-nums',
+										over >= 0 ? 'text-emerald-600 dark:text-emerald-500' : 'text-muted-foreground'
+									]}
+								>
+									{over >= 0
+										? t('cost.plans.covers', { amount: money(over) })
+										: t('cost.plans.short', { amount: money(-over) })}
+								</p>
+							</div>
+						{/each}
+					</div>
 				</Card.Header>
 
 				<Card.Content class="flex flex-col gap-3 overflow-x-auto">
-					<ChartPanel labels={months.labels} series={planLines} format={money} type="area" />
+					<!-- No stack here: a tariff and what the month cost are two answers to
+					     the same question, never two parts of one sum. -->
+					<ChartPanel
+						labels={months.labels}
+						series={planLines}
+						format={money}
+						type="line"
+						types={['line', 'area']}
+					/>
 
 					<p class="text-xs text-muted-foreground">{t('cost.plans.description')}</p>
 

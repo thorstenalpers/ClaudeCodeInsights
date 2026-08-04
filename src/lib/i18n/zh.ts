@@ -284,7 +284,8 @@ export const zh: Messages = {
 	'cost.history.tokens.day': '每个模型每天使用了多少令牌。',
 	'cost.measure.cost': '价格',
 	'cost.measure.tokens': '令牌',
-	'cost.plans.hint': '每种订阅以水平线显示，对比各月按 API 价格的实际花费。',
+	'cost.plans.hint':
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': '按月',
 	'cost.byWeek': '按周',
 	'cost.byDay': '按日',
@@ -483,7 +484,10 @@ export const zh: Messages = {
 	'cost.column.plan': '套餐',
 	'cost.plans.title': '订阅费用 vs API 费用',
 	'cost.plans.description':
-		'订阅每月的花费，对比同样这些月按 API 计价的花费。本机没有记录订阅变更，所以这段历史只能由你自己填。',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': '按 API 价格',
 	'cost.plans.fee': '套餐费用',
 	'cost.plans.add': '记录一次变更',

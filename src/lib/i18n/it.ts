@@ -294,7 +294,7 @@ export const it: Messages = {
 	'cost.measure.cost': 'Prezzi',
 	'cost.measure.tokens': 'Token',
 	'cost.plans.hint':
-		'Ogni piano come linea piatta rispetto a quanto i mesi sono costati davvero alle tariffe API.',
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'Per mese',
 	'cost.byWeek': 'Per settimana',
 	'cost.byDay': 'Per giorno',
@@ -506,7 +506,10 @@ export const it: Messages = {
 	'cost.column.plan': 'Piano',
 	'cost.plans.title': 'Costo dell’abbonamento contro costo API',
 	'cost.plans.description':
-		'Quanto è costato il piano ogni mese rispetto a quanto sarebbero costati gli stessi mesi con l’API. Nulla su questa macchina registra un cambio di piano, quindi la cronologia è l’unica cosa da inserire a mano.',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'A tariffe API',
 	'cost.plans.fee': 'Quota del piano',
 	'cost.plans.add': 'Registra un cambio',

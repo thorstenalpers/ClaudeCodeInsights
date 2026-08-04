@@ -291,7 +291,8 @@ export const ja: Messages = {
 	'cost.history.tokens.day': '各モデルが日ごとに使ったトークン数。',
 	'cost.measure.cost': '料金',
 	'cost.measure.tokens': 'トークン',
-	'cost.plans.hint': '各プランを水平線で示し、API 料金での実際の月額と比べる。',
+	'cost.plans.hint':
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': '月別',
 	'cost.byWeek': '週ごと',
 	'cost.byDay': '日別',
@@ -500,7 +501,10 @@ export const ja: Messages = {
 	'cost.column.plan': 'プラン',
 	'cost.plans.title': 'サブスク費用 vs API 費用',
 	'cost.plans.description':
-		'プランの月額と、同じ月を API 料金で払った場合の比較です。プラン変更はこの端末のどこにも記録されていないので、履歴だけは自分で入れる必要があります。',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'API 料金換算',
 	'cost.plans.fee': 'プラン料金',
 	'cost.plans.add': '変更を記録',

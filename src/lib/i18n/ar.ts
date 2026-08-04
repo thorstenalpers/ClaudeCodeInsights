@@ -286,7 +286,8 @@ export const ar: Messages = {
 	'cost.history.tokens.day': 'عدد الرموز التي استهلكها كل نموذج يوميًا.',
 	'cost.measure.cost': 'الأسعار',
 	'cost.measure.tokens': 'الرموز',
-	'cost.plans.hint': 'كل خطة كخط أفقي مقابل ما كلّفته الأشهر فعليًا بأسعار الواجهة البرمجية.',
+	'cost.plans.hint':
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'حسب الشهر',
 	'cost.byWeek': 'أسبوعيًا',
 	'cost.byDay': 'حسب اليوم',
@@ -490,7 +491,10 @@ export const ar: Messages = {
 	'cost.column.plan': 'الخطة',
 	'cost.plans.title': 'تكلفة الاشتراك مقابل تكلفة الواجهة البرمجية',
 	'cost.plans.description':
-		'ما كلّفته الخطة شهريًا مقابل ما كانت ستكلّفه الأشهر نفسها عبر الواجهة البرمجية. لا شيء على هذا الجهاز يسجّل تغيير الخطة، فالسجل هو الشيء الوحيد الذي عليك إدخاله.',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'بأسعار الواجهة',
 	'cost.plans.fee': 'رسوم الخطة',
 	'cost.plans.add': 'تسجيل تغيير',

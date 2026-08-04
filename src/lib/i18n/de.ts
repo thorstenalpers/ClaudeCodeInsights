@@ -293,7 +293,7 @@ export const de: Messages = {
 	'cost.measure.cost': 'Preise',
 	'cost.measure.tokens': 'Tokens',
 	'cost.plans.hint':
-		'Jeder Plan als waagerechte Linie gegen das, was die Monate zu API-Preisen tatsächlich gekostet haben.',
+		'Ein Punkt je Monat, nichts davon aufsummiert: die durchgezogene Linie ist, was die Token dieses Monats zu API-Preisen gekostet hätten, die gestrichelten sind, was der jeweilige Tarif für denselben Monat verlangt. Ein Tarif kostet jeden Monat gleich viel — deshalb liegt er waagerecht; die Nutzung schwankt, deshalb tut es die andere Linie nicht.',
 	'cost.byMonth': 'Nach Monat',
 	'cost.byWeek': 'Nach Woche',
 	'cost.byDay': 'Nach Tag',
@@ -506,7 +506,10 @@ export const de: Messages = {
 	'cost.column.plan': 'Abo',
 	'cost.plans.title': 'Abokosten vs. API-Kosten',
 	'cost.plans.description':
-		'Was das Abo je Monat gekostet hat, gegen das, was dieselben Monate über die API gekostet hätten. Auf diesem Rechner steht kein Abowechsel geschrieben — die Historie ist das Einzige hier, das du selbst eintragen musst.',
+		'Über der Tariflinie hat sich das Abo in diesem Monat gelohnt, darunter nicht. Der Schnitt darüber sagt dasselbe über den ganzen Zeitraum.',
+	'cost.plans.current': 'aktuell',
+	'cost.plans.covers': '{amount} über der Gebühr',
+	'cost.plans.short': '{amount} unter der Gebühr',
 	'cost.plans.actual': 'Zu API-Preisen',
 	'cost.plans.fee': 'Abogebühr',
 	'cost.plans.add': 'Wechsel eintragen',

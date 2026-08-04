@@ -291,7 +291,7 @@ export const ru: Messages = {
 	'cost.measure.cost': 'Цены',
 	'cost.measure.tokens': 'Токены',
 	'cost.plans.hint':
-		'Каждый план — прямой линией против того, во что месяцы обошлись по тарифам API.',
+		'One point per month, none of it added up: the solid line is what that month’s tokens would have cost at API rates, the dashed ones are what each tariff charges for the same month. A tariff costs the same every month — hence the flat line; usage does not, hence the other one.',
 	'cost.byMonth': 'По месяцам',
 	'cost.byWeek': 'По неделям',
 	'cost.byDay': 'По дням',
@@ -500,7 +500,10 @@ export const ru: Messages = {
 	'cost.column.plan': 'Тариф',
 	'cost.plans.title': 'Стоимость подписки против стоимости API',
 	'cost.plans.description':
-		'Во что обошёлся план каждый месяц против того, во что те же месяцы обошлись бы по API. Смена плана нигде на этой машине не записана, поэтому историю приходится задавать вручную.',
+		'Above the tariff line the subscription paid for itself that month, below it it did not. The average above says the same about the whole span.',
+	'cost.plans.current': 'in force',
+	'cost.plans.covers': '{amount} above the fee',
+	'cost.plans.short': '{amount} below the fee',
 	'cost.plans.actual': 'По ценам API',
 	'cost.plans.fee': 'Плата за тариф',
 	'cost.plans.add': 'Записать смену',
