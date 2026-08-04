@@ -37,13 +37,25 @@
 	/** Below this the rail alone is worth more than the labels beside it. */
 	const NARROW = 1100;
 
+	/**
+	 * Below this the rail runs out of room downwards.
+	 *
+	 * Thirteen entries at the full row height need about 540 pixels once the
+	 * header and the pinned foot are counted; the shorter rows fit inside the
+	 * 480 the window may never go under. Measured in CSS pixels, so a phone and
+	 * a scaled desktop are the same case.
+	 */
+	const SHORT = 620;
+
 	let viewport = $state(NARROW);
+	let viewportHeight = $state(SHORT);
 	/** What the user chose while there was room; restored when there is again. */
 	let preferred = $state(true);
 	/** The last click, which outranks the width until the width class changes. */
 	let clicked = $state<boolean | null>(null);
 
 	const narrow = $derived(viewport < NARROW);
+	const short = $derived(viewportHeight < SHORT);
 
 	// Crossing the threshold is a new situation, so the old click stops speaking
 	// for it: dragged narrow the rail wins, dragged wide again what was set does.
@@ -105,7 +117,7 @@
 	}
 </script>
 
-<svelte:window bind:innerWidth={viewport} />
+<svelte:window bind:innerWidth={viewport} bind:innerHeight={viewportHeight} />
 
 {#if starting}
 	<div
@@ -128,7 +140,12 @@
 		if (!narrow) preferred = open;
 	}}
 >
-	<AppSidebar pages={railPages} footer={footerPages} active={activeHref(page.url.pathname)} />
+	<AppSidebar
+		pages={railPages}
+		footer={footerPages}
+		active={activeHref(page.url.pathname)}
+		compact={short}
+	/>
 
 	<Sidebar.Inset class="flex h-dvh min-w-0 flex-col overflow-hidden">
 		<header class="@container flex h-12 shrink-0 items-center gap-2 border-b px-3">

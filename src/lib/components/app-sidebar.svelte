@@ -12,9 +12,11 @@
 		/** Pinned at the foot, in the order given. */
 		footer: PageDefinition[];
 		active: string;
+		/** Shorter rows and no gaps, for a window too low to hold the full set. */
+		compact?: boolean;
 	};
 
-	let { pages, footer, active }: Props = $props();
+	let { pages, footer, active, compact = false }: Props = $props();
 
 	/**
 	 * What a menu entry does under the pointer.
@@ -50,16 +52,23 @@
 		</div>
 	</Sidebar.Header>
 
-	<Sidebar.Content>
+	<!-- Scrolls folded down to the rail as well: the stock sidebar hides the
+	     overflow there, so on a low window the last icons were unreachable
+	     rather than merely out of sight. -->
+	<Sidebar.Content class="group-data-[collapsible=icon]:overflow-auto">
 		<Sidebar.Group>
 			<Sidebar.GroupContent>
-				<Sidebar.Menu class="gap-1">
+				<Sidebar.Menu class={compact ? 'gap-0' : 'gap-1'}>
 					{#each pages as page (page.href)}
 						<Sidebar.MenuItem>
 							<Tooltip.Root>
 								<Tooltip.Trigger>
 									{#snippet child({ props })}
-										<Sidebar.MenuButton {...props} isActive={active === page.href}>
+										<Sidebar.MenuButton
+											{...props}
+											size={compact ? 'sm' : 'default'}
+											isActive={active === page.href}
+										>
 											{#snippet child({ props: buttonProps })}
 												<a
 													{...buttonProps}
@@ -83,13 +92,17 @@
 	</Sidebar.Content>
 
 	<Sidebar.Footer>
-		<Sidebar.Menu class="gap-1">
+		<Sidebar.Menu class={compact ? 'gap-0' : 'gap-1'}>
 			{#each footer as page (page.href)}
 				<Sidebar.MenuItem>
 					<Tooltip.Root>
 						<Tooltip.Trigger>
 							{#snippet child({ props })}
-								<Sidebar.MenuButton {...props} isActive={active === page.href}>
+								<Sidebar.MenuButton
+									{...props}
+									size={compact ? 'sm' : 'default'}
+									isActive={active === page.href}
+								>
 									{#snippet child({ props: buttonProps })}
 										<a
 											{...buttonProps}
