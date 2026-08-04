@@ -65,22 +65,24 @@ pub fn microphones() -> Vec<Microphone> {
         .unwrap_or_default()
 }
 
+/// The language part of a tag: `de-DE`, `de_DE` and `de` all give `de`.
+pub fn primary(tag: &str) -> String {
+    tag.to_lowercase()
+        .replace('_', "-")
+        .split('-')
+        .next()
+        .unwrap_or_default()
+        .to_owned()
+}
+
 /// Whether one of the installed recogniser languages covers `wanted`.
 ///
 /// Matched on the primary subtag: a machine with `de-DE` dictates German for an
 /// app set to plain `de`, and refusing that would send the user looking for a
 /// pack they already have.
 fn supports(installed: &[String], wanted: &str) -> bool {
-    let base = |tag: &str| {
-        tag.to_lowercase()
-            .replace('_', "-")
-            .split('-')
-            .next()
-            .unwrap_or_default()
-            .to_owned()
-    };
-    let wanted = base(wanted);
-    installed.iter().any(|tag| base(tag) == wanted)
+    let wanted = primary(wanted);
+    installed.iter().any(|tag| primary(tag) == wanted)
 }
 
 /// Opens the page where the default input device is set.

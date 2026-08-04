@@ -388,6 +388,22 @@ class Voice {
 		if (!next) this.silence();
 	}
 
+	/**
+	 * Everything a page needs before it can describe dictation.
+	 *
+	 * The assistant asks too, not only the settings page: without it the
+	 * refusal there could name no installed language and no model, having
+	 * never asked for either.
+	 */
+	async ready(): Promise<void> {
+		await Promise.all([
+			this.check(),
+			this.loadMicrophones(),
+			this.loadSpeechLanguages(),
+			this.loadSpeechModels()
+		]);
+	}
+
 	async check(): Promise<void> {
 		if (!isHosted) {
 			this.available = false;

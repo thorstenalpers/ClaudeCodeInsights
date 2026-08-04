@@ -33,6 +33,7 @@
 
 	$effect(() => {
 		if (!isHosted) return;
+		void voice.ready();
 		void cli.path;
 		void api.getCliStatus(cli.configured).then((value) => (status = value));
 		void api.listProviders().then((value) => (providers = value));

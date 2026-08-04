@@ -11,6 +11,8 @@
 //! locally.
 
 use crate::error::{Error, Result};
+// Whisper takes the language alone, the same cut the Windows recogniser needs.
+use crate::speech::primary;
 use crate::tts::Progress;
 use serde::Serialize;
 use sherpa_onnx::{
@@ -268,15 +270,69 @@ fn path_string(path: PathBuf) -> String {
     path.to_string_lossy().into_owned()
 }
 
-/// `de-DE` is `de` to Whisper, which takes the language alone.
-fn primary(locale: &str) -> String {
-    locale
-        .to_lowercase()
-        .replace('_', "-")
-        .split('-')
-        .next()
-        .unwrap_or("en")
-        .to_owned()
+/// Opens the stream in whatever format the device actually speaks.
+///
+/// Asking for `f32` alone is refused outright by a device set to 16-bit in
+/// Windows' advanced properties — `StreamConfigNotSupported`, and dictation
+/// with a perfectly good microphone would be over before it started.
+fn capture(
+    device: &rodio::cpal::Device,
+    config: &rodio::cpal::SupportedStreamConfig,
+    channels: usize,
+    into: Arc<Mutex<Vec<f32>>>,
+) -> Result<rodio::cpal::Stream> {
+    use rodio::cpal::traits::DeviceTrait;
+    use rodio::cpal::{Sample, SampleFormat};
+
+    // Mixed down as it arrives: the model wants one channel, and a stereo
+    // headset would otherwise be read twice.
+    fn mix<T: Sample>(samples: &[T], channels: usize, into: &Mutex<Vec<f32>>)
+    where
+        f32: rodio::cpal::FromSample<T>,
+    {
+        let Ok(mut buffer) = into.lock() else {
+            return;
+        };
+        buffer.extend(samples.chunks(channels).map(|frame| {
+            frame
+                .iter()
+                .map(|sample| sample.to_sample::<f32>())
+                .sum::<f32>()
+                / channels as f32
+        }));
+    }
+
+    let complain = |error| log::warn!("dictation: {error}");
+    let shape = config.config();
+
+    let stream = match config.sample_format() {
+        SampleFormat::I16 => device.build_input_stream(
+            &shape,
+            move |samples: &[i16], _| mix(samples, channels, &into),
+            complain,
+            None,
+        ),
+        SampleFormat::U16 => device.build_input_stream(
+            &shape,
+            move |samples: &[u16], _| mix(samples, channels, &into),
+            complain,
+            None,
+        ),
+        SampleFormat::I32 => device.build_input_stream(
+            &shape,
+            move |samples: &[i32], _| mix(samples, channels, &into),
+            complain,
+            None,
+        ),
+        _ => device.build_input_stream(
+            &shape,
+            move |samples: &[f32], _| mix(samples, channels, &into),
+            complain,
+            None,
+        ),
+    };
+
+    stream.map_err(|error| Error::BadRequest(error.to_string()))
 }
 
 /// Opens the microphone and returns the first thing said, at 16 kHz mono.
@@ -305,26 +361,7 @@ fn record(device: Option<&str>, detector: &VoiceActivityDetector) -> Result<Vec<
     let channels = config.channels() as usize;
 
     let taken: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
-    let writer = Arc::clone(&taken);
-    let stream = input
-        .build_input_stream(
-            &config.config(),
-            move |samples: &[f32], _| {
-                // Whatever the device offers is mixed down: the model wants one
-                // channel and a stereo headset would otherwise be read twice.
-                let Ok(mut buffer) = writer.lock() else {
-                    return;
-                };
-                buffer.extend(
-                    samples
-                        .chunks(channels)
-                        .map(|frame| frame.iter().sum::<f32>() / channels as f32),
-                );
-            },
-            |error| log::warn!("dictation: {error}"),
-            None,
-        )
-        .map_err(|error| Error::BadRequest(error.to_string()))?;
+    let stream = capture(&input, &config, channels, Arc::clone(&taken))?;
 
     stopping().store(false, Ordering::SeqCst);
     stream

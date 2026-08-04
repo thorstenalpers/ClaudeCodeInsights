@@ -34,11 +34,8 @@
 	let hubQuery = $state('');
 
 	$effect(() => {
-		void voice.check();
+		void voice.ready();
 		void voice.loadPacks();
-		void voice.loadMicrophones();
-		void voice.loadSpeechLanguages();
-		void voice.loadSpeechModels();
 	});
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
