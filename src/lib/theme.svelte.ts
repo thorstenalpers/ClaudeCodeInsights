@@ -2,12 +2,13 @@ import { setMode, mode, userPrefersMode } from 'mode-watcher';
 import { applyThemeChange } from './theme/apply-theme-change';
 
 export const PRESETS = [
-	{ id: 'default', label: 'Neutral' },
-	{ id: 'tech', label: 'Tech' },
-	{ id: 'claude', label: 'Claude' },
-	{ id: 'cosmic', label: 'Cosmic' },
-	{ id: 'supabase', label: 'Supabase' },
-	{ id: 'graphite', label: 'Graphite' }
+	{ id: 'default', label: 'Default' },
+	{ id: 'caffeine', label: 'Caffeine' },
+	{ id: 'modern-minimal', label: 'Modern Minimal' },
+	{ id: 'mono', label: 'Mono' },
+	{ id: 'northern-lights', label: 'Northern Lights' },
+	{ id: 'twitter', label: 'Twitter' },
+	{ id: 'vercel', label: 'Vercel' }
 ] as const;
 
 export type PresetId = (typeof PRESETS)[number]['id'];
