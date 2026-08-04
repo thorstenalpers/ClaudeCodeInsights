@@ -67,6 +67,18 @@
 		handle.addEventListener('pointerup', done);
 	}
 
+	/** Same address, whatever the encoding: `%5C` and `\` are one path. */
+	function sameAddress(a: string, b: string): boolean {
+		const plain = (value: string) => {
+			try {
+				return decodeURIComponent(value).replace(/\\/g, '/').toLowerCase();
+			} catch {
+				return value.toLowerCase();
+			}
+		};
+		return plain(a) === plain(b);
+	}
+
 	/** Which entries are folded open; an entry not named here is closed. */
 	let open = $state<string[]>([]);
 
@@ -98,7 +110,7 @@
 	<Sidebar.MenuSubItem>
 		<Sidebar.MenuSubButton
 			size={compact ? 'sm' : 'md'}
-			isActive={item.href === path}
+			isActive={sameAddress(item.href, path)}
 			href={item.href}
 			title={item.title ?? item.label}
 		>
@@ -111,13 +123,13 @@
 		<!-- The third level: the sessions of one project. Shown only while that
 		     project is the page on screen, or the rail becomes a file tree of
 		     everything ever run. -->
-		{#if item.children && item.children.length > 0 && path.startsWith(item.href)}
+		{#if item.children && item.children.length > 0 && sameAddress(item.href, path)}
 			<Sidebar.MenuSub class={compact ? 'gap-0' : ''}>
 				{#each item.children as child (child.href)}
 					<Sidebar.MenuSubItem>
 						<Sidebar.MenuSubButton
 							size="sm"
-							isActive={child.href === path}
+							isActive={sameAddress(child.href, path)}
 							href={child.href}
 							title={child.title ?? child.label}
 						>

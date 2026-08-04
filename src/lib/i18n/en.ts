@@ -418,6 +418,11 @@ export const en = {
 	'settings.rates.edited': 'edited',
 	'settings.rates.reset': 'Back to published',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'Coding',
 	'activity.debugging': 'Debugging',
 	'activity.exploration': 'Exploration',
@@ -570,6 +575,7 @@ export const en = {
 		'Without this, a heard command waits for a click first. Either way, only opening a page, rescanning and switching the theme can be spoken — nothing that deletes or writes.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

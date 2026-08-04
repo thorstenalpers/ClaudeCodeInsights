@@ -417,6 +417,11 @@ export const ja: Messages = {
 	'settings.rates.edited': '変更済み',
 	'settings.rates.reset': '公開値に戻す',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'コーディング',
 	'activity.debugging': 'デバッグ',
 	'activity.exploration': '調査',
@@ -566,6 +571,7 @@ export const ja: Messages = {
 		'これを切ると、聞き取ったコマンドはクリックを待ちます。いずれにせよ音声でできるのはページを開く、再スキャン、テーマの切り替えだけで、削除も書き込みもできません。',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

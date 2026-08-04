@@ -247,16 +247,19 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
         // Either spelling counts. The filter chips carry the short name the
         // facets are built from, while a project's own page knows only the full
         // path it was registered under — matching one column would leave the
-        // other asking for rows that cannot answer.
+        // other asking for rows that cannot answer. The path is compared
+        // spelling-blind: `~/.claude.json` holds the same directory twice, once
+        // with each separator, and only one of them is what was scanned.
         where_parts.push(format!(
-            "(COALESCE(s.project_name, '') IN ({0}) OR COALESCE(s.project_path, '') IN ({0}))",
-            placeholders(request.projects.len())
+            "(COALESCE(s.project_name, '') IN ({0}) OR {1} IN ({0}))",
+            placeholders(request.projects.len()),
+            crate::analysis::SAME_PATH
         ));
         for value in &request.projects {
             params.push(Box::new(value.clone()));
         }
         for value in &request.projects {
-            params.push(Box::new(value.clone()));
+            params.push(Box::new(crate::analysis::same_path(value)));
         }
     }
 

@@ -410,6 +410,11 @@ export const ar: Messages = {
 	'settings.rates.edited': 'مُعدَّل',
 	'settings.rates.reset': 'العودة إلى المعلن',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'البرمجة',
 	'activity.debugging': 'تصحيح الأخطاء',
 	'activity.exploration': 'الاستكشاف',
@@ -557,6 +562,7 @@ export const ar: Messages = {
 		'بدون ذلك ينتظر الأمر المسموع نقرة أولًا. وفي الحالتين لا يمكن بالصوت سوى فتح صفحة وإعادة الفحص وتبديل السمة — لا شيء يحذف أو يكتب.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

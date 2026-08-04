@@ -102,16 +102,24 @@ export type PageGroup = {
 	pages: readonly PageDefinition[];
 };
 
+/** The pages of a group, in the order named rather than in the order listed. */
+function pick(hrefs: string[]): PageDefinition[] {
+	return hrefs
+		.map((href) => PAGES.find((page) => page.href === href))
+		.filter((page): page is PageDefinition => page !== undefined);
+}
+
 /**
  * The rail's entries, in the three groups they fall into.
  *
- * What is happening, what has happened, and what should happen next — the same
- * order as before, with the seams named.
+ * Where the work is, what it added up to, and what should happen next. The
+ * middle group is the one that grew: four pages that all answer a question
+ * about the same recorded turns, from four sides.
  */
 export const PAGE_GROUPS: readonly PageGroup[] = [
-	{ label: 'nav.group.now', pages: PAGES.slice(0, 1) },
-	{ label: 'nav.group.past', pages: PAGES.slice(1, 7) },
-	{ label: 'nav.group.next', pages: PAGES.slice(7) }
+	{ label: 'nav.group.now', pages: pick(['/', '/sessions', '/projects']) },
+	{ label: 'nav.group.analysis', pages: pick(['/cost', '/activity', '/agents', '/tools']) },
+	{ label: 'nav.group.next', pages: pick(['/orchestration', '/assistant']) }
 ];
 
 /** Shown in the rail only while the log view is switched on in settings. */

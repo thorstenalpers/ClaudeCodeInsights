@@ -416,6 +416,11 @@ export const pt: Messages = {
 	'settings.rates.edited': 'editado',
 	'settings.rates.reset': 'Voltar ao publicado',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'Programação',
 	'activity.debugging': 'Depuração',
 	'activity.exploration': 'Exploração',
@@ -569,6 +574,7 @@ export const pt: Messages = {
 		'Sem isto, um comando reconhecido espera por um clique. De qualquer forma, só é possível abrir uma página, reanalisar e mudar o tema — nada que apague ou escreva.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

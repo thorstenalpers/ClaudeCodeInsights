@@ -408,6 +408,11 @@ export const zh: Messages = {
 	'settings.rates.edited': '已修改',
 	'settings.rates.reset': '恢复公布价',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': '编码',
 	'activity.debugging': '调试',
 	'activity.exploration': '探索',
@@ -550,6 +555,7 @@ export const zh: Messages = {
 		'不开启时，识别到的命令要先点一下才执行。无论如何，语音只能打开页面、重新扫描和切换主题，不能删除或写入。',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

@@ -120,11 +120,16 @@ pub fn load(conn: &Connection, query: &SeriesQuery) -> Result<Series> {
         // Matching one column alone leaves the other asking for nothing.
         let marks = placeholders(query.projects.len());
         wheres.push(format!(
-            "(COALESCE(s.project_name, 'unknown') IN ({marks}) OR COALESCE(s.project_path, '') IN ({marks}))"
+            "(COALESCE(s.project_name, 'unknown') IN ({marks}) OR {} IN ({marks}))",
+            crate::analysis::SAME_PATH
         ));
-        for _ in 0..2 {
-            binds.extend(query.projects.iter().map(|v| SqlValue::Text(v.clone())));
-        }
+        binds.extend(query.projects.iter().map(|v| SqlValue::Text(v.clone())));
+        binds.extend(
+            query
+                .projects
+                .iter()
+                .map(|v| SqlValue::Text(crate::analysis::same_path(v))),
+        );
     }
 
     if let Some(from) = &query.from {

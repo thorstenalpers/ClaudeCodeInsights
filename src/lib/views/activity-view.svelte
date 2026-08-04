@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { api, type ActivityRow, type Rhythm } from '$lib/api';
+	import { api, type ActivityRow, type Rhythm, type Series } from '$lib/api';
+	import ChartPanel from '$lib/components/chart-panel.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -20,6 +22,7 @@
 	import { createTable } from '$lib/table.svelte';
 
 	let rhythm = $state<Rhythm | null>(null);
+	let series = $state<Series | null>(null);
 	let rows = $state<ActivityRow[] | null>(null);
 	let error = $state<string | null>(null);
 	let loading = $state(true);
@@ -33,6 +36,11 @@
 
 		let cancelled = false;
 		error = null;
+		api
+			.getSeries({ groupBy: 'activity' })
+			.then((value) => (series = value))
+			.catch(() => (series = null));
+
 		api
 			.getRhythm()
 			.then((value) => {
@@ -139,6 +147,72 @@
 		{ sort: 'sessions' }
 	);
 
+	/** What the whole set adds up to, which is what a reader wants first. */
+	const totals = $derived(
+		(rows ?? []).reduce(
+			(sum, row) => ({
+				sessions: sum.sessions + row.sessions,
+				turns: sum.turns + row.turns,
+				tokens:
+					sum.tokens +
+					row.inputTokens +
+					row.outputTokens +
+					row.cacheReadTokens +
+					row.cacheWriteTokens,
+				// Null where no model is known, which is not the same as free.
+				cost: sum.cost + (costOfSplit(row.byModel) ?? 0)
+			}),
+			{ sessions: 0, turns: 0, tokens: 0, cost: 0 }
+		)
+	);
+
+	/** The busiest activity, named rather than left to be read off a bar. */
+	const busiest = $derived([...(rows ?? [])].sort((a, b) => b.sessions - a.sessions)[0] ?? null);
+
+	type Grain = 'month' | 'week' | 'day';
+	const GRAINS: Grain[] = ['month', 'week', 'day'];
+	let grain = $state<Grain>('day');
+
+	const DAY_MS = 24 * 60 * 60 * 1000;
+
+	function weekOf(date: string): string {
+		const at = Date.parse(`${date}T00:00:00Z`);
+		const offset = (new Date(at).getUTCDay() + 6) % 7;
+		return new Date(at - offset * DAY_MS).toISOString().slice(0, 10);
+	}
+
+	/** Turns per activity over time, bucketed the way the reader asked. */
+	const history = $derived.by(() => {
+		const points = series?.points ?? [];
+		if (points.length === 0)
+			return { labels: [] as string[], series: [] as { key: string; values: number[] }[] };
+
+		const column = (date: string) =>
+			grain === 'month' ? date.slice(0, 7) : grain === 'week' ? weekOf(date) : date;
+
+		const labels: string[] = [];
+		for (const point of points) {
+			const at = column(point.date);
+			if (!labels.includes(at)) labels.push(at);
+		}
+		labels.sort();
+
+		const byKey: Record<string, number[]> = {};
+		for (const point of points) {
+			const index = labels.indexOf(column(point.date));
+			if (index === -1) continue;
+			byKey[point.key] ??= Array<number>(labels.length).fill(0);
+			byKey[point.key][index] += point.turns;
+		}
+
+		return {
+			labels,
+			series: Object.entries(byKey)
+				.map(([key, values]) => ({ key: label(key), values }))
+				.sort((a, b) => b.values.reduce((x, y) => x + y, 0) - a.values.reduce((x, y) => x + y, 0))
+		};
+	});
+
 	const HOURS = [...Array(24).keys()];
 
 	// Shading is relative to the busiest cell, so a quiet week still shows its
@@ -197,6 +271,80 @@
 		</div>
 
 		{#if rows && rows.length > 0}
+			<div class="grid shrink-0 gap-2 @2xl:grid-cols-4">
+				<div class="rounded-lg border bg-card p-3">
+					<p class="text-xs text-muted-foreground">{t('cost.column.sessions')}</p>
+					<p class="text-2xl leading-tight font-semibold tabular-nums">
+						{exact(totals.sessions)}
+					</p>
+					{#if busiest}
+						<p class="mt-1 truncate text-xs text-muted-foreground">
+							{t('activity.busiest', { activity: label(busiest.activity) })}
+						</p>
+					{/if}
+				</div>
+				<div class="rounded-lg border bg-card p-3">
+					<p class="text-xs text-muted-foreground">{t('cost.column.turns')}</p>
+					<p class="text-2xl leading-tight font-semibold tabular-nums">{exact(totals.turns)}</p>
+					<p class="mt-1 text-xs text-muted-foreground">
+						{t('activity.perSession', {
+							turns: totals.sessions === 0 ? '0' : Math.round(totals.turns / totals.sessions)
+						})}
+					</p>
+				</div>
+				<div class="rounded-lg border bg-card p-3">
+					<p class="text-xs text-muted-foreground">{t('cost.summary.tokens')}</p>
+					<p class="text-2xl leading-tight font-semibold tabular-nums" title={exact(totals.tokens)}>
+						{compact(totals.tokens)}
+					</p>
+					<p class="mt-1 text-xs text-muted-foreground">{t('cost.summary.cost')}</p>
+				</div>
+				<div class="rounded-lg border bg-card p-3">
+					<p class="text-xs text-muted-foreground">{t('cost.column.cost')}</p>
+					<p class="text-2xl leading-tight font-semibold tabular-nums">
+						{region.format(totals.cost)}
+					</p>
+					<p class="mt-1 text-xs text-muted-foreground">{t('cost.summary.cost.api')}</p>
+				</div>
+			</div>
+
+			{#if history.labels.length > 0}
+				<Card.Root data-size="sm" class="shrink-0">
+					<Card.Header class="gap-1">
+						<div class="flex flex-wrap items-center justify-between gap-2">
+							<Card.Title class="text-base">{t('activity.history')}</Card.Title>
+							<div class="flex gap-1">
+								{#each GRAINS as option (option)}
+									<Button
+										variant={grain === option ? 'default' : 'outline'}
+										size="sm"
+										class="h-8 font-normal"
+										onclick={() => (grain = option)}
+									>
+										{t(
+											option === 'month'
+												? 'cost.byMonth'
+												: option === 'week'
+													? 'cost.byWeek'
+													: 'cost.byDay'
+										)}
+									</Button>
+								{/each}
+							</div>
+						</div>
+						<Card.Description>{t('activity.history.hint')}</Card.Description>
+					</Card.Header>
+					<Card.Content>
+						<ChartPanel
+							labels={history.labels}
+							series={history.series}
+							format={compact}
+							type="stacked"
+						/>
+					</Card.Content>
+				</Card.Root>
+			{/if}
+
 			<div class="flex shrink-0 flex-wrap items-center gap-2">
 				<Input placeholder={t('common.search')} class="h-8 max-w-xs" bind:value={table.query} />
 				<ResetView show={table.dirty} onreset={() => table.reset()} />

@@ -420,6 +420,11 @@ export const de: Messages = {
 	'settings.rates.edited': 'geändert',
 	'settings.rates.reset': 'Zurück zu veröffentlicht',
 
+	'activity.busiest': 'meist {activity}',
+	'activity.perSession': '{turns} je Sitzung',
+	'activity.history': 'Zeitverlauf',
+	'activity.history.hint':
+		'Turns je Tätigkeit, gestapelt — die Summe und die Mischung in einem Bild.',
 	'activity.coding': 'Programmieren',
 	'activity.debugging': 'Fehlersuche',
 	'activity.exploration': 'Erkundung',
@@ -573,6 +578,7 @@ export const de: Messages = {
 		'Ohne das wartet ein erkannter Befehl erst auf einen Klick. So oder so lassen sich nur Seiten öffnen, neu einlesen und das Thema wechseln — nichts, was löscht oder schreibt.',
 	'nav.group.now': 'Jetzt',
 	'nav.group.past': 'Aufgezeichnet',
+	'nav.group.analysis': 'Analyse',
 	'nav.group.next': 'Arbeit',
 	'nav.cost.all': 'Alle Modelle',
 	'nav.railWidth': 'Ziehen stellt die Breite, Doppelklick setzt zurück',

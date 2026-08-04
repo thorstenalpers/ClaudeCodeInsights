@@ -419,6 +419,11 @@ export const fr: Messages = {
 	'settings.rates.edited': 'modifié',
 	'settings.rates.reset': 'Revenir aux tarifs publiés',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'Codage',
 	'activity.debugging': 'Débogage',
 	'activity.exploration': 'Exploration',
@@ -572,6 +577,7 @@ export const fr: Messages = {
 		'Sans cela, une commande reconnue attend un clic. Dans les deux cas, seules l’ouverture d’une page, la relecture et le changement de thème sont possibles — rien qui supprime ou écrive.',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',

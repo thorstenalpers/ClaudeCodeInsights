@@ -414,6 +414,11 @@ export const hi: Messages = {
 	'settings.rates.edited': 'संपादित',
 	'settings.rates.reset': 'प्रकाशित पर लौटें',
 
+	'activity.busiest': 'most in {activity}',
+	'activity.perSession': '{turns} per session',
+	'activity.history': 'Over time',
+	'activity.history.hint':
+		'Turns per activity, stacked, so both the total and the mix are readable.',
 	'activity.coding': 'कोडिंग',
 	'activity.debugging': 'डिबगिंग',
 	'activity.exploration': 'अन्वेषण',
@@ -565,6 +570,7 @@ export const hi: Messages = {
 		'इसके बिना पहचाना गया आदेश क्लिक की प्रतीक्षा करता है। दोनों ही स्थितियों में केवल पृष्ठ खोलना, दोबारा स्कैन और थीम बदलना ही बोला जा सकता है — कुछ भी मिटाने या लिखने वाला नहीं।',
 	'nav.group.now': 'Now',
 	'nav.group.past': 'Recorded',
+	'nav.group.analysis': 'Analysis',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
 	'nav.railWidth': 'Drag to set the width, double-click to reset',
