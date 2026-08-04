@@ -588,6 +588,18 @@ export const en = {
 	'voice.language.missing':
 		'Windows has no speech recognition for {language} on this machine. Install it under Settings › Time & language › Speech, or set the app to a language it has: {installed}.',
 	'voice.language.none': 'none',
+	'settings.voice.engine': 'Recogniser',
+	'settings.voice.engine.hint':
+		'Windows dictates through its own recogniser: it hears whatever is set as the default input and only speaks the languages Windows has packs for. The one in this app records from a microphone chosen here and reads a downloaded model, so a language Windows lacks still works.',
+	'settings.voice.engine.windows': 'Windows',
+	'settings.voice.engine.onDevice': 'In this app',
+	'settings.voice.engine.noModel':
+		'No model is here yet, so dictation has nothing to read with. Download one above.',
+	'settings.voice.mic.pick':
+		'Dictation records from this device. The system default is what Windows itself would hand out.',
+	'settings.voice.mic.system': 'System default',
+	'voice.model.missing': 'The speech model for dictation in this app has not been downloaded yet.',
+	'voice.model.settings': 'Open settings',
 	'voice.privacy':
 		'Windows will not start recognition until its speech setting is on: Settings › Privacy & security › Speech. Recognition itself still runs on this machine.',
 	'nav.logs': 'Log',

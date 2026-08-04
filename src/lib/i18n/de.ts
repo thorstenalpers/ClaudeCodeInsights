@@ -590,6 +590,19 @@ export const de: Messages = {
 	'voice.language.missing':
 		'Windows hat auf diesem Rechner keine Spracherkennung für {language}. Installiere sie unter Einstellungen › Zeit und Sprache › Spracherkennung, oder stelle die App auf eine Sprache um, die vorhanden ist: {installed}.',
 	'voice.language.none': 'keine',
+	'settings.voice.engine': 'Erkenner',
+	'settings.voice.engine.hint':
+		'Windows diktiert über den eigenen Erkenner: er hört auf das eingestellte Standardgerät und spricht nur die Sprachen, für die Windows Pakete hat. Der Erkenner in dieser App nimmt über ein hier gewähltes Mikrofon auf und liest ein heruntergeladenes Modell — damit geht auch eine Sprache, die Windows fehlt.',
+	'settings.voice.engine.windows': 'Windows',
+	'settings.voice.engine.onDevice': 'In dieser App',
+	'settings.voice.engine.noModel':
+		'Es ist noch kein Modell da, das Diktat hat also nichts zu lesen. Oben eines herunterladen.',
+	'settings.voice.mic.pick':
+		'Das Diktat nimmt über dieses Gerät auf. Der Systemstandard ist das, was Windows selbst herausgibt.',
+	'settings.voice.mic.system': 'Systemstandard',
+	'voice.model.missing':
+		'Das Sprachmodell für das Diktat in dieser App ist noch nicht heruntergeladen.',
+	'voice.model.settings': 'Einstellungen öffnen',
 	'voice.privacy':
 		'Windows startet die Erkennung erst, wenn die Spracheinstellung an ist: Einstellungen › Datenschutz und Sicherheit › Spracherkennung. Die Erkennung selbst läuft weiter auf diesem Rechner.',
 	'nav.logs': 'Protokoll',

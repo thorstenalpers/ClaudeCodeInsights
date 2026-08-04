@@ -391,6 +391,14 @@ export type AppInfo = {
 /** One capture device, as Windows lists it. */
 export type Microphone = { name: string; isDefault: boolean };
 
+/** A speech model for the dictation that runs in this app. */
+export type SpeechModel = {
+	id: string;
+	label: string;
+	megabytes: number;
+	installed: boolean;
+};
+
 export type CliStatus = { found: boolean; path: string | null; version: string | null };
 
 export type ProviderInfo = {
@@ -471,5 +479,12 @@ export const api = {
 	stopSpeaking: () => invoke<void>('stop_speaking'),
 	openSpeechSettings: () => invoke<void>('open_speech_settings'),
 	listSpeechLanguages: () => invoke<string[]>('list_speech_languages'),
+	listSpeechModels: () => invoke<SpeechModel[]>('list_speech_models'),
+	speechModelsFolder: () => invoke<string>('speech_models_folder'),
+	installSpeechModel: (id: string) => invoke<SpeechModel>('install_speech_model', { id }),
+	removeSpeechModel: (id: string) => invoke<void>('remove_speech_model', { id }),
+	dictate: (device: string | null, model: string, locale: string) =>
+		invoke<string>('dictate', { device, model, locale }),
+	stopDictating: () => invoke<void>('stop_dictating'),
 	recognizeSpeech: (locale: string) => invoke<string>('recognize_speech', { locale })
 };

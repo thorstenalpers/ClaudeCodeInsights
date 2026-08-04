@@ -247,14 +247,25 @@
 					</Button>
 				{/if}
 
+				<!-- The recogniser in this app waits for silence and can be cut
+				     short; Windows' own decides when a phrase is over. -->
 				<Button
 					variant="outline"
-					disabled={busy || voice.listening || voice.available === false}
-					title={voice.available === false ? t('settings.voice.unavailable') : t('voice.listen')}
-					onclick={dictate}
+					disabled={busy ||
+						(voice.listening && voice.engine !== 'onDevice') ||
+						(voice.engine === 'windows' && voice.available === false)}
+					title={voice.engine === 'windows' && voice.available === false
+						? t('settings.voice.unavailable')
+						: t('voice.listen')}
+					onclick={() => (voice.listening ? voice.stopListening() : dictate())}
 				>
-					<Mic class={['size-4', voice.listening && 'text-destructive']} />
-					{voice.listening ? t('voice.listening') : t('voice.listen')}
+					{#if voice.listening && voice.engine === 'onDevice'}
+						<Square class="size-4 text-destructive" />
+						{t('voice.stop')}
+					{:else}
+						<Mic class={['size-4', voice.listening && 'text-destructive']} />
+						{voice.listening ? t('voice.listening') : t('voice.listen')}
+					{/if}
 				</Button>
 				<Button disabled={busy || !question.trim()} onclick={ask}>
 					<Send class="size-4" />
@@ -262,7 +273,14 @@
 				</Button>
 			</div>
 
-			{#if voice.needsPrivacy}
+			{#if voice.needsModel}
+				<div class="flex flex-col items-start gap-2 rounded-md border border-amber-500/40 p-2">
+					<p class="text-xs">{t('voice.model.missing')}</p>
+					<Button variant="outline" size="sm" class="h-8 font-normal" href={resolve('/settings')}>
+						{t('voice.model.settings')}
+					</Button>
+				</div>
+			{:else if voice.needsPrivacy}
 				<p class="rounded-md border border-amber-500/40 p-2 text-xs">{t('voice.privacy')}</p>
 			{:else if voice.missingLanguage}
 				<div class="flex flex-col items-start gap-2 rounded-md border border-amber-500/40 p-2">

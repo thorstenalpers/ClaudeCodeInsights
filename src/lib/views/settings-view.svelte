@@ -22,9 +22,14 @@
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
-	import { language, languageName, packChoice, voice } from '$lib/voice.svelte';
+	import { type Engine, language, languageName, packChoice, voice } from '$lib/voice.svelte';
 
 	const MODES: ThemeMode[] = ['light', 'dark', 'system'];
+
+	const ENGINES: { id: Engine; label: string }[] = $derived([
+		{ id: 'windows', label: t('settings.voice.engine.windows') },
+		{ id: 'onDevice', label: t('settings.voice.engine.onDevice') }
+	]);
 
 	let hubQuery = $state('');
 
@@ -33,6 +38,7 @@
 		void voice.loadPacks();
 		void voice.loadMicrophones();
 		void voice.loadSpeechLanguages();
+		void voice.loadSpeechModels();
 	});
 	const BILLING: BillingMode[] = ['api', 'subscription'];
 
@@ -386,14 +392,108 @@
 			</div>
 
 			<div class="flex flex-col gap-2 border-t pt-3">
+				<span class="text-xs text-muted-foreground">{t('settings.voice.engine')}</span>
+				<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.engine.hint')}</p>
+				<div class="flex flex-wrap gap-1">
+					{#each ENGINES as entry (entry.id)}
+						<Button
+							variant={voice.engine === entry.id ? 'default' : 'outline'}
+							size="sm"
+							class="h-8 font-normal"
+							onclick={() => voice.setEngine(entry.id)}
+						>
+							{entry.label}
+						</Button>
+					{/each}
+				</div>
+
+				{#if voice.engine === 'onDevice'}
+					<div class="flex flex-col gap-2 pt-1">
+						{#each voice.models as model (model.id)}
+							<div class="flex flex-wrap items-center gap-2">
+								<Button
+									variant={voice.model === model.id ? 'default' : 'outline'}
+									size="sm"
+									class="h-8 font-normal"
+									disabled={!model.installed}
+									onclick={() => voice.setModel(model.id)}
+								>
+									{model.label}
+								</Button>
+								<span class="text-xs text-muted-foreground">
+									{t('settings.voice.packs.size', { size: model.megabytes })}
+								</span>
+								{#if model.installed}
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-8 font-normal"
+										onclick={() => void voice.removeModel(model.id)}
+									>
+										{t('settings.voice.packs.remove')}
+									</Button>
+								{:else}
+									<Button
+										variant="outline"
+										size="sm"
+										class="h-8 gap-1 font-normal"
+										disabled={voice.isInstalling(model.id)}
+										onclick={() => void voice.installModel(model.id)}
+									>
+										<Download class="size-3.5" />
+										{voice.isInstalling(model.id)
+											? `${voice.percentOf(model.id) ?? 0}%`
+											: t('settings.voice.packs.install')}
+									</Button>
+								{/if}
+							</div>
+						{/each}
+						{#if !voice.modelReady}
+							<p class="max-w-md text-xs text-amber-600 dark:text-amber-500">
+								{t('settings.voice.engine.noModel')}
+							</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
+			<div class="flex flex-col gap-2 border-t pt-3">
 				<span class="text-xs text-muted-foreground">{t('settings.voice.mic')}</span>
-				<p class="max-w-md text-xs text-muted-foreground">{t('settings.voice.mic.hint')}</p>
+				<p class="max-w-md text-xs text-muted-foreground">
+					{voice.engine === 'onDevice'
+						? t('settings.voice.mic.pick')
+						: t('settings.voice.mic.hint')}
+				</p>
+				{#if voice.engine === 'onDevice' && voice.microphones.length > 0}
+					<div class="flex flex-wrap items-center gap-2">
+						<Button
+							variant={voice.device === '' ? 'default' : 'outline'}
+							size="sm"
+							class="h-8 font-normal"
+							onclick={() => voice.setDevice('')}
+						>
+							{t('settings.voice.mic.system')}
+						</Button>
+					</div>
+				{/if}
 				{#each voice.microphones as microphone (microphone.name)}
 					<div class="flex flex-wrap items-center gap-2">
-						<Mic class="size-3.5 shrink-0 text-muted-foreground" />
-						<span class="min-w-0 flex-1 truncate text-sm" title={microphone.name}>
-							{microphone.name}
-						</span>
+						{#if voice.engine === 'onDevice'}
+							<Button
+								variant={voice.device === microphone.name ? 'default' : 'outline'}
+								size="sm"
+								class="h-8 min-w-0 gap-1 font-normal"
+								onclick={() => voice.setDevice(microphone.name)}
+							>
+								<Mic class="size-3.5 shrink-0" />
+								<span class="truncate">{microphone.name}</span>
+							</Button>
+						{:else}
+							<Mic class="size-3.5 shrink-0 text-muted-foreground" />
+							<span class="min-w-0 flex-1 truncate text-sm" title={microphone.name}>
+								{microphone.name}
+							</span>
+						{/if}
 						{#if microphone.isDefault}
 							<Badge variant="secondary" class="font-normal">
 								{t('settings.voice.mic.default')}
@@ -416,7 +516,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col gap-2 border-t pt-3">
+			<div class={['flex-col gap-2 border-t pt-3', voice.engine === 'windows' ? 'flex' : 'hidden']}>
 				<span class="text-xs text-muted-foreground">{t('settings.voice.recognition')}</span>
 				<p class="max-w-md text-xs text-muted-foreground">
 					{t('settings.voice.recognition.hint')}

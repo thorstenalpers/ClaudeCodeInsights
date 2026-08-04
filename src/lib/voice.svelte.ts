@@ -12,13 +12,24 @@
  * chosen in the same place, because to a reader they are one setting.
  */
 import { toast } from 'svelte-sonner';
-import { api, type HubVoice, type Microphone, type VoicePack } from '$lib/api';
+import { api, type HubVoice, type Microphone, type SpeechModel, type VoicePack } from '$lib/api';
 import { i18n, t } from '$lib/i18n/index.svelte';
 import { isHosted } from '$lib/ipc.svelte';
 import { logs } from '$lib/logs.svelte';
 
 const SPEAK_KEY = 'claudeadmin.voiceOutput';
 const VOICE_KEY = 'claudeadmin.voiceName';
+const ENGINE_KEY = 'claudeadmin.speechEngine';
+const DEVICE_KEY = 'claudeadmin.speechDevice';
+const MODEL_KEY = 'claudeadmin.speechModel';
+
+/** Which recogniser dictation goes through. */
+export type Engine = 'windows' | 'onDevice';
+
+function stored(key: string, fallback: string): string {
+	if (typeof localStorage === 'undefined') return fallback;
+	return localStorage.getItem(key) ?? fallback;
+}
 
 /** A pack speaker is stored as `pack:<id>:<speaker>` in the same setting the
  *  Windows voices use, so one choice covers both kinds. */
@@ -92,6 +103,49 @@ class Voice {
 		this.recognizes = await api.listSpeechLanguages().catch(() => []);
 	}
 
+	/**
+	 * Which recogniser listens.
+	 *
+	 * Windows' own takes no device and only speaks the languages it has packs
+	 * for; the one in this app records from a chosen microphone and reads a
+	 * downloaded model, which is what makes German work on an English Windows.
+	 */
+	engine = $state<Engine>(stored(ENGINE_KEY, 'windows') === 'onDevice' ? 'onDevice' : 'windows');
+	/** The capture device by name; empty means whatever Windows hands out. */
+	device = $state<string>(stored(DEVICE_KEY, ''));
+	/** The speech model the in-app recogniser reads. */
+	model = $state<string>(stored(MODEL_KEY, 'whisper-tiny'));
+	/** The models this app offers, with the installed ones marked. */
+	models = $state<SpeechModel[]>([]);
+	/** Set when dictation was asked for before its model was there. */
+	needsModel = $state(false);
+
+	setEngine(next: Engine): void {
+		this.engine = next;
+		localStorage.setItem(ENGINE_KEY, next);
+	}
+
+	setDevice(next: string): void {
+		this.device = next;
+		if (next === '') localStorage.removeItem(DEVICE_KEY);
+		else localStorage.setItem(DEVICE_KEY, next);
+	}
+
+	setModel(next: string): void {
+		this.model = next;
+		localStorage.setItem(MODEL_KEY, next);
+	}
+
+	async loadSpeechModels(): Promise<void> {
+		if (!isHosted) return;
+		this.models = await api.listSpeechModels().catch(() => []);
+	}
+
+	/** True once the chosen model is on disk, which is what dictation needs. */
+	get modelReady(): boolean {
+		return this.models.some((entry) => entry.id === this.model && entry.installed);
+	}
+
 	/** The installed Windows voices, once the engine has listed them. */
 	voices = $state<SpeechSynthesisVoice[]>([]);
 	/** The downloadable packs and whether each is here. */
@@ -157,11 +211,52 @@ class Voice {
 	 * this app ships, which is the only difference the download makes.
 	 */
 	async install(id: string, repo?: string, megabytes?: number): Promise<void> {
+		const pack = this.packs.find((entry) => entry.id === id);
+		await this.fetching(
+			id,
+			pack?.label ?? id.replace(/^hub:/, ''),
+			pack?.megabytes ?? megabytes ?? 0,
+			async () => {
+				const installed = repo ? await api.installHubVoice(repo) : await api.installVoicePack(id);
+				await this.loadPacks();
+				return installed.label;
+			}
+		);
+	}
+
+	/** Fetches a speech model for the dictation that runs in this app. */
+	async installModel(id: string): Promise<void> {
+		const model = this.models.find((entry) => entry.id === id);
+		await this.fetching(id, model?.label ?? id, model?.megabytes ?? 0, async () => {
+			const installed = await api.installSpeechModel(id);
+			await this.loadSpeechModels();
+			return installed.label;
+		});
+	}
+
+	async removeModel(id: string): Promise<void> {
+		if (!isHosted) return;
+		await api.removeSpeechModel(id).catch(() => {});
+		await this.loadSpeechModels();
+	}
+
+	/**
+	 * One download with its notice: the bar, the cancel and the outcome.
+	 *
+	 * Shared by the voices and the speech models because to a reader they are
+	 * the same thing happening — hundreds of megabytes with no other sign of
+	 * life — and the host reports both on the same event.
+	 */
+	private async fetching(
+		id: string,
+		label: string,
+		megabytes: number,
+		run: () => Promise<string>
+	): Promise<void> {
 		if (!isHosted || this.running[id]) return;
-		const pack = this.packs.find((entry) => entry.id === id) ?? { megabytes: megabytes ?? 0 };
 		this.running = { ...this.running, [id]: { received: 0, total: null } };
 		this.error = null;
-		logs.info('voice', `installing pack ${id}`);
+		logs.info('voice', `installing ${id}`);
 
 		const { listen } = await import('@tauri-apps/api/event');
 		const stop = await listen<{ id: string; received: number; total: number | null }>(
@@ -174,7 +269,7 @@ class Voice {
 				};
 				// The toast is the download's own line: several can be on their
 				// way, and the one being watched is rarely the one on screen.
-				toast.loading(this.title(id), {
+				toast.loading(this.title(label), {
 					id: notice,
 					description: this.line(id),
 					duration: Number.POSITIVE_INFINITY,
@@ -188,17 +283,16 @@ class Voice {
 
 		// Minutes of download with no other sign of life, so the state is said
 		// out loud rather than left to a disabled button.
-		const notice = toast.loading(this.title(id), {
-			description: t('settings.voice.packs.size', { size: pack.megabytes }),
+		const notice = toast.loading(this.title(label), {
+			description: t('settings.voice.packs.size', { size: megabytes }),
 			duration: Number.POSITIVE_INFINITY,
 			action: { label: t('settings.voice.packs.cancel'), onClick: () => void this.cancel(id) }
 		});
 
 		try {
-			const installed = repo ? await api.installHubVoice(repo) : await api.installVoicePack(id);
-			await this.loadPacks();
-			logs.info('voice', `pack ${id} installed`);
-			toast.success(t('settings.voice.packs.done', { label: installed.label }), {
+			const done = await run();
+			logs.info('voice', `${id} installed`);
+			toast.success(t('settings.voice.packs.done', { label: done }), {
 				id: notice,
 				description: this.folder,
 				duration: 8000,
@@ -208,7 +302,7 @@ class Voice {
 			const message = cause instanceof Error ? cause.message : String(cause);
 			// A cancel is the user's own doing, not a failure to report as one.
 			if (message.includes('cancelled')) {
-				logs.info('voice', `pack ${id} cancelled`);
+				logs.info('voice', `${id} cancelled`);
 				toast.info(t('settings.voice.packs.cancelled'), {
 					id: notice,
 					duration: 5000,
@@ -216,7 +310,7 @@ class Voice {
 				});
 			} else {
 				this.error = message;
-				logs.error('voice', `pack ${id} failed: ${message}`);
+				logs.error('voice', `${id} failed: ${message}`);
 				toast.error(t('settings.voice.packs.failed'), {
 					id: notice,
 					description: message,
@@ -230,9 +324,8 @@ class Voice {
 		}
 	}
 
-	/** The pack's own name in its notice, so several downloads stay apart. */
-	private title(id: string): string {
-		const label = this.packs.find((entry) => entry.id === id)?.label ?? id.replace(/^hub:/, '');
+	/** The download's own name in its notice, so several stay apart. */
+	private title(label: string): string {
 		return `${t('settings.voice.packs.installing')} · ${label}`;
 	}
 
@@ -308,21 +401,37 @@ class Voice {
 		if (!isHosted || this.listening) return null;
 		this.listening = true;
 		this.error = null;
+		this.needsModel = false;
 		try {
-			const heard = await api.recognizeSpeech(i18n.intlLocale);
+			const heard =
+				this.engine === 'onDevice'
+					? await api.dictate(this.device || null, this.model, i18n.intlLocale)
+					: await api.recognizeSpeech(i18n.intlLocale);
 			return heard.trim() === '' ? null : heard;
 		} catch (cause) {
-			// The host marks the two refusals the user can undo; everything else
-			// is passed through as Windows worded it.
+			// The host marks the refusals the user can undo; everything else is
+			// passed through as it was worded.
 			const message = cause instanceof Error ? cause.message : String(cause);
+			this.needsModel = message.includes('speech-model-missing');
 			this.needsPrivacy = message.includes('speech-privacy-not-accepted');
 			const missing = /speech-language-missing:(\S+)/.exec(message);
 			this.missingLanguage = missing?.[1] ?? null;
-			this.error = this.needsPrivacy || this.missingLanguage ? null : message;
+			this.error = this.needsPrivacy || this.missingLanguage || this.needsModel ? null : message;
 			return null;
 		} finally {
 			this.listening = false;
 		}
+	}
+
+	/**
+	 * Ends a dictation the app is running itself.
+	 *
+	 * Windows' recogniser decides for itself when a phrase is over and has no
+	 * such button; the one here waits for silence and can be cut short.
+	 */
+	stopListening(): void {
+		if (!isHosted || this.engine !== 'onDevice') return;
+		void api.stopDictating().catch(() => {});
 	}
 
 	speak(text: string): void {
