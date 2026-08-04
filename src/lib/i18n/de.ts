@@ -584,6 +584,7 @@ export const de: Messages = {
 	'nav.group.past': 'Aufgezeichnet',
 	'nav.group.next': 'Arbeit',
 	'nav.cost.all': 'Alle Modelle',
+	'nav.railWidth': 'Ziehen stellt die Breite, Doppelklick setzt zurück',
 	'nav.subPages': 'Die Ansichten dieser Seite zeigen',
 	'nav.logs': 'Protokoll',
 	'nav.logs.description': 'Was die App und ihr Host getan haben',

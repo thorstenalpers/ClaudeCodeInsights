@@ -577,6 +577,7 @@ export const ja: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'ログ',
 	'nav.logs.description': 'アプリとホストが何をしてきたか',

@@ -88,8 +88,20 @@ export const PAGES: readonly PageDefinition[] = [
 	}
 ];
 
-/** One entry hung under a rail entry: a project, an activity, a model. */
-export type SubEntry = { href: string; label: string; title?: string };
+/**
+ * One entry hung under a rail entry: a project, an activity, a model.
+ *
+ * A project carries the sessions that ran in it, which is the one place the
+ * rail goes three deep. The icon says which kind it is at a glance, since at
+ * that depth there is no room for a word saying so.
+ */
+export type SubEntry = {
+	href: string;
+	label: string;
+	title?: string;
+	icon?: Component;
+	children?: SubEntry[];
+};
 
 export type PageGroup = {
 	/** Named above the entries; dropped when the rail has no room for it. */

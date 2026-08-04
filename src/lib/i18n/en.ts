@@ -581,6 +581,7 @@ export const en = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Log',
 	'nav.logs.description': 'What the app and its host have been doing',

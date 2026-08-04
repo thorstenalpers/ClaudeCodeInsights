@@ -25,9 +25,47 @@
 		subs?: Record<string, SubEntry[]>;
 		/** The address on screen, which is what a sub-entry matches against. */
 		path?: string;
+		/** The rail's width in pixels, owned by the layout because the variable
+		 *  it feeds is declared on the provider. */
+		width?: number;
+		/** Asks for a new width; `settled` marks the end of a drag. */
+		onResize?: (next: number, settled: boolean) => void;
 	};
 
-	let { groups, footer, active, compact = false, subs = {}, path = '' }: Props = $props();
+	let {
+		groups,
+		footer,
+		active,
+		compact = false,
+		subs = {},
+		path = '',
+		width = 256,
+		onResize
+	}: Props = $props();
+
+	/** What a double-click goes back to; the layout clamps the rest. */
+	const DEFAULT_WIDTH = 256;
+
+	/** Dragging sets the width live; the pointer is captured so it survives
+	 *  leaving the handle, which is most of a drag. */
+	function drag(event: PointerEvent): void {
+		if (!onResize) return;
+		const handle = event.currentTarget as HTMLElement;
+		handle.setPointerCapture(event.pointerId);
+		const startX = event.clientX;
+		const startWidth = width;
+
+		const move = (moved: PointerEvent) => onResize(startWidth + moved.clientX - startX, false);
+		const done = () => {
+			handle.releasePointerCapture(event.pointerId);
+			handle.removeEventListener('pointermove', move);
+			handle.removeEventListener('pointerup', done);
+			onResize(width, true);
+		};
+
+		handle.addEventListener('pointermove', move);
+		handle.addEventListener('pointerup', done);
+	}
 
 	/** Which entries are folded open; an entry not named here is closed. */
 	let open = $state<string[]>([]);
@@ -55,6 +93,45 @@
 		'data-[active=true]:[&>svg]:text-sidebar-primary'
 	].join(' ');
 </script>
+
+{#snippet subEntry(item: SubEntry)}
+	<Sidebar.MenuSubItem>
+		<Sidebar.MenuSubButton
+			size={compact ? 'sm' : 'md'}
+			isActive={item.href === path}
+			href={item.href}
+			title={item.title ?? item.label}
+		>
+			{#if item.icon}
+				<item.icon class="size-3.5 shrink-0 opacity-60" />
+			{/if}
+			<span class="truncate">{item.label}</span>
+		</Sidebar.MenuSubButton>
+
+		<!-- The third level: the sessions of one project. Shown only while that
+		     project is the page on screen, or the rail becomes a file tree of
+		     everything ever run. -->
+		{#if item.children && item.children.length > 0 && path.startsWith(item.href)}
+			<Sidebar.MenuSub class={compact ? 'gap-0' : ''}>
+				{#each item.children as child (child.href)}
+					<Sidebar.MenuSubItem>
+						<Sidebar.MenuSubButton
+							size="sm"
+							isActive={child.href === path}
+							href={child.href}
+							title={child.title ?? child.label}
+						>
+							{#if child.icon}
+								<child.icon class="size-3 shrink-0 opacity-60" />
+							{/if}
+							<span class="truncate">{child.label}</span>
+						</Sidebar.MenuSubButton>
+					</Sidebar.MenuSubItem>
+				{/each}
+			</Sidebar.MenuSub>
+		{/if}
+	</Sidebar.MenuSubItem>
+{/snippet}
 
 {#snippet entry(page: PageDefinition)}
 	<Sidebar.MenuItem>
@@ -84,16 +161,7 @@
 			{#if shown}
 				<Sidebar.MenuSub class={compact ? 'gap-0' : ''}>
 					{#each children as item (item.href)}
-						<Sidebar.MenuSubItem>
-							<Sidebar.MenuSubButton
-								size={compact ? 'sm' : 'md'}
-								isActive={item.href === path}
-								href={item.href}
-								title={item.title ?? item.label}
-							>
-								<span class="truncate">{item.label}</span>
-							</Sidebar.MenuSubButton>
-						</Sidebar.MenuSubItem>
+						{@render subEntry(item)}
 					{/each}
 				</Sidebar.MenuSub>
 			{/if}
@@ -146,6 +214,17 @@
 			{/each}
 		</Sidebar.Menu>
 	</Sidebar.Footer>
+
+	<!-- The stock rail toggles on click; this one is also the width. Hidden
+	     while folded down to icons, where there is no width to choose. -->
+	<div
+		role="separator"
+		aria-orientation="vertical"
+		aria-label={t('nav.railWidth')}
+		class="absolute inset-y-0 right-0 z-20 w-1.5 cursor-ew-resize transition-colors group-data-[collapsible=icon]:hidden hover:bg-sidebar-primary/30"
+		ondblclick={() => onResize?.(DEFAULT_WIDTH, true)}
+		onpointerdown={drag}
+	></div>
 
 	<Sidebar.Rail />
 </Sidebar.Root>

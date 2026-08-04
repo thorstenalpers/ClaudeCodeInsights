@@ -583,6 +583,7 @@ export const fr: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Journal',
 	'nav.logs.description': "Ce que l'application et son hôte ont fait",

@@ -567,6 +567,7 @@ export const ar: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'السجل',
 	'nav.logs.description': 'ما الذي فعله التطبيق ومضيفه',

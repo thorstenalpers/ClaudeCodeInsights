@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import Folder from '@lucide/svelte/icons/folder';
+	import MessagesSquare from '@lucide/svelte/icons/messages-square';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { ModeWatcher } from 'mode-watcher';
 	import { fade } from 'svelte/transition';
@@ -34,7 +36,15 @@
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
 	import { nav } from '$lib/nav.svelte';
-	import { INFO_PAGE, LOG_PAGE, PAGE_GROUPS, SETTINGS_PAGE, activeHref, pageFor } from '$lib/pages';
+	import {
+		INFO_PAGE,
+		LOG_PAGE,
+		PAGE_GROUPS,
+		SETTINGS_PAGE,
+		activeHref,
+		pageFor,
+		type SubEntry
+	} from '$lib/pages';
 	import { scan } from '$lib/scan.svelte';
 	import { theme } from '$lib/theme.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -73,6 +83,26 @@
 	});
 
 	let sidebarOpen = $derived(clicked ?? (narrow ? false : preferred));
+
+	const RAIL_WIDTH_KEY = 'claudeadmin.railWidth';
+	/** Narrower and the labels are gone anyway; wider and the rail takes more
+	 *  than it gives back. */
+	const RAIL = { min: 180, max: 420, default: 256 };
+
+	let railWidth = $state(readRailWidth());
+
+	function readRailWidth(): number {
+		if (typeof localStorage === 'undefined') return RAIL.default;
+		const stored = Number(localStorage.getItem(RAIL_WIDTH_KEY));
+		return Number.isFinite(stored) && stored >= RAIL.min && stored <= RAIL.max
+			? stored
+			: RAIL.default;
+	}
+
+	function setRailWidth(next: number, settled: boolean): void {
+		railWidth = Math.min(RAIL.max, Math.max(RAIL.min, Math.round(next)));
+		if (settled) localStorage.setItem(RAIL_WIDTH_KEY, String(railWidth));
+	}
 
 	/**
 	 * The splash, in the window it is covering.
@@ -114,6 +144,8 @@
 	 * inventory: past a dozen the list is longer than the navigation above it.
 	 */
 	const SUB_LIMIT = 12;
+	/** Per project, under it. Deeper than this the rail is a transcript index. */
+	const SESSIONS_PER_PROJECT = 5;
 
 	let knownProjects = $state<ProjectRow[]>([]);
 	let knownActivities = $state<ActivityRow[]>([]);
@@ -141,7 +173,9 @@
 			.then((rows) => (knownTools = rows))
 			.catch(() => (knownTools = []));
 		void api
-			.listSessions({ page: 1, pageSize: SUB_LIMIT, sort: 'lastTs', descending: true })
+			// Enough to reach every project's newest few; the rail shows a
+			// handful per project, not the page's worth.
+			.listSessions({ page: 1, pageSize: 200, sort: 'lastTs', descending: true })
 			.then((found) => (knownSessions = found.rows))
 			.catch(() => (knownSessions = []));
 	});
@@ -152,15 +186,51 @@
 		return parts.at(-1) ?? path;
 	}
 
+	/** Same directory, two spellings, one entry: `\` and `/` reach the same place. */
+	const sameProject = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+
+	/** The newest sessions of one project, by the path they carry. */
+	function sessionsOf(project: string): SubEntry[] {
+		const key = sameProject(project);
+		return knownSessions
+			.filter((row) => row.projectName && sameProject(row.projectName) === key)
+			.slice(0, SESSIONS_PER_PROJECT)
+			.map((row) => ({
+				href: `/sessions/${encodeURIComponent(row.sessionId)}`,
+				label: row.topic || row.sessionId.slice(0, 8),
+				title: row.topic ?? row.sessionId,
+				icon: MessagesSquare
+			}));
+	}
+
+	const uniqueProjects = $derived.by(() => {
+		// A plain object, rebuilt on every run and never observed, which is what
+		// the reactive Map is for.
+		const seen: Record<string, ProjectRow> = {};
+		for (const project of knownProjects) {
+			if (!project.registered && project.sessions === 0) continue;
+			const key = sameProject(project.path);
+			// The registered spelling wins; among equals the busier one.
+			const known = seen[key];
+			if (
+				!known ||
+				(project.registered && !known.registered) ||
+				project.sessions > known.sessions
+			) {
+				seen[key] = project;
+			}
+		}
+		return Object.values(seen).slice(0, SUB_LIMIT);
+	});
+
 	const subs = $derived({
-		'/projects': knownProjects
-			.filter((project) => project.registered || project.sessions > 0)
-			.slice(0, SUB_LIMIT)
-			.map((project) => ({
-				href: `/projects/${encodeURIComponent(project.path)}`,
-				label: folderName(project.path),
-				title: displayPath(project.path)
-			})),
+		'/projects': uniqueProjects.map((project) => ({
+			href: `/projects/${encodeURIComponent(project.path)}`,
+			label: folderName(project.path),
+			title: displayPath(project.path),
+			icon: Folder,
+			children: sessionsOf(project.path)
+		})),
 		'/activity': knownActivities.slice(0, SUB_LIMIT).map((row) => ({
 			href: `/activity/${encodeURIComponent(row.activity)}`,
 			label: activityLabel(row.activity)
@@ -181,11 +251,6 @@
 		'/tools': knownTools.slice(0, SUB_LIMIT).map((row) => ({
 			href: `/tools?tool=${encodeURIComponent(row.name)}`,
 			label: row.name
-		})),
-		'/sessions': knownSessions.map((row) => ({
-			href: `/sessions/${encodeURIComponent(row.sessionId)}`,
-			label: row.topic || row.sessionId.slice(0, 8),
-			title: row.topic ?? row.sessionId
 		}))
 	});
 
@@ -225,6 +290,7 @@
 <!-- Bound rather than passed: the provider writes to `open` when the trigger is
      clicked, and a one-way prop stops following the width after it does. -->
 <Sidebar.Provider
+	style="--sidebar-width: {railWidth}px"
 	bind:open={sidebarOpen}
 	onOpenChange={(open: boolean) => {
 		clicked = open;
@@ -236,6 +302,8 @@
 		footer={footerPages}
 		active={activeHref(page.url.pathname)}
 		path={page.url.pathname}
+		width={railWidth}
+		onResize={setRailWidth}
 		compact={short}
 		{subs}
 	/>

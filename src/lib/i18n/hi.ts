@@ -576,6 +576,7 @@ export const hi: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'लॉग',
 	'nav.logs.description': 'ऐप और उसके होस्ट ने क्या किया',

@@ -577,6 +577,7 @@ export const ru: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Журнал',
 	'nav.logs.description': 'Чем занимались приложение и его хост',

@@ -584,6 +584,7 @@ export const it: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': 'Registro',
 	'nav.logs.description': "Che cosa hanno fatto l'app e il suo host",

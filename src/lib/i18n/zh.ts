@@ -559,6 +559,7 @@ export const zh: Messages = {
 	'nav.group.past': 'Recorded',
 	'nav.group.next': 'Work',
 	'nav.cost.all': 'All models',
+	'nav.railWidth': 'Drag to set the width, double-click to reset',
 	'nav.subPages': 'Show the views of this page',
 	'nav.logs': '日志',
 	'nav.logs.description': '应用及其宿主做过什么',
