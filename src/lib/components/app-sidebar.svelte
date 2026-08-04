@@ -107,8 +107,12 @@
 
 	<!-- Scrolls folded down to the rail as well: the stock sidebar hides the
 	     overflow there, so on a low window the last icons were unreachable
-	     rather than merely out of sight. -->
-	<Sidebar.Content class="group-data-[collapsible=icon]:overflow-auto">
+	     rather than merely out of sight. Downwards only — the rows are wider
+	     than the rail, and a free horizontal axis put an empty column and a
+	     bar under them. -->
+	<Sidebar.Content
+		class="group-data-[collapsible=icon]:overflow-x-hidden group-data-[collapsible=icon]:overflow-y-auto"
+	>
 		{#each groups as group (group.label)}
 			<Sidebar.Group class={compact ? 'py-0' : ''}>
 				{#if !compact}
