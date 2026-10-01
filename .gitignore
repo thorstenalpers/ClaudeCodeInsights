@@ -30,3 +30,4 @@ test-results/
 # OS
 Thumbs.db
 .DS_Store
+.claude/worktrees/

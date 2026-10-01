@@ -5,9 +5,10 @@
 * text=auto eol=lf
 
 # Third-party skill bundles: keep them byte-for-byte as installed, so a
-# reinstall does not show up as a diff of every file.
-.claude/skills/** -text
-.agents/skills/** -text
+# reinstall does not show up as a diff of every file. Vendored as well, or
+# their scripts outweigh the app and GitHub calls this a JavaScript project.
+.claude/skills/** -text linguist-vendored
+.agents/skills/** -text linguist-vendored
 
 # Windows-only scripts must keep CRLF or batch labels/goto can misbehave.
 *.cmd text eol=crlf
