@@ -12,6 +12,8 @@ use serde_json::Value;
 pub struct RawRecord {
     #[serde(rename = "type")]
     pub kind: Option<String>,
+    /// Only `system` records carry one; `compact_boundary` is the one that matters.
+    pub subtype: Option<String>,
     #[serde(rename = "sessionId")]
     pub session_id: Option<String>,
     pub uuid: Option<String>,
@@ -34,6 +36,22 @@ pub struct RawRecord {
     pub custom_title: Option<String>,
     #[serde(rename = "aiTitle")]
     pub ai_title: Option<String>,
+    #[serde(rename = "compactMetadata")]
+    pub compact_metadata: Option<CompactMetadata>,
+}
+
+/// What Claude Code records when it compacts a conversation.
+///
+/// Read from the `compact_boundary` record rather than guessed from the prefix
+/// of the summary message: the record says outright whether the user asked for
+/// it or the context window overflowed, and how large the context had grown.
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(default)]
+pub struct CompactMetadata {
+    /// `auto` when the context window overflowed, `manual` for `/compact`.
+    pub trigger: Option<String>,
+    #[serde(rename = "preTokens")]
+    pub pre_tokens: Option<i64>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -78,8 +96,8 @@ impl RawRecord {
             .map(str::to_owned)
     }
 
-    /// The ordered names of the tools this message called.
-    pub fn tool_uses(&self) -> Vec<String> {
+    /// The tools this message called, in order.
+    pub fn tool_uses(&self) -> Vec<ToolUse> {
         let Some(Value::Array(blocks)) = self.message.as_ref().and_then(|m| m.content.as_ref())
         else {
             return Vec::new();
@@ -88,10 +106,94 @@ impl RawRecord {
         blocks
             .iter()
             .filter(|block| block.get("type").and_then(Value::as_str) == Some("tool_use"))
-            .filter_map(|block| block.get("name").and_then(Value::as_str))
-            .map(str::to_owned)
+            .filter_map(|block| {
+                let name = block.get("name").and_then(Value::as_str)?;
+                Some(ToolUse {
+                    id: block
+                        .get("id")
+                        .and_then(Value::as_str)
+                        .filter(|s| !s.is_empty())
+                        .map(str::to_owned),
+                    name: name.to_owned(),
+                    file_path: block.get("input").and_then(target_path),
+                })
+            })
             .collect()
     }
+
+    /// The outcomes this record reports back, as `(tool_use_id, is_error)`.
+    ///
+    /// They arrive on a later `user` record than the call, and with parallel
+    /// tools not even in the same order, so they are collected on their own and
+    /// paired by id rather than positionally.
+    pub fn tool_results(&self) -> Vec<(String, bool)> {
+        let Some(Value::Array(blocks)) = self.message.as_ref().and_then(|m| m.content.as_ref())
+        else {
+            return Vec::new();
+        };
+
+        blocks
+            .iter()
+            .filter(|block| block.get("type").and_then(Value::as_str) == Some("tool_result"))
+            .filter_map(|block| {
+                let id = block.get("tool_use_id").and_then(Value::as_str)?;
+                if id.is_empty() {
+                    return None;
+                }
+                let failed = block
+                    .get("is_error")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                Some((id.to_owned(), failed))
+            })
+            .collect()
+    }
+
+    /// The slash command this record invoked, without its arguments.
+    ///
+    /// Claude Code wraps it in a `<command-name>` element inside an otherwise
+    /// ordinary user message, which is the only place the invocation is named.
+    pub fn slash_command(&self) -> Option<String> {
+        let text = self.text_content()?;
+        let start = text.find("<command-name>")? + "<command-name>".len();
+        let end = text[start..].find("</command-name>")? + start;
+        let name = text[start..end].split_whitespace().next()?;
+        name.starts_with('/').then(|| name.to_owned())
+    }
+
+    /// The message's plain text, whether it is a bare string or text blocks.
+    fn text_content(&self) -> Option<String> {
+        match self.message.as_ref()?.content.as_ref()? {
+            Value::String(text) => Some(text.clone()),
+            Value::Array(blocks) => {
+                let joined: String = blocks
+                    .iter()
+                    .filter(|block| block.get("type").and_then(Value::as_str) == Some("text"))
+                    .filter_map(|block| block.get("text").and_then(Value::as_str))
+                    .collect();
+                (!joined.is_empty()).then_some(joined)
+            }
+            _ => None,
+        }
+    }
+}
+
+/// One tool call, with what it was pointed at.
+#[derive(Debug, Clone)]
+pub struct ToolUse {
+    /// Absent on older transcripts, which is why the result pairing is optional.
+    pub id: Option<String>,
+    pub name: String,
+    pub file_path: Option<String>,
+}
+
+/// The file a tool call names, under whichever key that tool happens to use.
+fn target_path(input: &Value) -> Option<String> {
+    ["file_path", "notebook_path", "path"]
+        .iter()
+        .find_map(|key| input.get(key).and_then(Value::as_str))
+        .filter(|path| !path.is_empty())
+        .map(str::to_owned)
 }
 
 /// Metadata a subagent dispatch reports back on the parent's `user` record.

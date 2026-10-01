@@ -1,4 +1,5 @@
-use super::reader::{self, FileParse};
+use super::reader::FileParse;
+use super::source::Source;
 use anyhow::{Context, Result};
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
@@ -87,7 +88,7 @@ where
             current_file: path.file_name().map(|n| n.to_string_lossy().into_owned()),
         });
 
-        if let Err(error) = ingest_one(conn, path, &mut stats) {
+        if let Err(error) = ingest_one(conn, Source::of_path(path), path, &mut stats) {
             // One unreadable transcript must not abandon the rest of the scan,
             // but it must not vanish either.
             log::warn!("skipping {}: {error:#}", path.display());
@@ -118,7 +119,12 @@ where
     Ok(stats)
 }
 
-fn ingest_one(conn: &mut Connection, path: &Path, stats: &mut ScanStats) -> Result<()> {
+fn ingest_one(
+    conn: &mut Connection,
+    source: Source,
+    path: &Path,
+    stats: &mut ScanStats,
+) -> Result<()> {
     let metadata = std::fs::metadata(path)?;
     let size = metadata.len() as i64;
     let mtime_ms = metadata
@@ -141,11 +147,13 @@ fn ingest_one(conn: &mut Connection, path: &Path, stats: &mut ScanStats) -> Resu
             // Its rows can no longer be trusted to correspond to anything in the
             // file, so they go before it is read again.
             conn.execute("DELETE FROM turns WHERE scan_file_id = ?1", [id])?;
+            conn.execute("DELETE FROM session_events WHERE scan_file_id = ?1", [id])?;
+            conn.execute("DELETE FROM tool_results WHERE scan_file_id = ?1", [id])?;
             (0, Some(id))
         }
     };
 
-    let parsed = reader::parse_file(path, skip_lines)?;
+    let parsed = source.parse(path, skip_lines)?;
     stats.files_read += 1;
     stats.malformed_lines += parsed.malformed_lines;
 
@@ -158,7 +166,7 @@ fn ingest_one(conn: &mut Connection, path: &Path, stats: &mut ScanStats) -> Resu
         size,
         parsed.line_count as i64,
     )?;
-    write_parse(&tx, file_id, &path_text, &parsed, stats)?;
+    write_parse(&tx, file_id, source, &path_text, &parsed, stats)?;
     tx.commit()?;
 
     Ok(())
@@ -221,18 +229,19 @@ fn upsert_scan_file(
 fn write_parse(
     tx: &rusqlite::Transaction<'_>,
     file_id: i64,
+    source: Source,
     transcript_path: &str,
     parsed: &FileParse,
     stats: &mut ScanStats,
 ) -> Result<()> {
     for meta in parsed.sessions.values() {
-        let project_name = meta.cwd.as_deref().map(project_name_from_cwd);
+        let project_name = meta.cwd.as_deref().map(crate::projects::display_name);
 
         tx.execute(
             "INSERT INTO sessions
                 (session_id, project_path, project_name, git_branch, topic, topic_source,
-                 has_subagents, transcript_path)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+                 has_subagents, transcript_path, source)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
              ON CONFLICT(session_id) DO UPDATE SET
                 project_path  = COALESCE(excluded.project_path, sessions.project_path),
                 project_name  = COALESCE(excluded.project_name, sessions.project_name),
@@ -250,7 +259,8 @@ fn write_parse(
                                   ELSE COALESCE(excluded.topic_source, sessions.topic_source)
                                 END,
                 has_subagents = MAX(sessions.has_subagents, excluded.has_subagents),
-                transcript_path = COALESCE(excluded.transcript_path, sessions.transcript_path)",
+                transcript_path = COALESCE(excluded.transcript_path, sessions.transcript_path),
+                source          = excluded.source",
             params![
                 meta.session_id,
                 meta.cwd,
@@ -260,6 +270,7 @@ fn write_parse(
                 meta.topic_source,
                 i64::from(meta.has_subagents),
                 transcript_path,
+                source.id(),
             ],
         )?;
     }
@@ -283,7 +294,10 @@ fn write_parse(
                 cache_read_tokens  = excluded.cache_read_tokens,
                 cache_write_tokens = excluded.cache_write_tokens,
                 model              = COALESCE(excluded.model, turns.model),
-                tool_call_count    = excluded.tool_call_count,
+                -- For the same reason the tool rows are only rewritten by a
+                -- record that carries some: an echo reports none, and taking it
+                -- at its word would leave the count disagreeing with the rows.
+                tool_call_count    = MAX(turns.tool_call_count, excluded.tool_call_count),
                 scan_file_id       = excluded.scan_file_id",
             params![
                 turn.session_id,
@@ -312,13 +326,58 @@ fn write_parse(
             None => tx.last_insert_rowid(),
         };
 
+        // Only a record that carries tool calls may rewrite them. Claude repeats
+        // the whole response in every streaming record, so this changes nothing
+        // there; Codex repeats the running tally with no calls attached, and
+        // without this that echo would erase the calls the turn really made.
+        if turn.tools.is_empty() {
+            continue;
+        }
+
         tx.execute("DELETE FROM turn_tools WHERE turn_id = ?1", [turn_id])?;
         for (seq, tool) in turn.tools.iter().enumerate() {
             tx.execute(
-                "INSERT INTO turn_tools (turn_id, seq, tool_name) VALUES (?1, ?2, ?3)",
-                params![turn_id, seq as i64, tool],
+                "INSERT INTO turn_tools (turn_id, seq, tool_name, tool_use_id, file_path)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![turn_id, seq as i64, tool.name, tool.id, tool.file_path],
             )?;
         }
+    }
+
+    for event in &parsed.events {
+        // Same partial-index rule as the turns: without repeating the WHERE the
+        // conflict target matches nothing and every insert quietly does nothing.
+        tx.execute(
+            "INSERT INTO session_events
+                (session_id, uuid, ts_utc, kind, detail, pre_tokens, scan_file_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(uuid) WHERE uuid IS NOT NULL AND uuid <> ''
+             DO UPDATE SET
+                kind         = excluded.kind,
+                detail       = excluded.detail,
+                pre_tokens   = excluded.pre_tokens,
+                scan_file_id = excluded.scan_file_id",
+            params![
+                event.session_id,
+                event.uuid,
+                event.timestamp,
+                event.kind,
+                event.detail,
+                event.pre_tokens,
+                file_id,
+            ],
+        )?;
+    }
+
+    for (tool_use_id, is_error) in &parsed.tool_results {
+        tx.execute(
+            "INSERT INTO tool_results (tool_use_id, is_error, scan_file_id)
+             VALUES (?1, ?2, ?3)
+             ON CONFLICT(tool_use_id) DO UPDATE SET
+                is_error     = excluded.is_error,
+                scan_file_id = excluded.scan_file_id",
+            params![tool_use_id, i64::from(*is_error), file_id],
+        )?;
     }
 
     for agent in &parsed.agents {
@@ -393,27 +452,60 @@ pub(crate) fn recompute_derived(conn: &Connection) -> Result<()> {
         FROM turn_tools tt
         JOIN turns t ON t.id = tt.turn_id
         GROUP BY t.session_id, tt.tool_name;
+
+        -- Counted from the event rows for the same reason the turn figures are:
+        -- a tally kept as the scan runs drifts the moment a file is read in two
+        -- passes.
+        UPDATE sessions SET
+            compact_auto = (
+                SELECT COUNT(*) FROM session_events e
+                WHERE e.session_id = sessions.session_id AND e.kind = 'compact-auto'),
+            compact_manual = (
+                SELECT COUNT(*) FROM session_events e
+                WHERE e.session_id = sessions.session_id AND e.kind = 'compact-manual');
+
+        -- Windows paths differ only in case and separator, and a session that
+        -- reached the same file both ways touched one file, not two.
+        UPDATE sessions SET files_touched = (
+            SELECT COUNT(DISTINCT LOWER(REPLACE(tt.file_path, '\', '/')))
+            FROM turn_tools tt
+            JOIN turns t ON t.id = tt.turn_id
+            WHERE t.session_id = sessions.session_id AND tt.file_path IS NOT NULL
+        );
         "#,
     )
     .context("recomputing derived session data")?;
 
+    refresh_project_names(conn)?;
+
     Ok(())
 }
 
-/// The last two path components, which is enough to tell projects apart without
-/// exposing the whole directory layout.
-fn project_name_from_cwd(cwd: &str) -> String {
-    let normalised = cwd.replace('\\', "/");
-    let parts: Vec<&str> = normalised
-        .split('/')
-        .filter(|part| !part.is_empty())
-        .collect();
+/// The stored project name follows what is in the directory today.
+///
+/// It is read out of a manifest rather than off the path, so a checkout that
+/// was renamed — or a rule that changed here — must reach the sessions that
+/// were scanned before it. There is one directory per project, not per file,
+/// so this is a handful of lookups even on a large history.
+fn refresh_project_names(conn: &Connection) -> Result<()> {
+    let paths: Vec<String> = {
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT project_path FROM sessions
+             WHERE project_path IS NOT NULL AND project_path <> ''",
+        )?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+        rows.filter_map(Result::ok).collect()
+    };
 
-    match parts.len() {
-        0 => "unknown".to_owned(),
-        1 => parts[0].to_owned(),
-        n => format!("{}/{}", parts[n - 2], parts[n - 1]),
+    for path in paths {
+        let name = crate::projects::display_name(&path);
+        conn.execute(
+            "UPDATE sessions SET project_name = ?2
+             WHERE project_path = ?1 AND COALESCE(project_name, '') <> ?2",
+            params![path, name],
+        )?;
     }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -648,6 +740,69 @@ mod tests {
         assert_eq!(fixture.count("SELECT COUNT(*) FROM session_tool_counts"), 2);
     }
 
+    #[test]
+    fn compactions_are_counted_per_session_and_by_trigger() {
+        let mut fixture = Fixture::new("compactions");
+        fixture.write(
+            "a.jsonl",
+            &[
+                turn_line("m1", "u1", 10, "2026-01-01T10:00:00Z", "claude-opus-4-8"),
+                r#"{"type":"system","subtype":"compact_boundary","sessionId":"s1","uuid":"c1","timestamp":"2026-01-01T10:30:00Z","compactMetadata":{"trigger":"auto","preTokens":998547}}"#.to_owned(),
+                r#"{"type":"system","subtype":"compact_boundary","sessionId":"s1","uuid":"c2","timestamp":"2026-01-01T11:00:00Z","compactMetadata":{"trigger":"manual"}}"#.to_owned(),
+            ],
+        );
+        fixture.scan();
+
+        assert_eq!(
+            fixture.count("SELECT compact_auto FROM sessions WHERE session_id = 's1'"),
+            1
+        );
+        assert_eq!(
+            fixture.count("SELECT compact_manual FROM sessions WHERE session_id = 's1'"),
+            1
+        );
+    }
+
+    #[test]
+    fn the_same_file_reached_two_ways_is_touched_once() {
+        let mut fixture = Fixture::new("files-touched");
+        let edits = r#"{"type":"assistant","sessionId":"s1","uuid":"u1","timestamp":"2026-01-01T10:00:00Z","message":{"id":"m1","model":"claude-opus-4-8","usage":{"output_tokens":5},"content":[{"type":"tool_use","id":"t1","name":"Edit","input":{"file_path":"C:\\Sources\\app\\main.rs"}},{"type":"tool_use","id":"t2","name":"Read","input":{"file_path":"c:/sources/app/main.rs"}},{"type":"tool_use","id":"t3","name":"Write","input":{"file_path":"C:\\Sources\\app\\lib.rs"}}]}}"#;
+        fixture.write("a.jsonl", &[edits.to_owned()]);
+        fixture.scan();
+
+        assert_eq!(
+            fixture.count("SELECT files_touched FROM sessions WHERE session_id = 's1'"),
+            2,
+            "separator and case are the same file on Windows"
+        );
+    }
+
+    #[test]
+    fn an_outcome_still_finds_its_call_when_it_arrives_in_a_later_scan() {
+        // The reason the two are separate tables: an append-only transcript is
+        // routinely read in two passes with the call in one and the result in
+        // the next, and a pairing done at parse time would lose it.
+        let mut fixture = Fixture::new("late-result");
+        let call = r#"{"type":"assistant","sessionId":"s1","uuid":"u1","timestamp":"2026-01-01T10:00:00Z","message":{"id":"m1","model":"claude-opus-4-8","usage":{"output_tokens":5},"content":[{"type":"tool_use","id":"toolu_1","name":"Bash"}]}}"#;
+        let mut lines = vec![call.to_owned()];
+        fixture.write("a.jsonl", &lines);
+        fixture.scan();
+
+        lines.push(
+            r#"{"type":"user","sessionId":"s1","uuid":"u2","timestamp":"2026-01-01T10:00:01Z","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_1","is_error":true}]}}"#
+                .to_owned(),
+        );
+        fixture.write("a.jsonl", &lines);
+        fixture.scan();
+
+        let failed = fixture.count(
+            "SELECT COUNT(*) FROM turn_tools tt
+             JOIN tool_results r ON r.tool_use_id = tt.tool_use_id
+             WHERE r.is_error = 1",
+        );
+        assert_eq!(failed, 1);
+    }
+
     /// Runs against the machine's real transcripts. Ignored by default because
     /// it depends on data no other machine has; run it with
     /// `cargo test -- --ignored --nocapture` when changing the parser.
@@ -688,6 +843,47 @@ mod tests {
         eprintln!("  sessions       {}", stats.sessions_seen);
         eprintln!("  turns          {turns}");
         eprintln!("  tokens         {tokens}");
+
+        {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT source, COUNT(*) FROM sessions WHERE turn_count > 0 GROUP BY source",
+                )
+                .unwrap();
+            let rows = stmt
+                .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))
+                .unwrap();
+            for row in rows.filter_map(Result::ok) {
+                eprintln!("  source         {:8} {} sessions", row.0, row.1);
+            }
+        }
+
+        let one = |sql: &str| -> i64 { conn.query_row(sql, [], |r| r.get(0)).unwrap() };
+        eprintln!(
+            "  compactions    {} overflow, {} asked for",
+            one("SELECT COUNT(*) FROM session_events WHERE kind = 'compact-auto'"),
+            one("SELECT COUNT(*) FROM session_events WHERE kind = 'compact-manual'")
+        );
+        eprintln!(
+            "  slash commands {} in {} sessions",
+            one("SELECT COUNT(*) FROM session_events WHERE kind = 'slash'"),
+            one("SELECT COUNT(DISTINCT session_id) FROM session_events WHERE kind = 'slash'")
+        );
+        eprintln!(
+            "  tool outcomes  {} answered, {} failed",
+            one(
+                "SELECT COUNT(*) FROM turn_tools tt JOIN tool_results r ON r.tool_use_id = tt.tool_use_id"
+            ),
+            one(
+                "SELECT COUNT(*) FROM turn_tools tt JOIN tool_results r ON r.tool_use_id = tt.tool_use_id WHERE r.is_error = 1"
+            )
+        );
+        eprintln!(
+            "  files touched  {} distinct",
+            one(
+                "SELECT COUNT(DISTINCT LOWER(REPLACE(file_path, '\\', '/'))) FROM turn_tools WHERE file_path IS NOT NULL"
+            )
+        );
         if let Some(error) = &stats.first_error {
             eprintln!("  first error    {error}");
         }
@@ -707,10 +903,21 @@ mod tests {
     }
 
     #[test]
-    fn project_name_keeps_the_last_two_components() {
-        assert_eq!(project_name_from_cwd("/home/me/work/proj"), "work/proj");
-        assert_eq!(project_name_from_cwd(r"C:\Sources\MyApp"), "Sources/MyApp");
-        assert_eq!(project_name_from_cwd("solo"), "solo");
-        assert_eq!(project_name_from_cwd(""), "unknown");
+    fn a_stored_name_is_brought_up_to_date() {
+        let conn = Connection::open_in_memory().unwrap();
+        crate::storage::schema::migrate(&conn).unwrap();
+        conn.execute(
+            "INSERT INTO sessions (session_id, project_path, project_name)
+             VALUES ('s1', ?1, 'stale/name')",
+            [r"C:\Sources\MyApp\gone"],
+        )
+        .unwrap();
+
+        refresh_project_names(&conn).unwrap();
+
+        let name: String = conn
+            .query_row("SELECT project_name FROM sessions", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(name, "MyApp/gone");
     }
 }

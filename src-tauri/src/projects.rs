@@ -15,6 +15,8 @@ use walkdir::WalkDir;
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRow {
     pub path: String,
+    /// What the project calls itself — see [`display_name`].
+    pub name: String,
     pub registered: bool,
     pub dir_exists: bool,
     /// Set when several registrations point at the same directory, e.g. the
@@ -70,6 +72,152 @@ fn encode_project_dir(path: &str) -> String {
     path.chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
         .collect()
+}
+
+/// What a project is called, as opposed to which folder it sits in.
+///
+/// The last folder is not a name: `src-tauri`, `app` and `src` sit in every
+/// second checkout, and a list keyed by them merges projects that share
+/// nothing. So the name is read out of what the checkout says about itself —
+/// the manifest at its repository root — and a directory below that root keeps
+/// the part of the path that tells it apart, `claude-admin/src-tauri`.
+///
+/// A directory that is gone falls back to the last two path components, which
+/// is all that is left to go on.
+pub fn display_name(path: &str) -> String {
+    let dir = Path::new(path);
+    if !dir.is_dir() {
+        return short_path(path);
+    }
+
+    let root = git_root(dir);
+    let anchor: &Path = root.as_deref().unwrap_or(dir);
+    let base = manifest_name(anchor)
+        .or_else(|| last_component(anchor))
+        .unwrap_or_else(|| short_path(path));
+
+    let below = dir
+        .strip_prefix(anchor)
+        .ok()
+        .map(|rest| rest.to_string_lossy().replace('\\', "/"))
+        .filter(|rest| !rest.is_empty());
+
+    match below {
+        Some(rest) => format!("{base}/{rest}"),
+        None => base,
+    }
+}
+
+/// The last two path components: enough to tell two projects apart without
+/// putting the whole directory layout on screen.
+fn short_path(path: &str) -> String {
+    let unified = path.replace('\\', "/");
+    let parts: Vec<&str> = unified.split('/').filter(|part| !part.is_empty()).collect();
+    match parts.len() {
+        0 => "unknown".to_owned(),
+        1 => parts[0].to_owned(),
+        n => format!("{}/{}", parts[n - 2], parts[n - 1]),
+    }
+}
+
+fn last_component(dir: &Path) -> Option<String> {
+    dir.file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+}
+
+/// `.git` is a directory in a checkout and a file in a worktree or submodule,
+/// so both count.
+fn git_root(dir: &Path) -> Option<PathBuf> {
+    dir.ancestors()
+        .find(|candidate| candidate.join(".git").exists())
+        .map(Path::to_path_buf)
+}
+
+/// The name the ecosystem's own manifest gives the project, in the order the
+/// manifests are worth trusting.
+fn manifest_name(dir: &Path) -> Option<String> {
+    json_name(&dir.join("package.json"))
+        .or_else(|| toml_name(&dir.join("Cargo.toml"), "package"))
+        .or_else(|| toml_name(&dir.join("pyproject.toml"), "project"))
+        .or_else(|| toml_name(&dir.join("pyproject.toml"), "tool.poetry"))
+        .or_else(|| go_module(&dir.join("go.mod")))
+        .or_else(|| solution_or_project_name(dir))
+        .or_else(|| json_name(&dir.join("composer.json")))
+}
+
+/// The last segment only: `@acme/dashboard` and `acme/dashboard` are read as
+/// `dashboard`, because the scope is the same for every package of one vendor.
+fn unscoped(name: &str) -> Option<String> {
+    let trimmed = name.trim().trim_start_matches('@');
+    let tail = trimmed.rsplit('/').next().unwrap_or(trimmed).trim();
+    (!tail.is_empty()).then(|| tail.to_owned())
+}
+
+fn json_name(file: &Path) -> Option<String> {
+    let text = fs::read_to_string(file).ok()?;
+    let value: Value = serde_json::from_str(&text).ok()?;
+    unscoped(value.get("name")?.as_str()?)
+}
+
+/// A hand-rolled read of one `name` key, rather than a TOML dependency for a
+/// single line: the manifests that matter here all spell it `name = "..."`.
+fn toml_name(file: &Path, section: &str) -> Option<String> {
+    let text = fs::read_to_string(file).ok()?;
+    let mut inside = false;
+    for line in text.lines() {
+        let line = line.trim();
+        if let Some(header) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
+            inside = header.trim() == section;
+            continue;
+        }
+        if !inside {
+            continue;
+        }
+        if let Some(value) = line
+            .strip_prefix("name")
+            .map(str::trim_start)
+            .and_then(|rest| rest.strip_prefix('='))
+        {
+            return unscoped(value.trim().trim_matches(['"', '\'']));
+        }
+    }
+    None
+}
+
+fn go_module(file: &Path) -> Option<String> {
+    let text = fs::read_to_string(file).ok()?;
+    let line = text
+        .lines()
+        .map(str::trim)
+        .find(|line| line.starts_with("module "))?;
+    unscoped(line.trim_start_matches("module "))
+}
+
+/// .NET names itself after a file rather than inside one. A solution outranks
+/// a project file: it is the thing the whole folder is about.
+fn solution_or_project_name(dir: &Path) -> Option<String> {
+    let mut solutions = Vec::new();
+    let mut projects = Vec::new();
+
+    for entry in fs::read_dir(dir).ok()?.filter_map(Result::ok) {
+        let path = entry.path();
+        let Some(extension) = path.extension().and_then(|e| e.to_str()) else {
+            continue;
+        };
+        let stem = path.file_stem()?.to_string_lossy().into_owned();
+        match extension.to_ascii_lowercase().as_str() {
+            "sln" | "slnx" => solutions.push(stem),
+            "csproj" | "fsproj" | "vbproj" => projects.push(stem),
+            _ => {}
+        }
+    }
+
+    solutions.sort();
+    projects.sort();
+    solutions
+        .into_iter()
+        .next()
+        .or_else(|| projects.into_iter().next())
 }
 
 /// Key under which two registrations count as the same directory.
@@ -213,9 +361,12 @@ fn jsonl_files(dir: &Path) -> Vec<TranscriptFile> {
     files
 }
 
+/// One directory per project, named after the project path — a layout only
+/// Claude Code uses. Codex files a rollout under the day it ran, so a project's
+/// transcripts are not a folder there and are not looked for as one.
 fn transcript_dir_for(path: &str) -> Option<PathBuf> {
     let encoded = encode_project_dir(path);
-    let by_encoding = crate::paths::default_scan_roots()
+    let by_encoding = crate::paths::claude_scan_roots()
         .iter()
         .map(|root| root.join(&encoded))
         .find(|dir| dir.is_dir());
@@ -225,7 +376,7 @@ fn transcript_dir_for(path: &str) -> Option<PathBuf> {
     // what made deleting such a row fail.
     by_encoding.or_else(|| {
         let candidate = Path::new(path);
-        let inside_a_root = crate::paths::default_scan_roots()
+        let inside_a_root = crate::paths::claude_scan_roots()
             .iter()
             .any(|root| candidate.starts_with(root));
         (inside_a_root && candidate.is_dir()).then(|| candidate.to_path_buf())
@@ -268,6 +419,7 @@ pub fn list(conn: &Connection) -> Result<ProjectsReport> {
         let db = stats.get(&key).cloned().unwrap_or_default();
 
         projects.push(ProjectRow {
+            name: display_name(path),
             path: path.clone(),
             registered: true,
             dir_exists: Path::new(path).is_dir(),
@@ -287,8 +439,10 @@ pub fn list(conn: &Connection) -> Result<ProjectsReport> {
     }
 
     // Transcript folders no registration points at: usually projects whose
-    // registration was removed, but whose history is still on disk.
-    for root in crate::paths::default_scan_roots() {
+    // registration was removed, but whose history is still on disk. Claude
+    // Code's roots only — a folder is a project there, whereas under Codex it
+    // is a date, and every rollout already names the directory it ran in.
+    for root in crate::paths::claude_scan_roots() {
         let Ok(entries) = fs::read_dir(&root) else {
             continue;
         };
@@ -313,6 +467,7 @@ pub fn list(conn: &Connection) -> Result<ProjectsReport> {
 
             projects.push(ProjectRow {
                 dir_exists: Path::new(&display_path).is_dir(),
+                name: display_name(&display_path),
                 path: display_path,
                 registered: false,
                 duplicate_group: None,
@@ -549,6 +704,61 @@ mod tests {
             encode_project_dir(r"C:\Sources\AI-Agenten"),
             "C--Sources-AI-Agenten"
         );
+    }
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "claude-admin-test-{}-{}-{name}",
+            std::process::id(),
+            chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn the_name_comes_from_the_manifest_not_the_folder() {
+        let root = temp_dir("repo");
+        fs::write(root.join("package.json"), r#"{"name":"@acme/dashboard"}"#).unwrap();
+        assert_eq!(display_name(&root.to_string_lossy()), "dashboard");
+
+        let cargo = temp_dir("crate");
+        fs::write(
+            cargo.join("Cargo.toml"),
+            "[workspace]\nname = \"wrong\"\n\n[package]\nname = \"claude-admin\"\n",
+        )
+        .unwrap();
+        assert_eq!(display_name(&cargo.to_string_lossy()), "claude-admin");
+
+        let dotnet = temp_dir("dotnet");
+        fs::write(dotnet.join("Widgets.sln"), "").unwrap();
+        fs::write(dotnet.join("Widgets.Core.csproj"), "").unwrap();
+        assert_eq!(display_name(&dotnet.to_string_lossy()), "Widgets");
+    }
+
+    #[test]
+    fn a_folder_inside_a_repository_is_named_after_the_repository() {
+        // The case this exists for: `src-tauri` under two different checkouts
+        // used to read as one project.
+        let root = temp_dir("repo");
+        fs::create_dir_all(root.join(".git")).unwrap();
+        fs::write(root.join("package.json"), r#"{"name":"claude-admin"}"#).unwrap();
+        let inner = root.join("src-tauri");
+        fs::create_dir_all(&inner).unwrap();
+
+        assert_eq!(
+            display_name(&inner.to_string_lossy()),
+            "claude-admin/src-tauri"
+        );
+    }
+
+    #[test]
+    fn a_directory_that_is_gone_keeps_its_last_two_components() {
+        assert_eq!(
+            display_name(r"C:\Sources\MyApp\nowhere-at-all"),
+            "MyApp/nowhere-at-all"
+        );
+        assert_eq!(display_name(""), "unknown");
     }
 
     #[test]

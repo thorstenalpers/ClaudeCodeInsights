@@ -3,7 +3,7 @@ use rusqlite::Connection;
 
 /// Bumped whenever a migration is added. Forward only — this is a cache that can
 /// be rebuilt from the transcripts at any time, so there is no downgrade path.
-pub(crate) const TARGET_VERSION: i64 = 3;
+pub(crate) const TARGET_VERSION: i64 = 5;
 
 pub fn migrate(conn: &Connection) -> Result<()> {
     let current: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
@@ -16,6 +16,12 @@ pub fn migrate(conn: &Connection) -> Result<()> {
     }
     if current < 3 {
         conn.execute_batch(V3)?;
+    }
+    if current < 4 {
+        conn.execute_batch(V4)?;
+    }
+    if current < 5 {
+        conn.execute_batch(V5)?;
     }
 
     conn.pragma_update(None, "user_version", TARGET_VERSION)?;
@@ -166,4 +172,70 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 CREATE INDEX IF NOT EXISTS ix_tasks_project ON tasks(project_path, position);
+"#;
+
+const V4: &str = r#"
+-- What a tool call was pointed at, and how to find out whether it worked.
+--
+-- tool_use_id is what pairs a call with its outcome; older transcripts wrote
+-- none, so both of these stay nullable and every query treats them as optional.
+ALTER TABLE turn_tools ADD COLUMN tool_use_id TEXT;
+ALTER TABLE turn_tools ADD COLUMN file_path   TEXT;
+
+CREATE INDEX IF NOT EXISTS ix_turn_tools_use_id ON turn_tools(tool_use_id);
+CREATE INDEX IF NOT EXISTS ix_turn_tools_file   ON turn_tools(file_path);
+
+-- The outcome of a tool call, in its own table rather than as a column on the
+-- call. A result lands on a later record than the call that produced it, so an
+-- incremental scan regularly reads the two halves in different passes; joined
+-- at query time they find each other whenever both have arrived.
+CREATE TABLE IF NOT EXISTS tool_results (
+    tool_use_id  TEXT PRIMARY KEY,
+    is_error     INTEGER NOT NULL DEFAULT 0,
+    scan_file_id INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS ix_tool_results_file ON tool_results(scan_file_id);
+
+-- Things the user did that are not turns: a compaction, or a slash command.
+-- Rows, not counters, for the same reason the turn figures are recomputed —
+-- a tally written during a partial scan drifts.
+CREATE TABLE IF NOT EXISTS session_events (
+    id           INTEGER PRIMARY KEY,
+    session_id   TEXT NOT NULL,
+    uuid         TEXT,
+    ts_utc       TEXT NOT NULL,
+    -- compact-auto, compact-manual, slash
+    kind         TEXT NOT NULL,
+    detail       TEXT,
+    pre_tokens   INTEGER,
+    scan_file_id INTEGER NOT NULL
+);
+
+-- Same trick as the turns: a repeat scan of the same line is a no-op.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_session_events_uuid
+    ON session_events(uuid) WHERE uuid IS NOT NULL AND uuid <> '';
+
+CREATE INDEX IF NOT EXISTS ix_session_events_session ON session_events(session_id, kind);
+CREATE INDEX IF NOT EXISTS ix_session_events_file    ON session_events(scan_file_id);
+
+ALTER TABLE sessions ADD COLUMN compact_auto   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN compact_manual INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN files_touched  INTEGER NOT NULL DEFAULT 0;
+
+-- None of the above can be backfilled from what is already stored, and this
+-- database is a cache of the transcripts. Forgetting what was scanned makes the
+-- next scan read every file once and fill it all in.
+DELETE FROM scan_files;
+"#;
+
+const V5: &str = r#"
+-- Which agent wrote the transcript a session was read from.
+--
+-- Every session already in the database came from Claude Code, so the default
+-- is the whole backfill. It lives on the session rather than on the file
+-- because that is what every list, filter and facet reads.
+ALTER TABLE sessions ADD COLUMN source TEXT NOT NULL DEFAULT 'claude';
+
+CREATE INDEX IF NOT EXISTS ix_sessions_source ON sessions(source);
 "#;

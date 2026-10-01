@@ -6,7 +6,7 @@
 
 use crate::error::{Error, Result};
 
-const SERVICE: &str = "ClaudeAdmin";
+const SERVICE: &str = "ClaudeCodeInsights";
 
 fn entry(provider: &str) -> Result<keyring::Entry> {
     if super::providers::find(provider).is_none() {

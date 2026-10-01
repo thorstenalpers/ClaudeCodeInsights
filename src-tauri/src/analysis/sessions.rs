@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rusqlite::{Connection, ToSql};
+use rusqlite::{Connection, OptionalExtension, ToSql};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -26,6 +26,9 @@ pub struct SessionQuery {
     pub projects: Vec<String>,
     #[serde(default)]
     pub branches: Vec<String>,
+    /// The agents whose sessions to show — `claude`, `codex`.
+    #[serde(default)]
+    pub sources: Vec<String>,
     /// Inclusive local dates, `YYYY-MM-DD`.
     #[serde(default)]
     pub from: Option<String>,
@@ -45,7 +48,8 @@ pub struct SessionQuery {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FamilyRate {
-    /// `opus`, `sonnet`, `haiku`, `fable` — matched against the model name.
+    /// `opus`, `sonnet`, `haiku`, `fable`, `gpt` — matched against the model
+    /// name, which is all a transcript records.
     pub family: String,
     pub input: f64,
     pub output: f64,
@@ -70,6 +74,7 @@ impl Default for SessionQuery {
             tags: Vec::new(),
             projects: Vec::new(),
             branches: Vec::new(),
+            sources: Vec::new(),
             from: None,
             to: None,
             rates: Vec::new(),
@@ -81,8 +86,13 @@ impl Default for SessionQuery {
 #[serde(rename_all = "camelCase")]
 pub struct SessionRow {
     pub session_id: String,
+    /// The agent that wrote the transcript this was read from.
+    pub source: String,
     pub topic: Option<String>,
     pub project_name: Option<String>,
+    /// The directory the session ran in, which is what a project's own pages
+    /// are keyed by — the name alone cannot be turned back into one.
+    pub project_path: Option<String>,
     pub git_branch: Option<String>,
     pub first_ts: Option<String>,
     pub last_ts: Option<String>,
@@ -94,6 +104,12 @@ pub struct SessionRow {
     pub cache_read_tokens: i64,
     pub cache_write_tokens: i64,
     pub has_subagents: bool,
+    /// Times the context window overflowed, and times the user asked for a
+    /// compaction. Kept apart: one is a limit being hit, the other a decision.
+    pub compact_auto: i64,
+    pub compact_manual: i64,
+    /// Distinct files the session's tool calls named.
+    pub files_touched: i64,
     pub activity: String,
     pub profile: HashMap<String, f64>,
     pub tags: Vec<String>,
@@ -126,6 +142,8 @@ fn order_by(sort: Option<&str>) -> &'static str {
         Some("tokens") => "(input_tokens + output_tokens + cache_read_tokens + cache_write_tokens)",
         Some("model") => "s.model",
         Some("activity") => "activity",
+        Some("files") => "s.files_touched",
+        Some("compacts") => "(s.compact_auto + s.compact_manual)",
         _ => "s.last_ts",
     }
 }
@@ -137,22 +155,34 @@ fn order_by(sort: Option<&str>) -> &'static str {
 /// the statement; the numbers travel as bound values, and a family name that
 /// is not one of the four known ones never reaches the string at all.
 fn cost_expression(rates: &[FamilyRate], first_index: usize) -> (String, Vec<Box<dyn ToSql>>) {
-    const KNOWN: [&str; 4] = ["opus", "fable", "sonnet", "haiku"];
+    // Every family, and the model names that belong to it. Written out rather
+    // than derived from the family id because several of them answer to more
+    // than one name, and because this is the list the caller is checked against.
+    const KNOWN: [(&str, &[&str]); 5] = [
+        ("opus", &["opus"]),
+        ("fable", &["fable", "mythos"]),
+        ("sonnet", &["sonnet"]),
+        ("haiku", &["haiku"]),
+        ("gpt", &["gpt", "codex", "o3", "o4"]),
+    ];
 
     let mut arms = String::new();
     let mut params: Vec<Box<dyn ToSql>> = Vec::new();
     let mut index = first_index;
 
-    for rate in rates
-        .iter()
-        .filter(|rate| KNOWN.contains(&rate.family.as_str()))
-    {
-        // `fable` and `mythos` are the same family under two names.
-        let pattern = if rate.family == "fable" {
-            "(s.model LIKE '%fable%' OR s.model LIKE '%mythos%')".to_owned()
-        } else {
-            format!("s.model LIKE '%{}%'", rate.family)
+    for rate in rates.iter() {
+        let Some((_, names)) = KNOWN.iter().find(|(id, _)| *id == rate.family) else {
+            continue;
         };
+
+        let pattern = format!(
+            "({})",
+            names
+                .iter()
+                .map(|name| format!("s.model LIKE '%{name}%'"))
+                .collect::<Vec<_>>()
+                .join(" OR ")
+        );
 
         arms.push_str(&format!(
             " WHEN {pattern} THEN (input_tokens * ?{} + output_tokens * ?{} \
@@ -176,6 +206,33 @@ fn cost_expression(rates: &[FamilyRate], first_index: usize) -> (String, Vec<Box
 
     (format!("(CASE{arms} ELSE 0 END)"), params)
 }
+
+/// The columns a session row is built from, shared by the list and the single
+/// lookup so the two cannot answer differently about the same session.
+const SELECT: &str = r#"
+SELECT
+    s.session_id,
+    s.topic,
+    s.project_name,
+    s.project_path,
+    s.git_branch,
+    s.first_ts,
+    s.last_ts,
+    CAST((julianday(s.last_ts) - julianday(s.first_ts)) * 24 * 60 AS INTEGER) AS duration_minutes,
+    s.model,
+    s.turn_count,
+    COALESCE(t.input_tokens, 0)       AS input_tokens,
+    COALESCE(t.output_tokens, 0)      AS output_tokens,
+    COALESCE(t.cache_read_tokens, 0)  AS cache_read_tokens,
+    COALESCE(t.cache_write_tokens, 0) AS cache_write_tokens,
+    s.has_subagents,
+    COALESCE(a.activity, 'conversation') AS activity,
+    COALESCE(a.profile_json, '{}')       AS profile_json,
+    s.compact_auto,
+    s.compact_manual,
+    s.files_touched,
+    s.source
+"#;
 
 /// The join every session query starts from.
 ///
@@ -273,6 +330,16 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
         }
     }
 
+    if !request.sources.is_empty() {
+        where_parts.push(format!(
+            "s.source IN ({})",
+            placeholders(request.sources.len())
+        ));
+        for value in &request.sources {
+            params.push(Box::new(value.clone()));
+        }
+    }
+
     // The window is on last activity, which is what the column shows and what
     // "the past seven days" means to someone reading the table.
     if let Some(from) = request.from.as_deref().filter(|value| !value.is_empty()) {
@@ -308,23 +375,7 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
 
     let sql = format!(
         r#"
-        SELECT
-            s.session_id,
-            s.topic,
-            s.project_name,
-            s.git_branch,
-            s.first_ts,
-            s.last_ts,
-            CAST((julianday(s.last_ts) - julianday(s.first_ts)) * 24 * 60 AS INTEGER) AS duration_minutes,
-            s.model,
-            s.turn_count,
-            COALESCE(t.input_tokens, 0)       AS input_tokens,
-            COALESCE(t.output_tokens, 0)      AS output_tokens,
-            COALESCE(t.cache_read_tokens, 0)  AS cache_read_tokens,
-            COALESCE(t.cache_write_tokens, 0) AS cache_write_tokens,
-            s.has_subagents,
-            COALESCE(a.activity, 'conversation') AS activity,
-            COALESCE(a.profile_json, '{{}}')     AS profile_json
+        {SELECT}
         {BASE}
         {where_sql}
         ORDER BY {order} {direction}
@@ -343,26 +394,7 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
 
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {
-        let profile_json: String = row.get(15)?;
-        result.push(SessionRow {
-            session_id: row.get(0)?,
-            topic: row.get(1)?,
-            project_name: row.get(2)?,
-            git_branch: row.get(3)?,
-            first_ts: row.get(4)?,
-            last_ts: row.get(5)?,
-            duration_minutes: row.get::<_, Option<i64>>(6)?.unwrap_or(0),
-            model: row.get(7)?,
-            turn_count: row.get(8)?,
-            input_tokens: row.get(9)?,
-            output_tokens: row.get(10)?,
-            cache_read_tokens: row.get(11)?,
-            cache_write_tokens: row.get(12)?,
-            has_subagents: row.get::<_, i64>(13)? != 0,
-            activity: row.get(14)?,
-            profile: serde_json::from_str(&profile_json).unwrap_or_default(),
-            tags: Vec::new(),
-        });
+        result.push(read_row(row)?);
     }
     drop(rows);
     drop(stmt);
@@ -375,6 +407,46 @@ pub fn query(conn: &Connection, request: &SessionQuery) -> Result<SessionPage> {
         page: request.page,
         page_size,
     })
+}
+
+/// One row of `SELECT`, in the order its columns are written there.
+fn read_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<SessionRow> {
+    let profile_json: String = row.get(16)?;
+    Ok(SessionRow {
+        session_id: row.get(0)?,
+        topic: row.get(1)?,
+        project_name: row.get(2)?,
+        project_path: row.get(3)?,
+        git_branch: row.get(4)?,
+        first_ts: row.get(5)?,
+        last_ts: row.get(6)?,
+        duration_minutes: row.get::<_, Option<i64>>(7)?.unwrap_or(0),
+        model: row.get(8)?,
+        turn_count: row.get(9)?,
+        input_tokens: row.get(10)?,
+        output_tokens: row.get(11)?,
+        cache_read_tokens: row.get(12)?,
+        cache_write_tokens: row.get(13)?,
+        has_subagents: row.get::<_, i64>(14)? != 0,
+        activity: row.get(15)?,
+        profile: serde_json::from_str(&profile_json).unwrap_or_default(),
+        compact_auto: row.get(17)?,
+        compact_manual: row.get(18)?,
+        files_touched: row.get(19)?,
+        source: row.get(20)?,
+        tags: Vec::new(),
+    })
+}
+
+/// One session by id, for the detail page's figures.
+pub fn one(conn: &Connection, session_id: &str) -> Result<Option<SessionRow>> {
+    let sql = format!("{SELECT} {BASE} WHERE s.session_id = ?1");
+    let mut row = conn.query_row(&sql, [session_id], read_row).optional()?;
+
+    if let Some(row) = row.as_mut() {
+        attach_tags(conn, std::slice::from_mut(row))?;
+    }
+    Ok(row)
 }
 
 /// Tags are fetched for the page's sessions in one query rather than per row.
@@ -421,6 +493,9 @@ pub struct SessionFacets {
     pub tags: Vec<String>,
     pub projects: Vec<String>,
     pub branches: Vec<String>,
+    /// Only the agents that actually left something behind. A machine with no
+    /// Codex on it should not be offered a filter that can only empty the table.
+    pub sources: Vec<String>,
 }
 
 pub fn facets(conn: &Connection) -> Result<SessionFacets> {
@@ -445,6 +520,9 @@ pub fn facets(conn: &Connection) -> Result<SessionFacets> {
             "SELECT DISTINCT git_branch FROM sessions
              WHERE git_branch IS NOT NULL AND git_branch <> '' AND turn_count > 0
              ORDER BY git_branch",
+        )?,
+        sources: collect(
+            "SELECT DISTINCT source FROM sessions WHERE turn_count > 0 ORDER BY source",
         )?,
     })
 }

@@ -1,6 +1,8 @@
+pub mod codex;
 pub mod reader;
 pub mod record;
 pub mod scanner;
+pub mod source;
 
 #[cfg(test)]
 mod tests {
@@ -144,7 +146,87 @@ mod tests {
     fn tool_calls_are_read_in_order() {
         let line = r#"{"type":"assistant","sessionId":"s1","uuid":"a","timestamp":"2026-01-01T10:00:00Z","message":{"id":"m1","usage":{"output_tokens":5},"content":[{"type":"text","text":"hi"},{"type":"tool_use","name":"Read"},{"type":"tool_use","name":"Edit"}]}}"#;
         let parsed = parse_file(&transcript("tools", None, &[line]), 0).unwrap();
-        assert_eq!(parsed.turns[0].tools, vec!["Read", "Edit"]);
+        let names: Vec<&str> = parsed.turns[0]
+            .tools
+            .iter()
+            .map(|t| t.name.as_str())
+            .collect();
+        assert_eq!(names, vec!["Read", "Edit"]);
+    }
+
+    #[test]
+    fn a_tool_call_carries_its_id_and_the_file_it_named() {
+        // The id is what a result pairs with later, and the path is what makes
+        // "how many files did this session touch" answerable at all.
+        let line = r#"{"type":"assistant","sessionId":"s1","uuid":"a","timestamp":"2026-01-01T10:00:00Z","message":{"id":"m1","usage":{"output_tokens":5},"content":[{"type":"tool_use","id":"toolu_1","name":"Edit","input":{"file_path":"C:\\Sources\\app\\main.rs"}},{"type":"tool_use","id":"toolu_2","name":"Bash","input":{"command":"cargo test"}}]}}"#;
+        let parsed = parse_file(&transcript("tool-ids", None, &[line]), 0).unwrap();
+        let tools = &parsed.turns[0].tools;
+
+        assert_eq!(tools[0].id.as_deref(), Some("toolu_1"));
+        assert_eq!(
+            tools[0].file_path.as_deref(),
+            Some(r"C:\Sources\app\main.rs")
+        );
+        assert_eq!(tools[1].file_path, None, "a shell call names no file");
+    }
+
+    #[test]
+    fn tool_results_are_collected_apart_from_their_call() {
+        // They arrive on a later record, and with parallel tools out of order,
+        // so they are paired by id rather than by position.
+        let call = r#"{"type":"assistant","sessionId":"s1","uuid":"a","timestamp":"2026-01-01T10:00:00Z","message":{"id":"m1","usage":{"output_tokens":5},"content":[{"type":"tool_use","id":"toolu_1","name":"Bash"}]}}"#;
+        let result = r#"{"type":"user","sessionId":"s1","uuid":"b","timestamp":"2026-01-01T10:00:01Z","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_1","is_error":true}]}}"#;
+        let parsed = parse_file(&transcript("tool-results", None, &[call, result]), 0).unwrap();
+
+        assert_eq!(parsed.tool_results, vec![("toolu_1".to_owned(), true)]);
+    }
+
+    #[test]
+    fn a_result_without_the_error_flag_counts_as_success() {
+        let line = r#"{"type":"user","sessionId":"s1","uuid":"b","timestamp":"2026-01-01T10:00:01Z","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_9","content":"ok"}]}}"#;
+        let parsed = parse_file(&transcript("no-flag", None, &[line]), 0).unwrap();
+        assert_eq!(parsed.tool_results, vec![("toolu_9".to_owned(), false)]);
+    }
+
+    #[test]
+    fn a_compaction_says_whether_the_context_overflowed() {
+        // The boundary record states the trigger outright, which is worth more
+        // than guessing from the prefix of the summary that follows it.
+        let auto = r#"{"type":"system","subtype":"compact_boundary","sessionId":"s1","uuid":"c1","timestamp":"2026-01-01T10:00:00Z","compactMetadata":{"trigger":"auto","preTokens":998547}}"#;
+        let manual = r#"{"type":"system","subtype":"compact_boundary","sessionId":"s1","uuid":"c2","timestamp":"2026-01-01T11:00:00Z","compactMetadata":{"trigger":"manual","preTokens":120000}}"#;
+        let parsed = parse_file(&transcript("compact", None, &[auto, manual]), 0).unwrap();
+
+        assert_eq!(parsed.events.len(), 2);
+        assert_eq!(parsed.events[0].kind, "compact-auto");
+        assert_eq!(parsed.events[0].pre_tokens, Some(998_547));
+        assert_eq!(parsed.events[1].kind, "compact-manual");
+    }
+
+    #[test]
+    fn a_compaction_with_no_stated_trigger_is_read_as_an_overflow() {
+        // A future build could add a third trigger; anything that is not the
+        // user's own /compact is the machine's decision, not the user's.
+        let line = r#"{"type":"system","subtype":"compact_boundary","sessionId":"s1","uuid":"c3","timestamp":"2026-01-01T10:00:00Z"}"#;
+        let parsed = parse_file(&transcript("compact-bare", None, &[line]), 0).unwrap();
+        assert_eq!(parsed.events[0].kind, "compact-auto");
+        assert_eq!(parsed.events[0].pre_tokens, None);
+    }
+
+    #[test]
+    fn a_slash_command_is_read_without_its_arguments() {
+        let line = r#"{"type":"user","sessionId":"s1","uuid":"d","timestamp":"2026-01-01T10:00:00Z","message":{"content":"<command-name>/compact focus on auth</command-name><command-args>x</command-args>"}}"#;
+        let parsed = parse_file(&transcript("slash", None, &[line]), 0).unwrap();
+
+        assert_eq!(parsed.events.len(), 1);
+        assert_eq!(parsed.events[0].kind, "slash");
+        assert_eq!(parsed.events[0].detail.as_deref(), Some("/compact"));
+    }
+
+    #[test]
+    fn an_ordinary_message_mentioning_a_slash_is_not_a_command() {
+        let line = r#"{"type":"user","sessionId":"s1","uuid":"e","timestamp":"2026-01-01T10:00:00Z","message":{"content":"use a / to separate them"}}"#;
+        let parsed = parse_file(&transcript("not-slash", None, &[line]), 0).unwrap();
+        assert!(parsed.events.is_empty());
     }
 
     #[test]

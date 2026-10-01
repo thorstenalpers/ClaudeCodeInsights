@@ -50,6 +50,10 @@ pub struct LiveTurn {
 struct Follow {
     path: PathBuf,
     offset: u64,
+    /// Codex names the model and the directory once per turn rather than on
+    /// every line, so the last ones seen are carried to the lines they apply to.
+    model: Option<String>,
+    project: Option<String>,
 }
 
 static STATE: OnceLock<Mutex<Vec<Follow>>> = OnceLock::new();
@@ -64,14 +68,16 @@ fn state() -> &'static Mutex<Vec<Follow>> {
 /// newest shows the wrong one; past a handful the tabs stop being readable.
 const FOLLOWED: usize = 6;
 
-/// The most recently written transcript under the scan roots.
 /// The most recently written transcripts under the scan roots, newest first.
+///
+/// The depth covers both layouts: Claude Code files one directory per project,
+/// Codex one per day, which is three levels of its own.
 pub fn newest_transcripts(limit: usize) -> Vec<PathBuf> {
     let mut found: Vec<(std::time::SystemTime, PathBuf)> = Vec::new();
 
     for root in crate::paths::default_scan_roots() {
         for entry in walkdir::WalkDir::new(&root)
-            .max_depth(3)
+            .max_depth(4)
             .into_iter()
             .filter_map(std::result::Result::ok)
             .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "jsonl"))
@@ -186,6 +192,103 @@ fn parse(line: &str, path: &Path) -> Option<LiveTurn> {
     })
 }
 
+/// Reads one Codex rollout line into what the window shows.
+///
+/// Codex spreads a turn over several lines: what it said, what it asked for,
+/// and only then what it cost. The tally is therefore folded back into the row
+/// it belongs to instead of becoming a row of its own with nothing in it.
+fn apply_codex_line(line: &str, follow: &mut Follow, turns: &mut Vec<LiveTurn>) {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(line) else {
+        return;
+    };
+    let payload = value.get("payload").unwrap_or(&serde_json::Value::Null);
+    let kind = payload
+        .get("type")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
+
+    let string = |value: &serde_json::Value, key: &str| {
+        value
+            .get(key)
+            .and_then(serde_json::Value::as_str)
+            .filter(|text| !text.trim().is_empty())
+            .map(|text| text.trim().to_owned())
+    };
+
+    match value.get("type").and_then(serde_json::Value::as_str) {
+        Some("turn_context") | Some("session_meta") => {
+            if let Some(name) = string(payload, "model") {
+                follow.model = Some(name);
+            }
+            if let Some(cwd) = string(payload, "cwd") {
+                follow.project = Some(cwd);
+            }
+            return;
+        }
+        _ => {}
+    }
+
+    if kind == "token_count" {
+        // The tally reports the call that has just been written, and Codex
+        // counts the cached part inside the input.
+        let Some(last) = payload
+            .get("info")
+            .and_then(|info| info.get("last_token_usage"))
+        else {
+            return;
+        };
+        let count = |key: &str| {
+            last.get(key)
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(0)
+        };
+        if let Some(turn) = turns.last_mut() {
+            turn.cache_read_tokens = count("cached_input_tokens");
+            turn.input_tokens = (count("input_tokens") - turn.cache_read_tokens).max(0);
+            turn.output_tokens = count("output_tokens");
+        }
+        return;
+    }
+
+    let (role, text, thinking, tools) = match kind {
+        "user_message" => ("user", string(payload, "message"), false, Vec::new()),
+        "agent_message" => ("assistant", string(payload, "message"), false, Vec::new()),
+        "agent_reasoning" => ("assistant", string(payload, "text"), true, Vec::new()),
+        "function_call" => (
+            "assistant",
+            None,
+            false,
+            string(payload, "name").into_iter().collect(),
+        ),
+        _ => return,
+    };
+
+    if text.is_none() && tools.is_empty() && !thinking {
+        return;
+    }
+
+    turns.push(LiveTurn {
+        session_id: crate::ingest::codex::session_id_from_path(&follow.path),
+        project: follow.project.clone(),
+        git_branch: None,
+        role: role.to_owned(),
+        timestamp: value
+            .get("timestamp")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned),
+        text,
+        kind: if tools.is_empty() { "chat" } else { "code" }.to_owned(),
+        tools,
+        model: follow.model.clone(),
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_tokens: 0,
+        cache_write_tokens: 0,
+        thinking,
+        agent: false,
+    });
+}
+
 /// Reads whatever has been appended since the last look.
 fn read_new(follow: &mut Follow) -> Vec<LiveTurn> {
     let Ok(file) = File::open(&follow.path) else {
@@ -219,8 +322,15 @@ fn read_new(follow: &mut Follow) -> Vec<LiveTurn> {
                     break;
                 }
                 follow.offset += bytes as u64;
-                if let Some(turn) = parse(&line, &follow.path) {
-                    turns.push(turn);
+                match crate::ingest::source::Source::of_path(&follow.path) {
+                    crate::ingest::source::Source::Codex => {
+                        apply_codex_line(&line, follow, &mut turns);
+                    }
+                    crate::ingest::source::Source::Claude => {
+                        if let Some(turn) = parse(&line, &follow.path) {
+                            turns.push(turn);
+                        }
+                    }
                 }
             }
             Err(_) => break,
@@ -248,6 +358,8 @@ pub fn start(app: &AppHandle, tail: usize) -> Result<Vec<LiveTurn>> {
         let mut follow = Follow {
             path: path.clone(),
             offset: 0,
+            model: None,
+            project: None,
         };
         let all = read_new(&mut follow);
         // The tail is per session: one busy transcript must not push every

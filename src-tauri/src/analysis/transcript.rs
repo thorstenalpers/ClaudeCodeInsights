@@ -1,3 +1,4 @@
+use crate::ingest::source::Source;
 use anyhow::{Context, Result};
 use rusqlite::Connection;
 use serde::Serialize;
@@ -49,16 +50,15 @@ pub fn load(
     offset: usize,
     limit: usize,
 ) -> Result<TranscriptPage> {
-    let path: Option<String> = conn
+    let found: Option<(Option<String>, String)> = conn
         .query_row(
-            "SELECT transcript_path FROM sessions WHERE session_id = ?1",
+            "SELECT transcript_path, source FROM sessions WHERE session_id = ?1",
             [session_id],
-            |row| row.get(0),
+            |row| Ok((row.get(0)?, row.get(1)?)),
         )
-        .ok()
-        .flatten();
+        .ok();
 
-    let Some(path) = path else {
+    let Some((Some(path), source)) = found else {
         return Ok(TranscriptPage {
             turns: Vec::new(),
             total: 0,
@@ -67,7 +67,10 @@ pub fn load(
         });
     };
 
-    let turns = read_turns(Path::new(&path), session_id)?;
+    let turns = match Source::from_id(&source) {
+        Source::Codex => read_codex_turns(Path::new(&path))?,
+        Source::Claude => read_turns(Path::new(&path), session_id)?,
+    };
     let total = turns.len();
     let window = turns.into_iter().skip(offset).take(limit).collect();
 
@@ -183,6 +186,157 @@ fn read_turns(path: &Path, session_id: &str) -> Result<Vec<TranscriptTurn>> {
     }
 
     Ok(turns)
+}
+
+/// Rebuilds the conversation from a Codex rollout.
+///
+/// Codex says the same thing twice — once as an event and once as the response
+/// item that was sent to the model — so only the events are read. The response
+/// items are the raw request, and they carry the system prompt and the whole
+/// instruction preamble, none of which anybody said.
+///
+/// A rollout holds exactly one session, so nothing is filtered by id.
+fn read_codex_turns(path: &Path) -> Result<Vec<TranscriptTurn>> {
+    let file = File::open(path).with_context(|| format!("opening {}", path.display()))?;
+    let reader = BufReader::with_capacity(64 * 1024, file);
+
+    let mut records: Vec<Value> = Vec::new();
+    for line in reader.lines() {
+        let line = line?;
+        if line.trim().is_empty() {
+            continue;
+        }
+        if let Ok(value) = serde_json::from_str::<Value>(&line) {
+            records.push(value);
+        }
+    }
+
+    // An outcome lands several lines after the call, and with parallel calls not
+    // even in the same order, so they are indexed before anything is paired.
+    let mut results_by_id: HashMap<String, (String, bool)> = HashMap::new();
+    for record in &records {
+        let payload = record.get("payload").unwrap_or(&Value::Null);
+        if payload.get("type").and_then(Value::as_str) != Some("function_call_output") {
+            continue;
+        }
+        let Some(id) = payload.get("call_id").and_then(Value::as_str) else {
+            continue;
+        };
+        let output = payload.get("output").unwrap_or(&Value::Null);
+        results_by_id.entry(id.to_owned()).or_insert_with(|| {
+            (
+                stringify(Some(output)),
+                crate::ingest::codex::failed(output),
+            )
+        });
+    }
+
+    let mut turns: Vec<TranscriptTurn> = Vec::new();
+    // Codex reasons before it answers, so the summary is held until the message
+    // it belongs to arrives.
+    let mut pending_thinking: Vec<String> = Vec::new();
+
+    for record in &records {
+        let payload = record.get("payload").unwrap_or(&Value::Null);
+        let timestamp = record
+            .get("timestamp")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+        let kind = payload.get("type").and_then(Value::as_str).unwrap_or("");
+        let is_event = record.get("type").and_then(Value::as_str) == Some("event_msg");
+
+        match kind {
+            "user_message" if is_event => {
+                if let Some(text) = payload.get("message").and_then(Value::as_str) {
+                    turns.push(TranscriptTurn {
+                        index: turns.len(),
+                        role: "user".to_owned(),
+                        timestamp,
+                        text: Some(text.to_owned()),
+                        thinking: None,
+                        tool_calls: Vec::new(),
+                    });
+                }
+            }
+            "agent_reasoning" if is_event => {
+                if let Some(text) = payload.get("text").and_then(Value::as_str) {
+                    pending_thinking.push(text.to_owned());
+                }
+            }
+            "agent_message" if is_event => {
+                turns.push(TranscriptTurn {
+                    index: turns.len(),
+                    role: "assistant".to_owned(),
+                    timestamp,
+                    text: payload
+                        .get("message")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    thinking: take_thinking(&mut pending_thinking),
+                    tool_calls: Vec::new(),
+                });
+            }
+            "function_call" => {
+                let name = payload
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unknown")
+                    .to_owned();
+                let (input, input_truncated) = truncate(stringify(payload.get("arguments")));
+                let id = payload.get("call_id").and_then(Value::as_str).unwrap_or("");
+
+                let (result, result_truncated, is_error) = match results_by_id.get(id) {
+                    Some((raw, is_error)) => {
+                        let (text, truncated) = truncate(raw.clone());
+                        (Some(text), truncated, *is_error)
+                    }
+                    None => (None, false, false),
+                };
+
+                // A call that follows an answer belongs to it; one that opens a
+                // turn gets a turn of its own rather than being hung on the
+                // user's message.
+                if turns.last().is_none_or(|turn| turn.role != "assistant") {
+                    turns.push(TranscriptTurn {
+                        index: turns.len(),
+                        role: "assistant".to_owned(),
+                        timestamp,
+                        text: None,
+                        thinking: take_thinking(&mut pending_thinking),
+                        tool_calls: Vec::new(),
+                    });
+                }
+
+                if let Some(turn) = turns.last_mut() {
+                    turn.tool_calls.push(ToolCall {
+                        name,
+                        input,
+                        input_truncated,
+                        result,
+                        result_truncated,
+                        is_error,
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    turns.retain(|turn| {
+        turn.text.is_some() || turn.thinking.is_some() || !turn.tool_calls.is_empty()
+    });
+    for (index, turn) in turns.iter_mut().enumerate() {
+        turn.index = index;
+    }
+
+    Ok(turns)
+}
+
+fn take_thinking(pending: &mut Vec<String>) -> Option<String> {
+    if pending.is_empty() {
+        return None;
+    }
+    Some(std::mem::take(pending).join("\n\n"))
 }
 
 /// `message.content` is an array of blocks, or a bare string for simple turns.

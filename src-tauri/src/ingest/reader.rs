@@ -1,4 +1,4 @@
-use super::record::{AgentDispatch, RawRecord};
+use super::record::{AgentDispatch, RawRecord, ToolUse};
 use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -21,7 +21,25 @@ pub struct ParsedTurn {
     pub git_branch: Option<String>,
     pub is_subagent: bool,
     pub agent_id: Option<String>,
-    pub tools: Vec<String>,
+    pub tools: Vec<ToolUse>,
+}
+
+/// Something the user did that is not a turn: a compaction, or a slash command.
+///
+/// Kept as rows rather than counted during the parse, because an incremental
+/// scan only ever sees the tail of a file. Counting here would mean a session's
+/// figure depended on how often it happened to be scanned.
+#[derive(Debug, Clone)]
+pub struct ParsedEvent {
+    pub session_id: String,
+    pub uuid: Option<String>,
+    pub timestamp: String,
+    /// `compact-auto`, `compact-manual` or `slash`.
+    pub kind: String,
+    /// The command name, for a slash event.
+    pub detail: Option<String>,
+    /// How large the context had grown, for a compaction.
+    pub pre_tokens: Option<i64>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,6 +59,11 @@ pub struct FileParse {
     pub sessions: HashMap<String, SessionMeta>,
     pub turns: Vec<ParsedTurn>,
     pub agents: Vec<AgentDispatch>,
+    pub events: Vec<ParsedEvent>,
+    /// `(tool_use_id, is_error)`, stored apart from the call they belong to: the
+    /// result can land in a later scan than the call, so pairing them here would
+    /// lose every outcome that straddles the boundary.
+    pub tool_results: Vec<(String, bool)>,
     pub line_count: u64,
     /// Lines that were not valid JSON, or whose shape did not fit. Surfaced
     /// rather than swallowed: silently dropping transcript lines would show up
@@ -134,6 +157,43 @@ pub fn parse_file(path: &Path, skip_lines: u64) -> Result<FileParse> {
                     // the only place that knows which session started it.
                     dispatch.parent_session_id = Some(session_id.clone());
                     result.agents.push(dispatch);
+                }
+
+                result.tool_results.extend(record.tool_results());
+
+                if let Some(command) = record.slash_command()
+                    && let Some(timestamp) = record.timestamp.clone()
+                {
+                    result.events.push(ParsedEvent {
+                        session_id: session_id.clone(),
+                        uuid: record.uuid.clone(),
+                        timestamp,
+                        kind: "slash".to_owned(),
+                        detail: Some(command),
+                        pre_tokens: None,
+                    });
+                }
+            }
+            "system" => {
+                if record.subtype.as_deref() == Some("compact_boundary")
+                    && let Some(timestamp) = record.timestamp.clone()
+                {
+                    let metadata = record.compact_metadata.clone().unwrap_or_default();
+                    // Anything that is not explicitly the user's own /compact is
+                    // an overflow; that is the reading that stays right when a
+                    // future build adds a third trigger.
+                    let kind = match metadata.trigger.as_deref() {
+                        Some("manual") => "compact-manual",
+                        _ => "compact-auto",
+                    };
+                    result.events.push(ParsedEvent {
+                        session_id: session_id.clone(),
+                        uuid: record.uuid.clone(),
+                        timestamp,
+                        kind: kind.to_owned(),
+                        detail: None,
+                        pre_tokens: metadata.pre_tokens,
+                    });
                 }
             }
             "assistant" => {

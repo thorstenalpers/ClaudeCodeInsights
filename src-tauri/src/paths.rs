@@ -18,7 +18,7 @@ pub fn database_path() -> PathBuf {
 ///
 /// The macOS path belongs to the Xcode integration and is kept so the same
 /// default list works if the app is ever built for it.
-pub fn default_scan_roots() -> Vec<PathBuf> {
+pub fn claude_scan_roots() -> Vec<PathBuf> {
     let Some(home) = dirs::home_dir() else {
         return Vec::new();
     };
@@ -34,6 +34,29 @@ pub fn default_scan_roots() -> Vec<PathBuf> {
     ];
 
     candidates.into_iter().filter(|p| p.is_dir()).collect()
+}
+
+/// Where the Codex CLI keeps its rollouts, one directory per day.
+///
+/// The same folder serves the VS Code extension and the terminal; a rollout
+/// records which of the two started it.
+pub fn codex_scan_roots() -> Vec<PathBuf> {
+    let Some(home) = dirs::home_dir() else {
+        return Vec::new();
+    };
+
+    [home.join(".codex").join("sessions")]
+        .into_iter()
+        .filter(|p| p.is_dir())
+        .collect()
+}
+
+/// Every folder that is read, whichever agent wrote it.
+pub fn default_scan_roots() -> Vec<PathBuf> {
+    crate::ingest::source::ALL
+        .iter()
+        .flat_map(|source| source.roots())
+        .collect()
 }
 
 /// Claude Code's own configuration. Read freely; every write must go through

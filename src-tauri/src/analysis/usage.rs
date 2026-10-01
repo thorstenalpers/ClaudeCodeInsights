@@ -16,6 +16,13 @@ pub struct ToolRow {
     pub name: String,
     pub calls: i64,
     pub sessions: i64,
+    /// Calls whose outcome came back, and how many of those said error.
+    ///
+    /// Reported beside each other rather than as a rate, because a transcript
+    /// written before tool ids can answer neither and a bare 0 % would read as
+    /// "never fails" instead of "not known".
+    pub answered: i64,
+    pub failed: i64,
     /// The turns that reached for this tool, shared out over their calls.
     pub by_model: Vec<ModelTokens>,
 }
@@ -97,16 +104,45 @@ pub fn tools(conn: &Connection) -> Result<Vec<ToolRow>> {
             name: row.get(0)?,
             calls: row.get(1)?,
             sessions: row.get(2)?,
+            answered: 0,
+            failed: 0,
             by_model: Vec::new(),
         })
     })?;
 
     let mut rows = rows.collect::<Result<Vec<_>, _>>()?;
     let mut split = cost::by_tool(conn)?;
+    let mut outcomes = tool_outcomes(conn)?;
     for row in &mut rows {
         row.by_model = split.remove(&row.name).unwrap_or_default();
+        let (answered, failed) = outcomes.remove(&row.name).unwrap_or_default();
+        row.answered = answered;
+        row.failed = failed;
     }
     Ok(rows)
+}
+
+/// Per tool, how many calls came back and how many of those failed.
+///
+/// The join is what pairs the two: a call carries the id, the outcome carries
+/// the same id, and they routinely arrive in different scans.
+fn tool_outcomes(conn: &Connection) -> Result<HashMap<String, (i64, i64)>> {
+    let mut stmt = conn.prepare(
+        "SELECT tt.tool_name, COUNT(*), SUM(r.is_error)
+         FROM turn_tools tt
+         JOIN tool_results r ON r.tool_use_id = tt.tool_use_id
+         WHERE tt.tool_use_id IS NOT NULL
+         GROUP BY tt.tool_name",
+    )?;
+
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            (row.get::<_, i64>(1)?, row.get::<_, i64>(2)?),
+        ))
+    })?;
+
+    Ok(rows.collect::<Result<HashMap<_, _>, _>>()?)
 }
 
 /// Token totals per model. Cost stays out of here on purpose — it is derived

@@ -8,6 +8,7 @@ pub mod live;
 pub mod orchestration;
 pub mod paths;
 pub mod projects;
+pub mod rtk;
 pub mod session_tools;
 pub mod sessions;
 pub mod speech;
@@ -52,6 +53,7 @@ pub fn run() {
             commands::scan::start_scan,
             commands::overview::get_overview,
             commands::sessions::list_sessions,
+            commands::sessions::get_session,
             commands::sessions::get_session_facets,
             commands::sessions::get_transcript,
             commands::projects::list_projects,
@@ -96,6 +98,8 @@ pub fn run() {
             commands::assistant::has_api_key,
             commands::assistant::set_api_key,
             commands::assistant::open_free_key_url,
+            commands::rtk::get_rtk_status,
+            commands::rtk::get_rtk_report,
         ])
         .setup(|app| {
             // Always, not only in a debug build: the log view is the one place

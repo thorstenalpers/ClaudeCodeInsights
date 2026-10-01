@@ -1,11 +1,16 @@
 use super::db;
-use crate::analysis::sessions::{self, SessionFacets, SessionPage, SessionQuery};
+use crate::analysis::sessions::{self, SessionFacets, SessionPage, SessionQuery, SessionRow};
 use crate::analysis::transcript::{self, TranscriptPage};
 use crate::error::Result;
 
 #[tauri::command]
 pub fn list_sessions(query: SessionQuery) -> Result<SessionPage> {
     Ok(sessions::query(&db()?, &query)?)
+}
+
+#[tauri::command]
+pub fn get_session(session_id: String) -> Result<Option<SessionRow>> {
+    Ok(sessions::one(&db()?, &session_id)?)
 }
 
 #[tauri::command]

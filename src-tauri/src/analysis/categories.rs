@@ -12,6 +12,10 @@ pub const REASONING: &str = "reasoning";
 /// to more than one category (Task is both execution and delegation), and the
 /// reverse mapping cannot express that.
 ///
+/// Every agent names its tools differently, and the names are kept as written —
+/// this map is where the equivalence lives, so a session is classified the same
+/// way whichever agent ran it.
+///
 /// A pattern ending in `*` matches by prefix, anything else matches exactly.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(transparent)]
@@ -22,11 +26,20 @@ impl Default for CategoryMap {
         let entries: &[(&str, &[&str])] = &[
             (
                 "exploration",
-                &["Read", "Glob", "Grep", "NotebookRead", "ToolSearch"],
+                &[
+                    "Read",
+                    "Glob",
+                    "Grep",
+                    "NotebookRead",
+                    "ToolSearch",
+                    "read_file",
+                    "list_dir",
+                    "view_image",
+                ],
             ),
             (
                 "code_change",
-                &["Edit", "MultiEdit", "Write", "NotebookEdit"],
+                &["Edit", "MultiEdit", "Write", "NotebookEdit", "apply_patch"],
             ),
             (
                 "execution",
@@ -37,10 +50,13 @@ impl Default for CategoryMap {
                     "KillShell",
                     "Task",
                     "Agent",
+                    "shell",
+                    "shell_command",
+                    "local_shell",
                 ],
             ),
             ("delegation", &["Task", "Agent", "SendMessage"]),
-            ("research", &["WebFetch", "WebSearch"]),
+            ("research", &["WebFetch", "WebSearch", "web_search"]),
             (
                 "planning",
                 &[
@@ -50,6 +66,8 @@ impl Default for CategoryMap {
                     "ExitPlanMode",
                     "EnterPlanMode",
                     "AskUserQuestion",
+                    "update_plan",
+                    "request_user_input",
                 ],
             ),
             ("mcp", &["mcp__*"]),
