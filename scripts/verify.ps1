@@ -27,9 +27,11 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 # Copied again: the first clippy run creates the directory this needs.
 Get-ChildItem (Join-Path $root 'src-tauri\runtime\*.dll') | Copy-Item -Destination $deps -Force
 
-# Only the library: `src/main.rs` holds no tests, and running its harness means
-# launching a freshly built, unsigned executable — which Smart App Control on
-# this machine blocks outright ("An Application Control policy has blocked this
-# file", os error 4551).
-cargo test --manifest-path $manifest --lib
+# The library and the inspection tests, never `src/main.rs`: it holds no tests,
+# and running its harness means launching a freshly built, unsigned executable —
+# which Smart App Control on this machine blocks outright ("An Application
+# Control policy has blocked this file", os error 4551). The inspection tests
+# are all `#[ignore]`, so this compiles them and skips them; running them is
+# `npm run inspect`.
+cargo test --manifest-path $manifest --lib --test inspect
 exit $LASTEXITCODE

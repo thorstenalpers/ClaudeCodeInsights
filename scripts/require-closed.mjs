@@ -11,12 +11,14 @@ if (process.platform !== 'win32') process.exit(0);
 const running = execFileSync('powershell', [
 	'-NoProfile',
 	'-Command',
-	"(Get-Process claude-admin -ErrorAction SilentlyContinue | Measure-Object).Count"
+	'(Get-Process claude-admin -ErrorAction SilentlyContinue | Measure-Object).Count'
 ])
 	.toString()
 	.trim();
 
 if (running !== '0') {
-	console.error('claude-admin is running. Close the app first: it holds the DLLs this build copies.');
+	console.error(
+		'claude-admin is running. Close the app first: it holds the DLLs this build copies.'
+	);
 	process.exit(1);
 }
