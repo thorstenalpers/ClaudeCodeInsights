@@ -37,7 +37,9 @@ if (-not $dlls) {
     # The CI Rust cache restores the download directory without its DLLs, and the
     # build script only downloads when that directory is missing.
     Remove-Item -Recurse -Force (Join-Path $target 'sherpa-onnx-prebuilt') -ErrorAction SilentlyContinue
-    cargo clean --manifest-path $manifest -p sherpa-onnx-sys
+    $cleanArgs = @('clean', '--manifest-path', $manifest, '-p', 'sherpa-onnx-sys')
+    if ($Profile -eq 'release') { $cleanArgs += '--release' }
+    cargo @cleanArgs
     cargo @cargoArgs -vv
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $dlls = Find-Dlls
