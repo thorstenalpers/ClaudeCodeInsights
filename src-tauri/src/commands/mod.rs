@@ -1,0 +1,26 @@
+//! The Tauri command surface, one module per domain.
+//!
+//! Commands stay thin: open a connection, call the domain, let `?` turn a
+//! failure into `Error`. Anything longer belongs in the domain module.
+
+pub mod app;
+pub mod assistant;
+pub mod live;
+pub mod orchestration;
+pub mod overview;
+pub mod projects;
+pub mod rtk;
+pub mod runs;
+pub mod scan;
+pub mod sessions;
+pub mod speech;
+pub mod tts;
+pub mod usage;
+
+use crate::paths;
+use crate::storage;
+use rusqlite::Connection;
+
+fn db() -> crate::error::Result<Connection> {
+    Ok(storage::open(&paths::database_path())?)
+}

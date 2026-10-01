@@ -1,0 +1,13 @@
+# Package managers
+package-lock.json
+
+# Build output
+dist/
+src-tauri/target/
+src-tauri/gen/
+
+# Vendored agent skills — owned upstream, not ours to reformat
+/.claude/skills/
+
+# Regenerated verbatim by `shadcn-svelte add`
+/src/lib/components/ui/
