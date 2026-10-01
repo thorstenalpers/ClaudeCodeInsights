@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "tauri dev",
+		"prepare": "svelte-kit sync",
 		"npm:install": "npm i",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"lint": "prettier --check . && eslint .",
