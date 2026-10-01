@@ -1,0 +1,51 @@
+[package]
+name = "claude-admin"
+version = "0.1.0"
+description = "Analyses local Claude Code usage transcripts"
+authors = ["thorsten"]
+license = "MIT"
+edition = "2024"
+rust-version = "1.85"
+
+[lib]
+name = "claude_admin_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+log = "0.4"
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+walkdir = "2.5.0"
+dirs = "6.0.0"
+anyhow = "1.0.104"
+thiserror = "2"
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
+keyring = { version = "3.6.3", features = ["windows-native"] }
+reqwest = { version = "0.13.4", default-features = false, features = [
+	"blocking",
+	"json",
+	"rustls",
+] }
+sherpa-onnx = { version = "1.13.4", default-features = false, features = ["shared"] }
+tar = "0.4.46"
+bzip2 = "0.6.1"
+rodio = { version = "0.21.1", features = ["wav"] }
+notify = { version = "8.2.0", default-features = false, features = ["macos_fsevent"] }
+claude-agent-sdk-rs = "0.6.4"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "time"] }
+tokio-stream = "0.1.19"
+
+[profile.release]
+# The publish artifact competed against a 224 MB .NET folder; keeping it small
+# is a large part of why this project is Rust at all.
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

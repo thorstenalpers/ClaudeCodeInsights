@@ -1,0 +1,9 @@
+# Clippy gets its own target directory.
+#
+# Sharing one with `cargo build` makes the two fight over build-script outputs:
+# a `cargo clean -p` for one of them leaves the other unable to read files it
+# still has fingerprints for, and the build fails with "couldn't read
+# .../out/....rs". The cost is a second copy of the artifacts; the alternative
+# is an occasional full rebuild.
+[alias]
+lint = "clippy --target-dir target/clippy --all-targets -- -D warnings"
