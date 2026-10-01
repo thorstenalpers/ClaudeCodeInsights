@@ -48,12 +48,6 @@ npm run app:exe      # a runnable exe in bin/, without the installer
 npm run app:build    # installer
 ```
 
-## A note on cost
-
-Costs are **estimates** from published API prices. They are wrong for Pro and
-Max subscribers, who pay a subscription rather than per token. A model with no
-price entry shows `n/a`, never `$0.00` — an unknown cost is not a zero one.
-
 ## Contributing
 
 Architecture and conventions are in [AGENTS.md](AGENTS.md) and
