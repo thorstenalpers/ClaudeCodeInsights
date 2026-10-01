@@ -51,6 +51,16 @@ It builds in the same separate target directory `npm run verify` uses, so it
 works with the app open — which is when a log is usually worth reading. For a
 breakpoint, run the test itself from the editor instead.
 
+## Releasing
+
+A release is a version nobody has tagged yet; there is no manual step after the merge.
+
+1. Set `version` in `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` to the same
+   value. `.github/workflows/release.yml` fails when they differ.
+2. Write the notes in `release-notes/v<version>.md`. They become the GitHub release body.
+3. Merge to `main`. The workflow builds the NSIS installer, tags `v<version>` and
+   publishes the release. A merge that leaves the version unchanged releases nothing.
+
 ## Hard rules
 
 1. **Never write into `~/.claude/` or `~/.codex/`, except where the user
