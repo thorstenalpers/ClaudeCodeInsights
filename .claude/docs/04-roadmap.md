@@ -44,10 +44,10 @@ off at 1296 px. Column visibility is the answer.
 
 **Tags have no UI.** Schema and queries are done; nothing assigns them.
 
-**The repository folder is still `ClaudeUsageAnalyzer`.** Renaming it was
-deferred because it is the working directory of the session doing the work.
-Rename to `ClaudeAdmin` and reopen there. Nothing inside the repo refers to the
-old name.
+**The repository folder is still `ClaudeAdmin`.** Renaming it is deferred
+because it is the working directory of the session doing the work. Rename to
+`ClaudeCodeInsights` and reopen there. Nothing inside the repo refers to the
+folder except a path fixture in `projects.rs`, which is a literal, not a lookup.
 
 **`%LocalAppData%\ClaudeUsageAnalyzer` is orphaned** (~12 MB) and can be deleted.
 

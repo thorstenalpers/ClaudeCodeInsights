@@ -1,4 +1,4 @@
-# Claude Insights
+# Claude Code Insights
 
 A desktop app for the data Claude Code leaves on your machine. It reads the
 transcripts under `~/.claude/`, works out where your tokens and money went, lets

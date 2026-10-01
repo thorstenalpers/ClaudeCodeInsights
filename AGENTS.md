@@ -1,8 +1,10 @@
-# Claude Insights
+# Claude Code Insights
 
-A local desktop app for reading and managing what Claude Code stores on this
-machine: transcripts, usage, cost, and the projects registered in its settings.
-Everything stays on the machine. Nothing is uploaded.
+A local desktop app for reading and managing what coding agents store on this
+machine: transcripts, usage, cost, and the projects registered in the settings.
+Claude Code is the primary source; Codex sessions from `~/.codex/sessions` are
+read into the same tables, marked by `sessions.source`. Everything stays on the
+machine. Nothing is uploaded.
 
 ## Stack
 
@@ -24,6 +26,8 @@ npm run app:exe      # debug exe without installer, copied to bin/
 npm run lint         # prettier --check . && eslint .
 npm run format       # prettier --write .
 npm run check        # svelte-check
+npm run verify       # fmt, clippy and the Rust tests, beside a running app
+npm run inspect      # print this machine's own data — see below
 cd src-tauri && cargo test
 cd src-tauri && cargo lint    # clippy in its own target dir
 ```
@@ -31,11 +35,27 @@ cd src-tauri && cargo lint    # clippy in its own target dir
 `npm run app:exe` is the fastest way to see a change in the real window without
 a dev server. F5 in VS Code debugs the Rust side against `npm run dev`.
 
+`tests/inspect.rs` prints what the window would show, through the same calls the
+window makes — the session list, one session with its transcript and tool calls,
+every project with its transcripts and registration, every roll-up, and the
+host's log file. Its tests read this machine and are `#[ignore]` for that reason,
+so `npm run inspect` is what turns them on:
+
+```bash
+npm run inspect
+npm run inspect -- -Test every_project_in_full
+npm run inspect -- -Test one_session_in_full -Session b70e238b
+```
+
+It builds in the same separate target directory `npm run verify` uses, so it
+works with the app open — which is when a log is usually worth reading. For a
+breakpoint, run the test itself from the editor instead.
+
 ## Hard rules
 
-1. **Never write into `~/.claude/`, except where the user explicitly asked for
-   it.** Transcripts are foreign, read-only territory. Everything this app owns
-   lives under `%LocalAppData%\ClaudeAdmin`.
+1. **Never write into `~/.claude/` or `~/.codex/`, except where the user
+   explicitly asked for it.** Transcripts are foreign, read-only territory.
+   Everything this app owns lives under `%LocalAppData%\ClaudeAdmin`.
 2. **Any change to `~/.claude.json` writes a backup next to it first.** It is
    Claude Code's own configuration; a corrupt one breaks the user's tooling.
 3. **A destructive action shows exactly what disappears before it runs** — file
