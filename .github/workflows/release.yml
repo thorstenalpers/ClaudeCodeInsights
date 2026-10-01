@@ -42,7 +42,7 @@ jobs:
           "version=$version" >> $env:GITHUB_OUTPUT
           "release=$release" >> $env:GITHUB_OUTPUT
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: steps.version.outputs.release == 'true'
         with:
           node-version: 24
