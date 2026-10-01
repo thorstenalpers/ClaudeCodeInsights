@@ -1,6 +1,6 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-	"productName": "Claude Insights",
+	"productName": "Claude Code Insights",
 	"version": "0.1.0",
 	"identifier": "dev.thor.claudeadmin",
 	"build": {
@@ -13,7 +13,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "Claude Insights",
+				"title": "Claude Code Insights",
 				"width": 1280,
 				"height": 672,
 				"minWidth": 380,
