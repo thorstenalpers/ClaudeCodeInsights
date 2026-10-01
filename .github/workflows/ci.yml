@@ -47,6 +47,10 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: Stage the runtime DLLs
+        # Not in the repository; the bundle config and the test binaries need them.
+        run: ./scripts/stage-runtime.ps1
+
       - name: Format check
         working-directory: src-tauri
         run: cargo fmt --check
