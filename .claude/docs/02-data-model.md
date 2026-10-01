@@ -47,16 +47,16 @@ plausible-looking but wrong numbers, which is the worst failure mode here.
 Codex rollouts record events, not messages, so their rules differ
 (`ingest/codex.rs`):
 
-| Rule                                                                    | Why                                                                                                                                       |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| A turn is the `token_count` event that reports it                       | Codex writes the model's text, its calls and its usage as separate lines; the tally is the one line that says a call happened              |
-| Dedup on the cumulative total, which also names the turn                | The last tally is repeated verbatim at the start of the next turn; the running total is the one value a repeat carries unchanged           |
-| `cached_input_tokens` is subtracted from `input_tokens`                 | Codex counts the cached part inside the input; this schema keeps them apart, and adding them back together would charge the cache twice    |
-| The session id comes from the file name                                 | The head of the file names it too, but an incremental scan reads only the tail                                                             |
-| `function_call` lines belong to the next tally                          | A Codex tool call is its own line, ahead of the usage that pays for it                                                                     |
-| An outcome is read from `Exit code:` and from `rejected by user`        | Codex writes shell outcomes as text; a refusal failed as surely as a non-zero exit                                                         |
-| `apply_patch` file paths are read out of the patch                      | The one call that changes code names its files inside the patch body, not in a field                                                       |
-| The first user message becomes the topic                                | Codex writes no title of its own, and a list of untitled sessions is one no one can find anything in                                       |
+| Rule                                                             | Why                                                                                                                                     |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| A turn is the `token_count` event that reports it                | Codex writes the model's text, its calls and its usage as separate lines; the tally is the one line that says a call happened           |
+| Dedup on the cumulative total, which also names the turn         | The last tally is repeated verbatim at the start of the next turn; the running total is the one value a repeat carries unchanged        |
+| `cached_input_tokens` is subtracted from `input_tokens`          | Codex counts the cached part inside the input; this schema keeps them apart, and adding them back together would charge the cache twice |
+| The session id comes from the file name                          | The head of the file names it too, but an incremental scan reads only the tail                                                          |
+| `function_call` lines belong to the next tally                   | A Codex tool call is its own line, ahead of the usage that pays for it                                                                  |
+| An outcome is read from `Exit code:` and from `rejected by user` | Codex writes shell outcomes as text; a refusal failed as surely as a non-zero exit                                                      |
+| `apply_patch` file paths are read out of the patch               | The one call that changes code names its files inside the patch body, not in a field                                                    |
+| The first user message becomes the topic                         | Codex writes no title of its own, and a list of untitled sessions is one no one can find anything in                                    |
 
 ## Incremental scan
 
