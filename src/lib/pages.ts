@@ -10,6 +10,7 @@ import Projects from '@lucide/svelte/icons/folder-git-2';
 import Sessions from '@lucide/svelte/icons/messages-square';
 import Settings from '@lucide/svelte/icons/settings';
 import Logs from '@lucide/svelte/icons/scroll-text';
+import Rtk from '@lucide/svelte/icons/scissors';
 import Tools from '@lucide/svelte/icons/wrench';
 import Info from '@lucide/svelte/icons/info';
 import Orchestration from '@lucide/svelte/icons/list-checks';
@@ -122,6 +123,22 @@ export const PAGE_GROUPS: readonly PageGroup[] = [
 	{ label: 'nav.group.next', pages: pick(['/orchestration', '/assistant']) }
 ];
 
+/** Shown only where RTK is installed and its integration is switched on. */
+export const RTK_PAGE: PageDefinition = {
+	href: '/rtk',
+	label: 'nav.rtk',
+	description: 'nav.rtk.description',
+	icon: Rtk
+};
+
+/** The rail's groups, with RTK hung beside the other four analyses when it is on. */
+export function pageGroups(rtk: boolean): readonly PageGroup[] {
+	if (!rtk) return PAGE_GROUPS;
+	return PAGE_GROUPS.map((group) =>
+		group.label === 'nav.group.analysis' ? { ...group, pages: [...group.pages, RTK_PAGE] } : group
+	);
+}
+
 /** Shown in the rail only while the log view is switched on in settings. */
 export const LOG_PAGE: PageDefinition = {
 	href: '/logs',
@@ -147,7 +164,13 @@ export const SETTINGS_PAGE: PageDefinition = {
 
 // The log page is in here even while the rail hides it: the breadcrumb has
 // to be able to name a page the user reached by its address.
-export const ALL_PAGES: readonly PageDefinition[] = [...PAGES, LOG_PAGE, INFO_PAGE, SETTINGS_PAGE];
+export const ALL_PAGES: readonly PageDefinition[] = [
+	...PAGES,
+	RTK_PAGE,
+	LOG_PAGE,
+	INFO_PAGE,
+	SETTINGS_PAGE
+];
 
 /** The rail highlights the deepest match, so /sessions/abc keeps Sessions active. */
 export function activeHref(pathname: string): Pathname {

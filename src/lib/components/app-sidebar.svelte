@@ -89,21 +89,20 @@
 	/**
 	 * What a menu entry does under the pointer.
 	 *
-	 * A background alone is flat, so the row leans a hair towards the page it
-	 * would open and the icon grows with it. The bar on the left marks the page
-	 * you are on and slides in rather than appearing, which is the difference
-	 * between a state and a flicker.
+	 * Colour only. The row used to lean towards the page it would open and grow
+	 * its icon with it, and text rasterised mid-transform is what read as a
+	 * blur — the desktop it sits on moves nothing here either, it fills the row.
 	 */
 	const HOVER = [
-		'group/nav relative overflow-hidden transition-[background-color,color,transform] duration-150',
-		'hover:translate-x-0.5 [&>svg]:transition-transform [&>svg]:duration-150 hover:[&>svg]:scale-110',
-		'before:absolute before:top-1/2 before:left-0 before:h-5 before:w-1 before:-translate-x-1.5',
-		'before:-translate-y-1/2 before:rounded-full before:bg-sidebar-primary before:transition-all',
-		'before:duration-200 data-[active=true]:before:translate-x-0',
+		'relative overflow-hidden transition-colors duration-150',
 		'data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary',
 		'data-[active=true]:font-semibold data-[active=true]:hover:bg-sidebar-primary/20',
 		'data-[active=true]:[&>svg]:text-sidebar-primary'
 	].join(' ');
+
+	/** The bar that marks the page you are on, and the side it comes in from. */
+	const MARKER =
+		'absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-sidebar-primary transition-transform duration-200';
 </script>
 
 {#snippet subEntry(item: SubEntry)}
@@ -154,6 +153,15 @@
 					href={resolve(page.href)}
 					class={cn((props as { class?: string }).class, HOVER)}
 				>
+					<!-- Slides in rather than appearing, which is the difference between a
+					     state and a flicker. data-active says the same thing to a reader. -->
+					<span
+						aria-hidden="true"
+						class={cn(
+							MARKER,
+							active === page.href ? 'translate-x-0' : '-translate-x-1.5 rtl:translate-x-1.5'
+						)}
+					></span>
 					<page.icon />
 					<span>{t(page.label)}</span>
 				</a>

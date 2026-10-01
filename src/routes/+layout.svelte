@@ -29,7 +29,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { Separator } from '$lib/components/ui/separator';
-	import { displayPath, folderName } from '$lib/format';
+	import { displayPath } from '$lib/format';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { isHosted } from '$lib/ipc.svelte';
@@ -39,12 +39,13 @@
 	import {
 		INFO_PAGE,
 		LOG_PAGE,
-		PAGE_GROUPS,
 		SETTINGS_PAGE,
 		activeHref,
 		pageFor,
+		pageGroups,
 		type SubEntry
 	} from '$lib/pages';
+	import { rtk } from '$lib/rtk.svelte';
 	import { scan } from '$lib/scan.svelte';
 	import { theme } from '$lib/theme.svelte';
 	import { voice } from '$lib/voice.svelte';
@@ -123,6 +124,7 @@
 	// starts recording once someone opens it has already missed the interesting part.
 	void logs.listen();
 	void cli.refresh();
+	void rtk.refresh();
 
 	$effect(() => {
 		// Two nested frames: the first is scheduled before the upcoming paint,
@@ -133,7 +135,7 @@
 	// The log sits with the other two that are about the app rather than about
 	// the work, directly above the info it is usually opened next to.
 	const footerPages = $derived(
-		logs.enabled ? [INFO_PAGE, LOG_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
+		logs.enabled ? [LOG_PAGE, INFO_PAGE, SETTINGS_PAGE] : [INFO_PAGE, SETTINGS_PAGE]
 	);
 	/**
 	 * What hangs under each rail entry: the things this machine has, not views
@@ -183,11 +185,11 @@
 	/** Same directory, two spellings, one entry: `\` and `/` reach the same place. */
 	const sameProject = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
 
-	/** The newest sessions of one project, by the path they carry. */
+	/** The newest sessions of one project, by the directory they ran in. */
 	function sessionsOf(project: string): SubEntry[] {
 		const key = sameProject(project);
 		return knownSessions
-			.filter((row) => row.projectName && sameProject(row.projectName) === key)
+			.filter((row) => row.projectPath && sameProject(row.projectPath) === key)
 			.slice(0, SESSIONS_PER_PROJECT)
 			.map((row) => ({
 				href: `/sessions/${encodeURIComponent(row.sessionId)}`,
@@ -217,14 +219,14 @@
 		// Alphabetical by the name on screen: a rail is looked *up* in, and the
 		// order it was last worked in is no help for that.
 		return Object.values(seen)
-			.sort((a, b) => folderName(a.path).localeCompare(folderName(b.path)))
+			.sort((a, b) => a.name.localeCompare(b.name))
 			.slice(0, SUB_LIMIT);
 	});
 
 	const subs = $derived({
 		'/projects': uniqueProjects.map((project) => ({
 			href: `/projects/${encodeURIComponent(project.path)}`,
-			label: folderName(project.path),
+			label: project.name,
 			title: displayPath(project.path),
 			icon: Folder,
 			children: sessionsOf(project.path)
@@ -258,10 +260,13 @@
 	const detailActivity = $derived(page.params.name ?? null);
 	/** The project a sub-page is about, which the URL carries but no page said. */
 	const detailProject = $derived(page.params.path ?? null);
-	/** The folder alone: the whole path is already on the line below. */
-	const projectName = $derived(
-		detailProject?.split(/[\\/]/).filter(Boolean).at(-1) ?? detailProject
-	);
+	/** The name the host worked out, with the whole path on the line below. */
+	const projectName = $derived.by(() => {
+		if (!detailProject) return detailProject;
+		const key = sameProject(detailProject);
+		const known = knownProjects.find((project) => sameProject(project.path) === key);
+		return known?.name ?? detailProject.split(/[\\/]/).filter(Boolean).at(-1) ?? detailProject;
+	});
 
 	/** The activity's own name where there is one, the raw id where there is not. */
 	function activityLabel(activity: string): string {
@@ -296,7 +301,7 @@
 	}}
 >
 	<AppSidebar
-		groups={PAGE_GROUPS}
+		groups={pageGroups(rtk.available)}
 		footer={footerPages}
 		active={activeHref(page.url.pathname)}
 		path={page.url.pathname}

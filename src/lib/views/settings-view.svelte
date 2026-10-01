@@ -20,6 +20,7 @@
 	import { assistant, SHARE_PARTS } from '$lib/assistant.svelte';
 	import { cli } from '$lib/cli.svelte';
 	import { logs } from '$lib/logs.svelte';
+	import { rtk } from '$lib/rtk.svelte';
 	import { PRESETS, theme, type ThemeMode } from '$lib/theme.svelte';
 	import { language, packChoice, voice } from '$lib/voice.svelte';
 
@@ -37,6 +38,10 @@
 
 	function onCliInput(event: Event) {
 		cli.set((event.currentTarget as HTMLInputElement).value);
+	}
+
+	function onRtkInput(event: Event) {
+		rtk.setPath((event.currentTarget as HTMLInputElement).value);
 	}
 
 	function onPlanPrice(id: PlanId, event: Event) {
@@ -338,6 +343,55 @@
 						? t('settings.cli.found', { path: displayPath(cli.status.path) })
 						: t('settings.cli.missing')}
 				</p>
+			{/if}
+		</Card.Content>
+	</Card.Root>
+
+	<Card.Root data-size="sm" class="shrink-0">
+		<Card.Header>
+			<Card.Title>{t('settings.rtk')}</Card.Title>
+			<Card.Description>{t('settings.rtk.description')}</Card.Description>
+		</Card.Header>
+		<Card.Content class="flex flex-col gap-2">
+			<div class="flex flex-wrap items-center gap-2">
+				<Button
+					variant={rtk.enabled ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => rtk.setEnabled(!rtk.enabled)}
+				>
+					{rtk.enabled ? t('common.on') : t('common.off')}
+				</Button>
+				{#if rtk.enabled && rtk.available}
+					<Button variant="outline" size="sm" href={resolve('/rtk')}
+						>{t('settings.rtk.open')}</Button
+					>
+				{/if}
+			</div>
+
+			{#if rtk.enabled}
+				<Input
+					class="max-w-lg font-mono text-xs"
+					placeholder={t('settings.rtk.placeholder')}
+					value={rtk.path}
+					oninput={onRtkInput}
+				/>
+				{#if rtk.status}
+					<p class="text-xs text-muted-foreground">
+						{rtk.status.found && rtk.status.path
+							? t('settings.rtk.found', {
+									path: displayPath(rtk.status.path),
+									version: rtk.status.version ?? '?'
+								})
+							: t('settings.rtk.missing')}
+					</p>
+					<p class="text-xs break-all text-muted-foreground">
+						{rtk.status.historyExists
+							? t('settings.rtk.history', { path: displayPath(rtk.status.history) })
+							: t('settings.rtk.noHistory')}
+					</p>
+				{/if}
+			{:else}
+				<p class="max-w-md text-xs text-muted-foreground">{t('settings.rtk.offHint')}</p>
 			{/if}
 		</Card.Content>
 	</Card.Root>

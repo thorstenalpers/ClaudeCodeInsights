@@ -21,6 +21,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Chart from '$lib/components/ui/chart';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { shortLabel } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
 
@@ -72,8 +73,21 @@
 	const colour = (index: number) => `var(${CHART_VARS[index % CHART_VARS.length]})`;
 
 	// Room for the labels rather than none: a chart that draws to its own edge
-	// puts the axis text outside the card it sits in.
-	const PADDING = { top: 8, right: 24, bottom: 24, left: 56 };
+	// puts the axis text outside the card it sits in. The bottom holds two
+	// rows, not one — layerchart pins the legend to the floor of the chart, and
+	// with only the axis allowed for it landed across the dates.
+	const PADDING = { top: 8, right: 24, bottom: 44, left: 56 };
+
+	/**
+	 * How the x axis is drawn: shortened labels, and only as many of them as
+	 * fit side by side.
+	 *
+	 * layerchart shows every value of a band scale unless it is told a spacing,
+	 * so a year by day arrived as three hundred labels printed over each other.
+	 * The tooltip still carries the full label, which is where an exact date
+	 * belongs.
+	 */
+	const X_AXIS = { format: shortLabel, tickSpacing: 64 };
 
 	/** One row per label, which is the shape layerchart reads. */
 	const data = $derived(
@@ -143,6 +157,7 @@
 					seriesLayout="overlap"
 					props={{
 						area: { line: { class: 'stroke-2' }, fillOpacity: chosen === 'area' ? 0.25 : 0 },
+						xAxis: X_AXIS,
 						yAxis: { format }
 					}}
 				>
@@ -159,7 +174,7 @@
 					xScale={scaleBand().padding(0.25)}
 					series={drawn}
 					seriesLayout={chosen === 'stacked' ? 'stack' : 'group'}
-					props={{ yAxis: { format } }}
+					props={{ xAxis: X_AXIS, yAxis: { format } }}
 				>
 					{#snippet tooltip()}
 						<Chart.Tooltip />

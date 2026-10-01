@@ -2,8 +2,15 @@
 	import Brain from '@lucide/svelte/icons/brain';
 	import CircleDot from '@lucide/svelte/icons/circle-dot';
 	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-	import { api, type LiveTurn, type TranscriptPage, type TranscriptTurn } from '$lib/api';
+	import {
+		api,
+		type LiveTurn,
+		type SessionRow,
+		type TranscriptPage,
+		type TranscriptTurn
+	} from '$lib/api';
 	import { Badge } from '$lib/components/ui/badge';
+	import VitalsStrip, { type Vital } from '$lib/components/vitals-strip.svelte';
 	import ToolCallCard from '$lib/components/tool-call-card.svelte';
 	import ResetView from '$lib/components/reset-view.svelte';
 	import SortHeader from '$lib/components/sort-header.svelte';
@@ -13,9 +20,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { formatTime } from '$lib/format';
+	import { compact, exact, formatDuration, formatTime, sourceName } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
+	import { costOf } from '$lib/pricing.svelte';
+	import { region } from '$lib/region.svelte';
 
 	type Props = { sessionId: string };
 	let { sessionId }: Props = $props();
@@ -174,9 +183,112 @@
 		},
 		{ sort: 'index', descending: false }
 	);
+
+	// The figures come from the database while the transcript above comes from
+	// the file, so a session written since the last scan shows the conversation
+	// with no strip rather than a strip of zeroes.
+	let row = $state<SessionRow | null>(null);
+
+	$effect(() => {
+		const id = sessionId;
+		if (!isHosted) return;
+
+		let cancelled = false;
+		row = null;
+		api
+			.getSession(id)
+			.then((value) => {
+				if (!cancelled) row = value;
+			})
+			.catch(() => {});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	const vitals = $derived.by((): Vital[] => {
+		if (!row) return [];
+		const tokens = row.inputTokens + row.outputTokens + row.cacheReadTokens + row.cacheWriteTokens;
+		// A row with no model cannot be priced — a dash says unknown, where a
+		// zero would say free.
+		const cost = row.model
+			? costOf(row.model, {
+					inputTokens: row.inputTokens,
+					outputTokens: row.outputTokens,
+					cacheReadTokens: row.cacheReadTokens,
+					cacheWriteTokens: row.cacheWriteTokens
+				})
+			: null;
+
+		const cells: Vital[] = [
+			{
+				label: t('sessions.column.duration'),
+				value: formatDuration(row.durationMinutes),
+				sublabel: `${formatTime(row.firstTs)} – ${formatTime(row.lastTs)}`,
+				info: t('info.duration')
+			},
+			{
+				label: t('sessions.column.turns'),
+				value: exact(row.turnCount),
+				sublabel: row.hasSubagents ? t('sessions.subagents') : undefined,
+				info: t('info.turns')
+			},
+			{
+				label: t('cost.summary.tokens'),
+				value: compact(tokens),
+				sublabel: t('cost.summary.tokens.hint', {
+					input: compact(row.inputTokens),
+					output: compact(row.outputTokens),
+					cache: compact(row.cacheReadTokens + row.cacheWriteTokens)
+				}),
+				info: t('info.tokens')
+			},
+			{
+				label: t('sessions.column.cost'),
+				value: cost === null ? t('common.none') : region.format(cost),
+				// Named only when it is not the default agent: on those rows the
+				// model name alone would leave the reader guessing who ran it.
+				sublabel:
+					row.source !== 'claude'
+						? `${row.model ?? '—'} · ${sourceName(row.source)}`
+						: (row.model ?? undefined),
+				info: t('info.cost')
+			},
+			{
+				label: t('sessions.column.files'),
+				value: exact(row.filesTouched),
+				info: t('info.files')
+			}
+		];
+
+		// Only shown when it happened: a zero here would be one more cell to read
+		// past on every session that never came close to the limit.
+		const compactions = row.compactAuto + row.compactManual;
+		if (compactions > 0) {
+			cells.push({
+				label: t('sessions.column.compacts'),
+				value: exact(compactions),
+				sublabel: t('sessions.compactSplit', {
+					auto: String(row.compactAuto),
+					manual: String(row.compactManual)
+				}),
+				info: t('info.compacts'),
+				warn: row.compactAuto > 0
+			});
+		}
+
+		return cells;
+	});
 </script>
 
 <div class="flex h-full flex-col">
+	{#if vitals.length > 0}
+		<div class="shrink-0 px-6 pt-3">
+			<VitalsStrip {vitals} />
+		</div>
+	{/if}
+
 	<div class="flex shrink-0 flex-wrap items-center gap-2 border-b px-6 py-3">
 		<Button
 			variant={showTools ? 'default' : 'outline'}

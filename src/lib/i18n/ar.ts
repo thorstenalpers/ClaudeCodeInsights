@@ -1,7 +1,7 @@
 import type { Messages } from './en';
 
 export const ar: Messages = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': 'نظرة عامة',
 	'nav.overview.description': 'الرموز والتكلفة والنشاط في لمحة',
@@ -115,6 +115,8 @@ export const ar: Messages = {
 	'common.noMatch': 'لا شيء يطابق البحث.',
 	'common.cancel': 'إلغاء',
 	'common.none': '—',
+	'common.on': 'مفعّل',
+	'common.off': 'معطّل',
 	'common.waitingOnScanner': 'في انتظار ماسح النصوص.',
 
 	'overview.title': 'نظرة عامة',
@@ -147,6 +149,7 @@ export const ar: Messages = {
 	'range.90': 'آخر 90 يوماً',
 	'filter.project': 'المشروع',
 	'filter.branch': 'الفرع',
+	'filter.source': 'المصدر',
 	'filter.model': 'النموذج',
 	'filter.activity': 'النشاط',
 	'filter.tag': 'الوسم',
@@ -167,6 +170,11 @@ export const ar: Messages = {
 	'sessions.column.output': 'المخرجات',
 	'sessions.column.cache': 'الذاكرة المؤقتة',
 	'sessions.column.model': 'النموذج',
+	'sessions.column.files': 'الملفات',
+	'sessions.column.compacts': 'عمليات الضغط',
+	'sessions.compactSplit': '{auto} تجاوز · {manual} بطلب',
+	'sessions.overflowed': 'تجاوزت نافذة السياق حدها {count} مرة',
+	'sessions.compacted': 'تم الضغط بطلب {count} مرة',
 	'sessions.subagents': 'استُخدم وكلاء فرعيون',
 	'sessions.page': 'صفحة {page} من {total}',
 	'sessions.perPage': '{count} لكل صفحة',
@@ -260,6 +268,7 @@ export const ar: Messages = {
 	'tools.column.calls': 'الاستدعاءات',
 	'tools.column.sessions': 'الجلسات',
 	'tools.column.share': 'النسبة',
+	'tools.column.failed': 'فاشلة',
 	'tools.empty': 'لم تُفحص أي استدعاءات أدوات بعد.',
 	'chart.type.stacked': 'مكدّس',
 	'chart.type.bars': 'أعمدة',
@@ -430,17 +439,6 @@ export const ar: Messages = {
 	'activity.detail.sessions': 'أحدث {shown} من أصل {total}.',
 	'activity.noTools': 'لا استدعاءات أدوات',
 
-	'placeholder.activity.1': 'خريطة حرارية حسب يوم الأسبوع والساعة',
-	'placeholder.activity.2': 'توزيع مدة الجلسات والسلاسل',
-	'placeholder.agents.1': 'تشغيلات مجمّعة حسب نوع الوكيل',
-	'placeholder.agents.2': 'المدة واستدعاءات الأدوات ونسبة التفويض',
-	'placeholder.tools.1': 'الاستدعاءات لكل أداة، والرموز خلفها',
-	'placeholder.tools.2': 'معدل الفشل لكل أداة',
-	'placeholder.cost.1': 'التكلفة لكل نموذج، مع جدول أسعار قابل للتحرير',
-	'placeholder.cost.2': 'وفورات الذاكرة المؤقتة مقابل السعر بدونها',
-	'placeholder.assistant.1': 'اسأل عن استخدامك بلغة بسيطة',
-	'placeholder.assistant.2': 'إجابات مبنية على قاعدة البيانات المحلية فقط',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': 'إعادة ضبط العرض',
 	'common.whatIsThis': 'ما هذا؟',
@@ -479,6 +477,12 @@ export const ar: Messages = {
 	'info.status':
 		'ما ينبغي فعله بهذا المشروع، إن كان ثمة شيء. «unregistered» يعني أن النصوص على القرص بلا مدخل في ~/.claude.json، ويكفي فتح المجلد مرة في Claude Code. «missing dir» يعني أن المدخل موجود والمجلد اختفى، فيمكن حذف المدخل. وإذا لم يظهر شيء فلا شيء لتفعله.',
 	'info.share': 'استدعاءات هذه الأداة مقابل الأداة الأكثر انشغالًا، لا مقابل المجموع.',
+	'info.toolFailed':
+		'الاستدعاءات التي عادت بخطأ، مقابل الاستدعاءات التي عادت أصلاً. النصوص الأقدم لا تذكر معرّف الاستدعاء، فلا يمكن مطابقة نتيجتها — وهي مستبعدة من الرقمين بدل أن تُحسب نجاحًا.',
+	'info.files':
+		'الملفات المتمايزة التي سمّتها استدعاءات الأدوات في الجلسة. الملف نفسه إذا وُصل إليه بصيغتين للمسار يُحسب مرة واحدة.',
+	'info.compacts':
+		'كم مرة جرى ضغط المحادثة. التجاوز يعني أن نافذة السياق امتلأت فضغط Claude Code من تلقاء نفسه؛ وبطلب يعني استخدام ‎/compact‎.',
 	'status.billing.hint': 'ما تعنيه أرقام التكلفة في هذه النافذة.',
 	'status.billing.subscription': 'اشتراك — الأرقام مكافئة للواجهة البرمجية لا فاتورة',
 	'status.billing.api': 'API',
@@ -607,5 +611,60 @@ export const ar: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'ما أبعده وسيط الأوامر عن السياق',
+	'rtk.off': 'RTK معطّل',
+	'rtk.off.hint': 'أعد تفعيله في الإعدادات لقراءة ما وفّره RTK.',
+	'rtk.failed': 'تعذّرت قراءة سجل RTK',
+	'rtk.empty': 'لم يسجّل RTK شيئًا بعد',
+	'rtk.empty.hint': 'السجل موجود لكنه لا يحوي أي أمر. يمتلئ مع كل أمر يرشّحه RTK.',
+	'rtk.empty.noHistory': 'لا سجل في {path} — لم يمر شيء عبر RTK على هذا الجهاز.',
+	'rtk.card.saved': 'الرموز الموفَّرة',
+	'rtk.hint.saved': '{share} مما كان سيكلّفه الإخراج الخام',
+	'rtk.card.input': 'الإخراج الخام',
+	'rtk.hint.input': 'ما كانت الأوامر ستضعه في السياق دون ترشيح',
+	'rtk.card.output': 'بعد الترشيح',
+	'rtk.hint.output': 'ما وصل فعلًا إلى النموذج',
+	'rtk.card.commands': 'الأوامر',
+	'rtk.hint.commands': 'عبر {count} مرشّحات',
+	'rtk.card.time': 'الوقت المستغرق',
+	'rtk.hint.time': 'ما استغرقته الأوامر عبر الوسيط مجتمعة',
+	'rtk.card.failures': 'إخفاقات التحليل',
+	'rtk.hint.failures': 'أوامر لم يستطع RTK قراءتها فنفّذها خامًا',
+	'rtk.daily': 'يوميًا',
+	'rtk.daily.description': 'الإخراج الخام لكل يوم، مقسومًا بين ما بقي وما أُسقط.',
+	'rtk.series.kept': 'المُبقى',
+	'rtk.series.saved': 'الموفَّر',
+	'rtk.filters': 'حسب المرشّح',
+	'rtk.filters.description':
+		'أي مرشّح يستحق مكانه. «proxy» و«run» هما النداءان اللذان مرّا دون ترشيح.',
+	'rtk.projects': 'حسب المشروع',
+	'rtk.projects.description': 'أين نُفّذت الأوامر، الأكبر توفيرًا أولًا.',
+	'rtk.failures': 'إخفاقات التحليل',
+	'rtk.failures.description': 'أحدث الأوامر التي لم يستطع RTK قراءتها.',
+	'rtk.column.filter': 'المرشّح',
+	'rtk.column.project': 'المشروع',
+	'rtk.column.calls': 'النداءات',
+	'rtk.column.input': 'خام',
+	'rtk.column.saved': 'موفَّر',
+	'rtk.column.share': 'الحصة',
+	'rtk.column.when': 'متى',
+	'rtk.column.command': 'الأمر',
+	'rtk.column.message': 'السبب',
+	'rtk.column.recovered': 'نُفّذ رغم ذلك',
+	'rtk.recovered': 'نعم',
+	'rtk.lost': 'لا',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'الوسيط الذي يختصر إخراج الأوامر قبل أن يراه النموذج. يُقرأ سجله حيث هو ولا يُكتب فيه أبدًا.',
+	'settings.rtk.placeholder': 'مسار rtk.exe',
+	'settings.rtk.found': 'وُجد: {path} ({version})',
+	'settings.rtk.missing': 'غير موجود. تبقى الصفحة خارج الشريط.',
+	'settings.rtk.history': 'السجل: {path}',
+	'settings.rtk.noHistory': 'لم يُسجَّل أي تاريخ بعد.',
+	'settings.rtk.open': 'فتح',
+	'settings.rtk.offHint':
+		'عند التعطيل لا ينظر هذا التطبيق إلى RTK إطلاقًا. يبقى RTK يرشّح — هذا إعداده هو، لا هذا.'
 };

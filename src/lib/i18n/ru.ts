@@ -1,7 +1,7 @@
 import type { Messages } from './en';
 
 export const ru: Messages = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': 'Обзор',
 	'nav.overview.description': 'Токены, стоимость и активность с первого взгляда',
@@ -115,6 +115,8 @@ export const ru: Messages = {
 	'common.noMatch': 'Ничего не найдено.',
 	'common.cancel': 'Отмена',
 	'common.none': '—',
+	'common.on': 'Вкл',
+	'common.off': 'Выкл',
 	'common.waitingOnScanner': 'Ожидание сканера расшифровок.',
 
 	'overview.title': 'Обзор',
@@ -148,6 +150,7 @@ export const ru: Messages = {
 	'range.90': 'Последние 90 дней',
 	'filter.project': 'Проект',
 	'filter.branch': 'Ветка',
+	'filter.source': 'Источник',
 	'filter.model': 'Модель',
 	'filter.activity': 'Активность',
 	'filter.tag': 'Метка',
@@ -168,6 +171,11 @@ export const ru: Messages = {
 	'sessions.column.output': 'Вывод',
 	'sessions.column.cache': 'Кэш',
 	'sessions.column.model': 'Модель',
+	'sessions.column.files': 'Файлы',
+	'sessions.column.compacts': 'Сжатия',
+	'sessions.compactSplit': '{auto} переполнение · {manual} по запросу',
+	'sessions.overflowed': 'Контекстное окно переполнялось {count} раз',
+	'sessions.compacted': 'Сжатие по запросу — {count} раз',
 	'sessions.subagents': 'Использованы субагенты',
 	'sessions.page': 'Страница {page} из {total}',
 	'sessions.perPage': '{count} на страницу',
@@ -263,6 +271,7 @@ export const ru: Messages = {
 	'tools.column.calls': 'Вызовы',
 	'tools.column.sessions': 'Сессии',
 	'tools.column.share': 'Доля',
+	'tools.column.failed': 'Ошибки',
 	'tools.empty': 'Вызовы инструментов пока не отсканированы.',
 	'chart.type.stacked': 'С накоплением',
 	'chart.type.bars': 'Столбцы',
@@ -435,17 +444,6 @@ export const ru: Messages = {
 	'activity.detail.sessions': '{shown} самых недавних из {total}.',
 	'activity.noTools': 'Нет вызовов инструментов',
 
-	'placeholder.activity.1': 'Тепловая карта по дням недели и часам',
-	'placeholder.activity.2': 'Распределение длительности сессий и серии',
-	'placeholder.agents.1': 'Запуски по типам агентов',
-	'placeholder.agents.2': 'Длительность, вызовы инструментов и доля делегирования',
-	'placeholder.tools.1': 'Вызовы по инструментам и стоящие за ними токены',
-	'placeholder.tools.2': 'Доля ошибок по инструментам',
-	'placeholder.cost.1': 'Стоимость по моделям с редактируемой таблицей тарифов',
-	'placeholder.cost.2': 'Экономия кэша против цены без кэша',
-	'placeholder.assistant.1': 'Спрашивайте о своём использовании обычным языком',
-	'placeholder.assistant.2': 'Ответы только на основе локальной базы данных',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': 'Сбросить вид',
 	'common.whatIsThis': 'Что это?',
@@ -487,6 +485,12 @@ export const ru: Messages = {
 	'info.status':
 		'Что делать с этим проектом, если вообще что-то. «unregistered» — стенограммы на диске есть, а записи в ~/.claude.json нет: достаточно один раз открыть папку в Claude Code. «missing dir» — запись есть, а каталога уже нет, запись можно удалить. Ничего не показано — делать нечего.',
 	'info.share': 'Вызовы этого инструмента против самого загруженного, а не против суммы.',
+	'info.toolFailed':
+		'Вызовы, вернувшиеся с ошибкой, против вызовов, вернувшихся вообще. В старых расшифровках нет идентификатора вызова, поэтому их результат не с чем сопоставить — они не входят ни в одно из чисел, а не считаются успешными.',
+	'info.files':
+		'Различные файлы, названные вызовами инструментов в сессии. Один и тот же файл, записанный двумя способами, считается один раз.',
+	'info.compacts':
+		'Сколько раз разговор был сжат. Переполнение — контекстное окно заполнилось и Claude Code сжал сам; по запросу — это /compact.',
 	'status.billing.hint': 'Что означают цифры затрат в этом окне.',
 	'status.billing.subscription': 'подписка — цифры эквивалентны API, а не счёт',
 	'status.billing.api': 'API',
@@ -617,5 +621,61 @@ export const ru: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'Что прокси командной строки не пустил в контекст',
+	'rtk.off': 'RTK выключен',
+	'rtk.off.hint': 'Включите его снова в настройках, чтобы увидеть, сколько сэкономил RTK.',
+	'rtk.failed': 'Не удалось прочитать историю RTK',
+	'rtk.empty': 'RTK пока ничего не записал',
+	'rtk.empty.hint':
+		'История есть, но в ней нет ни одной команды. Она заполняется по мере фильтрации.',
+	'rtk.empty.noHistory': 'Истории в {path} нет — на этой машине через RTK ничего не проходило.',
+	'rtk.card.saved': 'Сэкономлено токенов',
+	'rtk.hint.saved': '{share} того, во что обошёлся бы неотфильтрованный вывод',
+	'rtk.card.input': 'Исходный вывод',
+	'rtk.hint.input': 'Сколько команды положили бы в контекст без фильтра',
+	'rtk.card.output': 'После фильтрации',
+	'rtk.hint.output': 'Сколько на самом деле дошло до модели',
+	'rtk.card.commands': 'Команды',
+	'rtk.hint.commands': 'Через {count} фильтров',
+	'rtk.card.time': 'Затраченное время',
+	'rtk.hint.time': 'Сколько заняли все команды, прошедшие через прокси',
+	'rtk.card.failures': 'Ошибки разбора',
+	'rtk.hint.failures': 'Команды, которые RTK не смог разобрать и выполнил без фильтра',
+	'rtk.daily': 'По дням',
+	'rtk.daily.description': 'Исходный вывод каждого дня, разделённый на оставленное и отброшенное.',
+	'rtk.series.kept': 'Оставлено',
+	'rtk.series.saved': 'Сэкономлено',
+	'rtk.filters': 'По фильтрам',
+	'rtk.filters.description':
+		'Какой фильтр себя оправдывает. «proxy» и «run» — вызовы, прошедшие без фильтрации.',
+	'rtk.projects': 'По проектам',
+	'rtk.projects.description': 'Где выполнялись команды, наибольшая экономия сверху.',
+	'rtk.failures': 'Ошибки разбора',
+	'rtk.failures.description': 'Последние команды, которые RTK не смог разобрать.',
+	'rtk.column.filter': 'Фильтр',
+	'rtk.column.project': 'Проект',
+	'rtk.column.calls': 'Вызовы',
+	'rtk.column.input': 'Исходно',
+	'rtk.column.saved': 'Сэкономлено',
+	'rtk.column.share': 'Доля',
+	'rtk.column.when': 'Когда',
+	'rtk.column.command': 'Команда',
+	'rtk.column.message': 'Причина',
+	'rtk.column.recovered': 'Всё же выполнена',
+	'rtk.recovered': 'да',
+	'rtk.lost': 'нет',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'Прокси, который сокращает вывод команд, прежде чем его увидит модель. Его история читается там, где лежит, и никогда не изменяется.',
+	'settings.rtk.placeholder': 'Путь к rtk.exe',
+	'settings.rtk.found': 'Найдено: {path} ({version})',
+	'settings.rtk.missing': 'Не найдено. Страница не появляется в панели.',
+	'settings.rtk.history': 'История: {path}',
+	'settings.rtk.noHistory': 'История ещё не записана.',
+	'settings.rtk.open': 'Открыть',
+	'settings.rtk.offHint':
+		'Когда выключено, приложение не заглядывает в RTK. Сам RTK продолжает фильтровать — это его настройка, а не эта.'
 };

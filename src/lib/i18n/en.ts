@@ -5,7 +5,7 @@
  * key is a compile error rather than a blank spot in the window.
  */
 export const en = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': 'Overview',
 	'nav.overview.description': 'Tokens, cost and activity at a glance',
@@ -119,6 +119,8 @@ export const en = {
 	'common.noMatch': 'Nothing matches the search.',
 	'common.cancel': 'Cancel',
 	'common.none': '—',
+	'common.on': 'On',
+	'common.off': 'Off',
 	'common.waitingOnScanner': 'Waiting on the transcript scanner.',
 
 	'overview.title': 'Overview',
@@ -151,6 +153,7 @@ export const en = {
 	'range.90': 'Last 90 days',
 	'filter.project': 'Project',
 	'filter.branch': 'Branch',
+	'filter.source': 'Source',
 	'filter.model': 'Model',
 	'filter.activity': 'Activity',
 	'filter.tag': 'Tag',
@@ -171,7 +174,12 @@ export const en = {
 	'sessions.column.output': 'Output',
 	'sessions.column.cache': 'Cache',
 	'sessions.column.model': 'Model',
+	'sessions.column.files': 'Files',
+	'sessions.column.compacts': 'Compactions',
+	'sessions.compactSplit': '{auto} overflow · {manual} asked for',
 	'sessions.subagents': 'Used subagents',
+	'sessions.overflowed': 'Context window overflowed {count} times',
+	'sessions.compacted': 'Compacted on request {count} times',
 	'sessions.page': 'Page {page} of {total}',
 	'sessions.perPage': '{count} per page',
 	'sessions.previousPage': 'Previous page',
@@ -266,6 +274,7 @@ export const en = {
 	'tools.column.calls': 'Calls',
 	'tools.column.sessions': 'Sessions',
 	'tools.column.share': 'Share',
+	'tools.column.failed': 'Failed',
 	'tools.empty': 'No tool calls scanned yet.',
 	'chart.type.stacked': 'Stacked',
 	'chart.type.bars': 'Bars',
@@ -438,17 +447,6 @@ export const en = {
 	'activity.detail.sessions': 'The {shown} most recent of {total}.',
 	'activity.noTools': 'No tool calls',
 
-	'placeholder.activity.1': 'Weekday by hour heatmap',
-	'placeholder.activity.2': 'Session length distribution and streaks',
-	'placeholder.agents.1': 'Runs grouped by agent type',
-	'placeholder.agents.2': 'Duration, tool calls and delegation share',
-	'placeholder.tools.1': 'Calls per tool, and the tokens behind them',
-	'placeholder.tools.2': 'Failure rate per tool',
-	'placeholder.cost.1': 'Cost per model, with an editable price table',
-	'placeholder.cost.2': 'Cache savings against the uncached price',
-	'placeholder.assistant.1': 'Ask about your own usage in plain language',
-	'placeholder.assistant.2': 'Answers grounded in the local database only',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': 'Reset view',
 	'common.whatIsThis': 'What is this?',
@@ -491,6 +489,12 @@ export const en = {
 	'info.status':
 		'What to do about this project, if anything. “unregistered” means transcripts are on disk but ~/.claude.json has no entry — opening the folder in Claude Code once puts it back. “missing dir” means the entry is there but the directory is gone, so the entry can be removed. Nothing shown means nothing to do.',
 	'info.share': 'This tool’s calls against the busiest tool, not against the total.',
+	'info.toolFailed':
+		'Calls that came back saying error, against the calls that came back at all. Older transcripts name no call id, so their outcome cannot be paired with the call — those are left out of both figures rather than counted as successes.',
+	'info.files':
+		'Distinct files the session’s tool calls named. The same file reached by two spellings of its path counts once.',
+	'info.compacts':
+		'Times the conversation was compacted. An overflow means the context window filled up and Claude Code compacted on its own; asked for means a /compact.',
 	'status.billing.hint': 'What the cost figures in this window mean.',
 	'status.billing.subscription': 'subscription — figures are API-equivalent, not a bill',
 	'status.billing.api': 'API',
@@ -621,7 +625,62 @@ export const en = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'What the CLI proxy kept out of the context',
+	'rtk.off': 'RTK is switched off',
+	'rtk.off.hint': 'Switch it back on in the settings to read what RTK has saved.',
+	'rtk.failed': 'RTK’s history could not be read',
+	'rtk.empty': 'RTK has recorded nothing yet',
+	'rtk.empty.hint': 'The history is there but holds no command. It fills as RTK filters.',
+	'rtk.empty.noHistory': 'No history at {path} — nothing has gone through RTK on this machine.',
+	'rtk.card.saved': 'Tokens saved',
+	'rtk.hint.saved': '{share} of what the raw output would have cost',
+	'rtk.card.input': 'Raw output',
+	'rtk.hint.input': 'What the commands would have put into the context unfiltered',
+	'rtk.card.output': 'After filtering',
+	'rtk.hint.output': 'What actually reached the model',
+	'rtk.card.commands': 'Commands',
+	'rtk.hint.commands': 'Through {count} filters',
+	'rtk.card.time': 'Time spent',
+	'rtk.hint.time': 'What the proxied commands took altogether',
+	'rtk.card.failures': 'Parse failures',
+	'rtk.hint.failures': 'Commands RTK could not read and had to run raw',
+	'rtk.daily': 'Per day',
+	'rtk.daily.description': 'Each day’s raw output, split into what was kept and what was dropped.',
+	'rtk.series.kept': 'Kept',
+	'rtk.series.saved': 'Saved',
+	'rtk.filters': 'By filter',
+	'rtk.filters.description':
+		'Which filter earns its place. “proxy” and “run” are the calls that went through unfiltered.',
+	'rtk.projects': 'By project',
+	'rtk.projects.description': 'Where the commands ran, biggest saving first.',
+	'rtk.failures': 'Parse failures',
+	'rtk.failures.description': 'The most recent commands RTK could not read.',
+	'rtk.column.filter': 'Filter',
+	'rtk.column.project': 'Project',
+	'rtk.column.calls': 'Calls',
+	'rtk.column.input': 'Raw',
+	'rtk.column.saved': 'Saved',
+	'rtk.column.share': 'Share',
+	'rtk.column.when': 'When',
+	'rtk.column.command': 'Command',
+	'rtk.column.message': 'Reason',
+	'rtk.column.recovered': 'Ran anyway',
+	'rtk.recovered': 'yes',
+	'rtk.lost': 'no',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'The proxy that shortens command output before a model sees it. Its history is read where it lies and never written to.',
+	'settings.rtk.placeholder': 'Path to rtk.exe',
+	'settings.rtk.found': 'Found: {path} ({version})',
+	'settings.rtk.missing': 'Not found. The page stays out of the rail.',
+	'settings.rtk.history': 'History: {path}',
+	'settings.rtk.noHistory': 'No history recorded yet.',
+	'settings.rtk.open': 'Open',
+	'settings.rtk.offHint':
+		'Off, this app never looks at RTK. RTK itself keeps filtering — that is its own setting, not this one.'
 } as const;
 
 export type MessageKey = keyof typeof en;

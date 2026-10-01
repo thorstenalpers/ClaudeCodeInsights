@@ -22,7 +22,7 @@ export type Rate = {
 };
 
 /** A model family, matched by name because that is all a transcript records. */
-export type FamilyId = 'opus' | 'fable' | 'sonnet' | 'haiku';
+export type FamilyId = 'opus' | 'fable' | 'sonnet' | 'haiku' | 'gpt';
 
 export const FAMILIES: { id: FamilyId; match: RegExp; published: Rate }[] = [
 	{
@@ -44,6 +44,14 @@ export const FAMILIES: { id: FamilyId; match: RegExp; published: Rate }[] = [
 		id: 'haiku',
 		match: /haiku/i,
 		published: { input: 0.8, output: 4, cacheRead: 0.08, cacheWrite: 1 }
+	},
+	{
+		// The OpenAI models a Codex session runs on. One family, priced at the
+		// GPT-5.x line's published rates; OpenAI charges no cache write, so that
+		// rate is zero rather than guessed.
+		id: 'gpt',
+		match: /gpt|codex|^o[34]/i,
+		published: { input: 1.25, output: 10, cacheRead: 0.125, cacheWrite: 0 }
 	}
 ];
 

@@ -36,8 +36,11 @@ export type ScanStats = {
 
 export type SessionRow = {
 	sessionId: string;
+	/** The agent that wrote the transcript: `claude`, `codex`. */
+	source: string;
 	topic: string | null;
 	projectName: string | null;
+	projectPath: string | null;
 	gitBranch: string | null;
 	firstTs: string | null;
 	lastTs: string | null;
@@ -49,6 +52,11 @@ export type SessionRow = {
 	cacheReadTokens: number;
 	cacheWriteTokens: number;
 	hasSubagents: boolean;
+	/** Times the context window overflowed, against times a compaction was asked for. */
+	compactAuto: number;
+	compactManual: number;
+	/** Distinct files the session's tool calls named. */
+	filesTouched: number;
 	activity: string;
 	/** Share per tool category; can sum above 1 because a tool may be in several. */
 	profile: Record<string, number>;
@@ -73,6 +81,7 @@ export type SessionQuery = {
 	tags?: string[];
 	projects?: string[];
 	branches?: string[];
+	sources?: string[];
 	/** Inclusive local dates, `YYYY-MM-DD`. */
 	from?: string | null;
 	to?: string | null;
@@ -92,6 +101,8 @@ export type SessionFacets = {
 	tags: string[];
 	projects: string[];
 	branches: string[];
+	/** Only the agents that actually left sessions behind. */
+	sources: string[];
 };
 
 export type ToolCall = {
@@ -130,6 +141,8 @@ export type ModelTokens = {
 
 export type ProjectRow = {
 	path: string;
+	/** What the checkout calls itself, worked out by the host from its manifest. */
+	name: string;
 	registered: boolean;
 	dirExists: boolean;
 	duplicateGroup: string | null;
@@ -172,6 +185,13 @@ export type ToolRow = {
 	name: string;
 	calls: number;
 	sessions: number;
+	/**
+	 * Calls whose outcome came back, and how many said error. A transcript
+	 * written before tool ids answers neither, which is why the denominator
+	 * travels with the count instead of a bare rate.
+	 */
+	answered: number;
+	failed: number;
 	/** Each turn's tokens shared over the tool calls it made. */
 	byModel: ModelTokens[];
 };
@@ -379,6 +399,50 @@ export type AppInfo = {
 /** One capture device, as Windows lists it. */
 export type CliStatus = { found: boolean; path: string | null; version: string | null };
 
+/** Where RTK is, and whether it has recorded anything yet. */
+export type RtkStatus = {
+	found: boolean;
+	path: string | null;
+	version: string | null;
+	history: string;
+	historyExists: boolean;
+};
+
+/** Input is what the raw output would have cost; output is what reached the model. */
+export type RtkSummary = {
+	commands: number;
+	inputTokens: number;
+	outputTokens: number;
+	savedTokens: number;
+	execTimeMs: number;
+	failures: number;
+	firstTs: string | null;
+	lastTs: string | null;
+};
+
+/** One filter, or one project — the same figures answer both questions. */
+export type RtkGroup = {
+	name: string;
+	calls: number;
+	inputTokens: number;
+	outputTokens: number;
+	savedTokens: number;
+	execTimeMs: number;
+};
+
+export type RtkDay = { date: string; calls: number; inputTokens: number; savedTokens: number };
+
+/** A command RTK could not parse and had to run raw. */
+export type RtkFailure = { ts: string; command: string; message: string; recovered: boolean };
+
+export type RtkReport = {
+	summary: RtkSummary;
+	filters: RtkGroup[];
+	projects: RtkGroup[];
+	days: RtkDay[];
+	failures: RtkFailure[];
+};
+
 export type ProviderInfo = {
 	id: string;
 	model: string;
@@ -395,6 +459,7 @@ export const api = {
 	getScanState: () => invoke<ScanState>('get_scan_state'),
 	startScan: () => invoke<boolean>('start_scan'),
 	listSessions: (query: SessionQuery) => invoke<SessionPage>('list_sessions', { query }),
+	getSession: (sessionId: string) => invoke<SessionRow | null>('get_session', { sessionId }),
 	getSessionFacets: () => invoke<SessionFacets>('get_session_facets'),
 	listProjects: () => invoke<ProjectsReport>('list_projects'),
 	openClaudeConfig: () => invoke<void>('open_claude_config'),
@@ -428,6 +493,8 @@ export const api = {
 	getSeries: (query: SeriesQuery) => invoke<Series>('get_series', { query }),
 	getSeriesFacets: () => invoke<SeriesFacets>('get_series_facets'),
 	getCliStatus: (path: string | null) => invoke<CliStatus>('get_cli_status', { path }),
+	getRtkStatus: (path: string | null) => invoke<RtkStatus>('get_rtk_status', { path }),
+	getRtkReport: () => invoke<RtkReport>('get_rtk_report'),
 	askClaude: (
 		source: string,
 		path: string | null,

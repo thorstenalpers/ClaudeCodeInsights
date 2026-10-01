@@ -1,7 +1,7 @@
 import type { Messages } from './en';
 
 export const fr: Messages = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': "Vue d'ensemble",
 	'nav.overview.description': "Jetons, coût et activité en un coup d'œil",
@@ -115,6 +115,8 @@ export const fr: Messages = {
 	'common.noMatch': 'Rien ne correspond à la recherche.',
 	'common.cancel': 'Annuler',
 	'common.none': '—',
+	'common.on': 'Activé',
+	'common.off': 'Désactivé',
 	'common.waitingOnScanner': "En attente de l'analyseur de transcriptions.",
 
 	'overview.title': "Vue d'ensemble",
@@ -148,6 +150,7 @@ export const fr: Messages = {
 	'range.90': '90 derniers jours',
 	'filter.project': 'Projet',
 	'filter.branch': 'Branche',
+	'filter.source': 'Source',
 	'filter.model': 'Modèle',
 	'filter.activity': 'Activité',
 	'filter.tag': 'Étiquette',
@@ -168,6 +171,11 @@ export const fr: Messages = {
 	'sessions.column.output': 'Sortie',
 	'sessions.column.cache': 'Cache',
 	'sessions.column.model': 'Modèle',
+	'sessions.column.files': 'Fichiers',
+	'sessions.column.compacts': 'Compactages',
+	'sessions.compactSplit': '{auto} débordement · {manual} demandé',
+	'sessions.overflowed': 'Fenêtre de contexte débordée {count} fois',
+	'sessions.compacted': 'Compacté {count} fois à la demande',
 	'sessions.subagents': 'A utilisé des sous-agents',
 	'sessions.page': 'Page {page} sur {total}',
 	'sessions.perPage': '{count} par page',
@@ -266,6 +274,7 @@ export const fr: Messages = {
 	'tools.column.calls': 'Appels',
 	'tools.column.sessions': 'Sessions',
 	'tools.column.share': 'Part',
+	'tools.column.failed': 'Échecs',
 	'tools.empty': "Aucun appel d'outil analysé pour le moment.",
 	'chart.type.stacked': 'Empilé',
 	'chart.type.bars': 'Barres',
@@ -439,17 +448,6 @@ export const fr: Messages = {
 	'activity.detail.sessions': 'Les {shown} plus récentes sur {total}.',
 	'activity.noTools': 'Aucun appel d’outil',
 
-	'placeholder.activity.1': 'Carte thermique jour de la semaine par heure',
-	'placeholder.activity.2': 'Distribution des durées de session et séries',
-	'placeholder.agents.1': "Exécutions groupées par type d'agent",
-	'placeholder.agents.2': "Durée, appels d'outils et part de délégation",
-	'placeholder.tools.1': 'Appels par outil, et les jetons associés',
-	'placeholder.tools.2': "Taux d'échec par outil",
-	'placeholder.cost.1': 'Coût par modèle, avec une grille tarifaire modifiable',
-	'placeholder.cost.2': 'Économies de cache par rapport au prix sans cache',
-	'placeholder.assistant.1': 'Interrogez votre utilisation en langage courant',
-	'placeholder.assistant.2': 'Réponses fondées uniquement sur la base locale',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': 'Réinitialiser la vue',
 	'common.whatIsThis': "Qu'est-ce que c'est ?",
@@ -492,6 +490,12 @@ export const fr: Messages = {
 	'info.status':
 		'Ce qu’il y a à faire pour ce projet, s’il y a quelque chose. « unregistered » : des transcriptions existent sur le disque mais ~/.claude.json n’a pas d’entrée — ouvrir le dossier une fois dans Claude Code la recrée. « missing dir » : l’entrée existe mais le dossier a disparu, l’entrée peut donc être retirée. Rien d’affiché, rien à faire.',
 	'info.share': 'Les appels de cet outil face à l’outil le plus sollicité, et non face au total.',
+	'info.toolFailed':
+		'Appels revenus en erreur, rapportés aux appels effectivement revenus. Les anciennes transcriptions ne nomment aucun identifiant d’appel, leur résultat ne peut donc pas être apparié — ils sont exclus des deux chiffres plutôt que comptés comme des succès.',
+	'info.files':
+		'Fichiers distincts nommés par les appels d’outils de la session. Un même fichier atteint par deux écritures de son chemin compte une fois.',
+	'info.compacts':
+		'Nombre de compactages de la conversation. Débordement signifie que la fenêtre de contexte était pleine et que Claude Code a compacté de lui-même ; demandé signifie un /compact.',
 	'status.billing.hint': 'Ce que signifient les chiffres de coût dans cette fenêtre.',
 	'status.billing.subscription': 'abonnement — chiffres équivalents API, pas une facture',
 	'status.billing.api': 'API',
@@ -623,5 +627,63 @@ export const fr: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'Ce que le proxy CLI a tenu hors du contexte',
+	'rtk.off': 'RTK est désactivé',
+	'rtk.off.hint': 'Réactivez-le dans les réglages pour lire ce que RTK a économisé.',
+	'rtk.failed': 'L’historique de RTK n’a pas pu être lu',
+	'rtk.empty': 'RTK n’a encore rien enregistré',
+	'rtk.empty.hint':
+		'L’historique existe mais ne contient aucune commande. Il se remplit à mesure que RTK filtre.',
+	'rtk.empty.noHistory':
+		'Aucun historique dans {path} — rien n’est passé par RTK sur cette machine.',
+	'rtk.card.saved': 'Jetons économisés',
+	'rtk.hint.saved': '{share} de ce qu’aurait coûté la sortie brute',
+	'rtk.card.input': 'Sortie brute',
+	'rtk.hint.input': 'Ce que les commandes auraient mis dans le contexte sans filtrage',
+	'rtk.card.output': 'Après filtrage',
+	'rtk.hint.output': 'Ce qui a réellement atteint le modèle',
+	'rtk.card.commands': 'Commandes',
+	'rtk.hint.commands': 'À travers {count} filtres',
+	'rtk.card.time': 'Temps passé',
+	'rtk.hint.time': 'Ce que les commandes passées par le proxy ont pris au total',
+	'rtk.card.failures': 'Échecs d’analyse',
+	'rtk.hint.failures': 'Commandes que RTK n’a pas su lire et a dû exécuter brutes',
+	'rtk.daily': 'Par jour',
+	'rtk.daily.description':
+		'La sortie brute de chaque jour, séparée entre ce qui a été gardé et ce qui a été écarté.',
+	'rtk.series.kept': 'Gardé',
+	'rtk.series.saved': 'Économisé',
+	'rtk.filters': 'Par filtre',
+	'rtk.filters.description':
+		'Quel filtre en vaut la peine. « proxy » et « run » sont les appels passés sans filtrage.',
+	'rtk.projects': 'Par projet',
+	'rtk.projects.description': 'Où les commandes ont tourné, plus grosse économie d’abord.',
+	'rtk.failures': 'Échecs d’analyse',
+	'rtk.failures.description': 'Les commandes les plus récentes que RTK n’a pas su lire.',
+	'rtk.column.filter': 'Filtre',
+	'rtk.column.project': 'Projet',
+	'rtk.column.calls': 'Appels',
+	'rtk.column.input': 'Brut',
+	'rtk.column.saved': 'Économisé',
+	'rtk.column.share': 'Part',
+	'rtk.column.when': 'Quand',
+	'rtk.column.command': 'Commande',
+	'rtk.column.message': 'Raison',
+	'rtk.column.recovered': 'Exécutée quand même',
+	'rtk.recovered': 'oui',
+	'rtk.lost': 'non',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'Le proxy qui raccourcit la sortie des commandes avant qu’un modèle ne la voie. Son historique est lu là où il se trouve et jamais écrit.',
+	'settings.rtk.placeholder': 'Chemin vers rtk.exe',
+	'settings.rtk.found': 'Trouvé : {path} ({version})',
+	'settings.rtk.missing': 'Introuvable. La page reste hors de la barre.',
+	'settings.rtk.history': 'Historique : {path}',
+	'settings.rtk.noHistory': 'Aucun historique enregistré pour l’instant.',
+	'settings.rtk.open': 'Ouvrir',
+	'settings.rtk.offHint':
+		'Désactivé, cette application ne consulte jamais RTK. RTK continue de filtrer — c’est son propre réglage, pas celui-ci.'
 };

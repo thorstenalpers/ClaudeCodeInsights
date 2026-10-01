@@ -1,7 +1,7 @@
 import type { Messages } from './en';
 
 export const hi: Messages = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': 'अवलोकन',
 	'nav.overview.description': 'टोकन, लागत और गतिविधि एक नज़र में',
@@ -115,6 +115,8 @@ export const hi: Messages = {
 	'common.noMatch': 'खोज से कुछ मेल नहीं खाता।',
 	'common.cancel': 'रद्द करें',
 	'common.none': '—',
+	'common.on': 'चालू',
+	'common.off': 'बंद',
 	'common.waitingOnScanner': 'ट्रांसक्रिप्ट स्कैनर की प्रतीक्षा है।',
 
 	'overview.title': 'अवलोकन',
@@ -148,6 +150,7 @@ export const hi: Messages = {
 	'range.90': 'पिछले 90 दिन',
 	'filter.project': 'प्रोजेक्ट',
 	'filter.branch': 'ब्रांच',
+	'filter.source': 'स्रोत',
 	'filter.model': 'मॉडल',
 	'filter.activity': 'गतिविधि',
 	'filter.tag': 'टैग',
@@ -168,6 +171,11 @@ export const hi: Messages = {
 	'sessions.column.output': 'आउटपुट',
 	'sessions.column.cache': 'कैश',
 	'sessions.column.model': 'मॉडल',
+	'sessions.column.files': 'फ़ाइलें',
+	'sessions.column.compacts': 'संपीड़न',
+	'sessions.compactSplit': '{auto} अतिप्रवाह · {manual} अनुरोध पर',
+	'sessions.overflowed': 'संदर्भ विंडो {count} बार भर गई',
+	'sessions.compacted': 'अनुरोध पर {count} बार संपीड़ित',
 	'sessions.subagents': 'सबएजेंट का उपयोग किया',
 	'sessions.page': 'पृष्ठ {page} / {total}',
 	'sessions.perPage': 'प्रति पृष्ठ {count}',
@@ -263,6 +271,7 @@ export const hi: Messages = {
 	'tools.column.calls': 'कॉल',
 	'tools.column.sessions': 'सत्र',
 	'tools.column.share': 'हिस्सा',
+	'tools.column.failed': 'विफल',
 	'tools.empty': 'अभी तक कोई उपकरण कॉल स्कैन नहीं हुई।',
 	'chart.type.stacked': 'स्टैक्ड',
 	'chart.type.bars': 'बार',
@@ -434,17 +443,6 @@ export const hi: Messages = {
 	'activity.detail.sessions': '{total} में से {shown} सबसे नई।',
 	'activity.noTools': 'कोई टूल कॉल नहीं',
 
-	'placeholder.activity.1': 'सप्ताह के दिन और घंटे के अनुसार हीटमैप',
-	'placeholder.activity.2': 'सत्र अवधि वितरण और श्रृंखलाएँ',
-	'placeholder.agents.1': 'एजेंट प्रकार के अनुसार समूहित रन',
-	'placeholder.agents.2': 'अवधि, उपकरण कॉल और प्रत्यायोजन हिस्सा',
-	'placeholder.tools.1': 'प्रति उपकरण कॉल, और उनके पीछे के टोकन',
-	'placeholder.tools.2': 'प्रति उपकरण विफलता दर',
-	'placeholder.cost.1': 'प्रति मॉडल लागत, संपादन योग्य मूल्य तालिका के साथ',
-	'placeholder.cost.2': 'बिना कैश मूल्य की तुलना में कैश बचत',
-	'placeholder.assistant.1': 'अपने उपयोग के बारे में सरल भाषा में पूछें',
-	'placeholder.assistant.2': 'उत्तर केवल स्थानीय डेटाबेस पर आधारित',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': 'दृश्य रीसेट करें',
 	'common.whatIsThis': 'यह क्या है?',
@@ -486,6 +484,12 @@ export const hi: Messages = {
 	'info.status':
 		'इस परियोजना के बारे में क्या करना है, अगर कुछ है तो। “unregistered” का अर्थ है कि ट्रांसक्रिप्ट डिस्क पर हैं पर ~/.claude.json में प्रविष्टि नहीं — Claude Code में फ़ोल्डर एक बार खोलने से वह लौट आती है। “missing dir” का अर्थ है प्रविष्टि है पर निर्देशिका नहीं, तो प्रविष्टि हटाई जा सकती है। कुछ न दिखे तो करने को कुछ नहीं।',
 	'info.share': 'इस टूल के कॉल सबसे व्यस्त टूल के मुक़ाबले, कुल के मुक़ाबले नहीं।',
+	'info.toolFailed':
+		'त्रुटि लौटाने वाले कॉल, उन कॉलों के मुकाबले जो लौटे ही। पुराने प्रतिलेखों में कॉल आईडी नहीं होती, इसलिए उनका परिणाम जोड़ा नहीं जा सकता — उन्हें सफल गिनने के बजाय दोनों आंकड़ों से बाहर रखा गया है।',
+	'info.files':
+		'सत्र के टूल कॉल द्वारा नामित अलग-अलग फ़ाइलें। एक ही फ़ाइल दो तरह के पथ से पहुँचने पर एक बार गिनी जाती है।',
+	'info.compacts':
+		'बातचीत कितनी बार संपीड़ित हुई। अतिप्रवाह का अर्थ है संदर्भ विंडो भर गई और Claude Code ने स्वयं संपीड़ित किया; अनुरोध का अर्थ है /compact।',
 	'status.billing.hint': 'इस विंडो में लागत के आँकड़ों का अर्थ।',
 	'status.billing.subscription': 'सदस्यता — आँकड़े API-समकक्ष हैं, बिल नहीं',
 	'status.billing.api': 'API',
@@ -616,5 +620,60 @@ export const hi: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'CLI प्रॉक्सी ने संदर्भ से क्या बाहर रखा',
+	'rtk.off': 'RTK बंद है',
+	'rtk.off.hint': 'RTK ने कितना बचाया, यह पढ़ने के लिए सेटिंग्स में इसे फिर से चालू करें।',
+	'rtk.failed': 'RTK का इतिहास पढ़ा नहीं जा सका',
+	'rtk.empty': 'RTK ने अभी तक कुछ दर्ज नहीं किया',
+	'rtk.empty.hint': 'इतिहास मौजूद है पर उसमें कोई कमांड नहीं। RTK के छानने के साथ यह भरता जाएगा।',
+	'rtk.empty.noHistory': '{path} पर कोई इतिहास नहीं — इस मशीन पर कुछ भी RTK से होकर नहीं गुज़रा।',
+	'rtk.card.saved': 'बचाए गए टोकन',
+	'rtk.hint.saved': 'बिना छाने आउटपुट की लागत का {share}',
+	'rtk.card.input': 'कच्चा आउटपुट',
+	'rtk.hint.input': 'बिना छाने ये कमांड संदर्भ में कितना डाल देते',
+	'rtk.card.output': 'छानने के बाद',
+	'rtk.hint.output': 'मॉडल तक असल में कितना पहुँचा',
+	'rtk.card.commands': 'कमांड',
+	'rtk.hint.commands': '{count} फ़िल्टरों से होकर',
+	'rtk.card.time': 'लगा समय',
+	'rtk.hint.time': 'प्रॉक्सी से गुज़रे कमांडों ने कुल कितना समय लिया',
+	'rtk.card.failures': 'पार्स विफलताएँ',
+	'rtk.hint.failures': 'जिन कमांडों को RTK पढ़ न सका और कच्चा ही चलाना पड़ा',
+	'rtk.daily': 'प्रतिदिन',
+	'rtk.daily.description': 'हर दिन का कच्चा आउटपुट, रखे गए और हटाए गए हिस्से में बँटा।',
+	'rtk.series.kept': 'रखा गया',
+	'rtk.series.saved': 'बचाया गया',
+	'rtk.filters': 'फ़िल्टर के अनुसार',
+	'rtk.filters.description':
+		'कौन-सा फ़िल्टर काम का है। “proxy” और “run” वे कॉल हैं जो बिना छने निकल गए।',
+	'rtk.projects': 'प्रोजेक्ट के अनुसार',
+	'rtk.projects.description': 'कमांड कहाँ चले, सबसे बड़ी बचत पहले।',
+	'rtk.failures': 'पार्स विफलताएँ',
+	'rtk.failures.description': 'हाल के वे कमांड जिन्हें RTK पढ़ न सका।',
+	'rtk.column.filter': 'फ़िल्टर',
+	'rtk.column.project': 'प्रोजेक्ट',
+	'rtk.column.calls': 'कॉल',
+	'rtk.column.input': 'कच्चा',
+	'rtk.column.saved': 'बचाया',
+	'rtk.column.share': 'हिस्सा',
+	'rtk.column.when': 'कब',
+	'rtk.column.command': 'कमांड',
+	'rtk.column.message': 'कारण',
+	'rtk.column.recovered': 'फिर भी चला',
+	'rtk.recovered': 'हाँ',
+	'rtk.lost': 'नहीं',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'वह प्रॉक्सी जो मॉडल के देखने से पहले कमांड आउटपुट छोटा कर देता है। इसका इतिहास वहीं पढ़ा जाता है जहाँ वह है, कभी लिखा नहीं जाता।',
+	'settings.rtk.placeholder': 'rtk.exe का पथ',
+	'settings.rtk.found': 'मिला: {path} ({version})',
+	'settings.rtk.missing': 'नहीं मिला। पेज साइडबार से बाहर रहता है।',
+	'settings.rtk.history': 'इतिहास: {path}',
+	'settings.rtk.noHistory': 'अभी तक कोई इतिहास दर्ज नहीं।',
+	'settings.rtk.open': 'खोलें',
+	'settings.rtk.offHint':
+		'बंद होने पर यह ऐप RTK को कभी नहीं देखता। RTK खुद छानता रहता है — वह उसकी अपनी सेटिंग है, यह नहीं।'
 };

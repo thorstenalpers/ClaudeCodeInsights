@@ -7,6 +7,7 @@
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Shrink from '@lucide/svelte/icons/shrink';
 	import Users from '@lucide/svelte/icons/users';
 	import { api, type SessionFacets, type SessionPage } from '$lib/api';
 	import ActivityBadge from '$lib/components/activity-badge.svelte';
@@ -22,7 +23,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import Folder from '@lucide/svelte/icons/folder';
-	import { compact, displayPath, exact, folderName, formatWhen } from '$lib/format';
+	import { compact, displayPath, exact, formatDuration, formatWhen, sourceName } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { MessageKey } from '$lib/i18n/en';
 	import { errorMessage, isHosted } from '$lib/ipc.svelte';
@@ -136,16 +137,15 @@
 	let tags = $state<string[]>([]);
 	let projects = $state<string[]>([]);
 	let branches = $state<string[]>([]);
+	let sources = $state<string[]>([]);
 	let from = $state<string | null>(null);
 	let to = $state<string | null>(null);
 
 	let result = $state<SessionPage | null>(null);
 	let facets = $state<SessionFacets | null>(null);
 
-	/** The column is looked up in, so it reads alphabetically by folder. */
-	const sortedProjects = $derived(
-		[...(facets?.projects ?? [])].sort((a, b) => folderName(a).localeCompare(folderName(b)))
-	);
+	/** The column is looked up in, so it reads alphabetically by name. */
+	const sortedProjects = $derived([...(facets?.projects ?? [])].sort((a, b) => a.localeCompare(b)));
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
@@ -189,6 +189,7 @@
 			tags,
 			projects,
 			branches,
+			sources,
 			from,
 			to,
 			// Sorting by cost happens in the host, over the whole history rather
@@ -275,6 +276,7 @@
 		tags = [];
 		projects = [];
 		branches = [];
+		sources = [];
 		from = null;
 		to = null;
 		page = 0;
@@ -282,17 +284,17 @@
 
 	const hasFilters = $derived(
 		Boolean(search) ||
-			activities.length + models.length + tags.length + projects.length + branches.length > 0 ||
+			activities.length +
+				models.length +
+				tags.length +
+				projects.length +
+				branches.length +
+				sources.length >
+				0 ||
 			Boolean(from || to)
 	);
 
 	const totalPages = $derived(result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1);
-
-	function formatDuration(minutes: number): string {
-		if (minutes < 1) return '<1m';
-		if (minutes < 60) return `${minutes}m`;
-		return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-	}
 
 	/** The table knows the topic; the header would otherwise show a bare UUID. */
 	function openSession(sessionId: string, label: string) {
@@ -379,6 +381,21 @@
 						}}
 					/>
 				{/if}
+				<!-- Offered only once a second agent has left something behind:
+				     a filter with one answer can only empty the table. -->
+				{#if facets.sources.length > 1}
+					<FilterMenu
+						label={t('filter.source')}
+						options={facets.sources}
+						chosen={sources}
+						display={sourceName}
+						onToggle={(value: string) => (sources = toggle(sources, value))}
+						onClear={() => {
+							sources = [];
+							page = 0;
+						}}
+					/>
+				{/if}
 			{/if}
 
 			<DateRangeMenu
@@ -458,7 +475,7 @@
 								}}
 							>
 								<Folder class="size-3.5 shrink-0 text-muted-foreground" />
-								<span class="min-w-0 flex-1 truncate">{folderName(project)}</span>
+								<span class="min-w-0 flex-1 truncate">{project}</span>
 							</button>
 						{/each}
 					</aside>
@@ -586,6 +603,31 @@
 													<Tooltip.Content>{t('sessions.subagents')}</Tooltip.Content>
 												</Tooltip.Root>
 											{/if}
+											<!-- An overflow is the one marker worth colouring: it says the
+											     session outgrew its window, which the token total does not. -->
+											{#if row.compactAuto > 0}
+												<Tooltip.Root>
+													<Tooltip.Trigger>
+														{#snippet child({ props })}
+															<Shrink {...props} class="size-3.5 shrink-0 text-amber-600" />
+														{/snippet}
+													</Tooltip.Trigger>
+													<Tooltip.Content>
+														{t('sessions.overflowed', { count: String(row.compactAuto) })}
+													</Tooltip.Content>
+												</Tooltip.Root>
+											{:else if row.compactManual > 0}
+												<Tooltip.Root>
+													<Tooltip.Trigger>
+														{#snippet child({ props })}
+															<Shrink {...props} class="size-3.5 shrink-0 text-muted-foreground" />
+														{/snippet}
+													</Tooltip.Trigger>
+													<Tooltip.Content>
+														{t('sessions.compacted', { count: String(row.compactManual) })}
+													</Tooltip.Content>
+												</Tooltip.Root>
+											{/if}
 										</div>
 										{#if row.tags.length > 0}
 											<div class="mt-1 flex flex-wrap gap-1">
@@ -598,10 +640,11 @@
 										{/if}
 									</Table.Cell>
 
-									<Table.Cell class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}>
-										<span class="block truncate"
-											>{row.projectName ? displayPath(row.projectName) : '—'}</span
-										>
+									<Table.Cell
+										class={[CLASS.project, 'max-w-[12rem] text-muted-foreground']}
+										title={row.projectPath ? displayPath(row.projectPath) : undefined}
+									>
+										<span class="block truncate">{row.projectName ?? '—'}</span>
 										{#if row.gitBranch}
 											<span class="block truncate font-mono text-xs opacity-70"
 												>{row.gitBranch}</span
@@ -644,7 +687,16 @@
 										{compact(row.cacheReadTokens)}
 									</Table.Cell>
 									<Table.Cell class={[CLASS.model, 'whitespace-nowrap text-muted-foreground']}>
-										{shortModel(row.model)}
+										<div class="flex items-center gap-1.5">
+											{shortModel(row.model)}
+											<!-- Marked only on the rows that are the exception; a badge on
+											     every line would say nothing. -->
+											{#if row.source !== 'claude'}
+												<Badge variant="outline" class="h-4 px-1 text-[10px] font-normal">
+													{sourceName(row.source)}
+												</Badge>
+											{/if}
+										</div>
 									</Table.Cell>
 								</Table.Row>
 							{/each}

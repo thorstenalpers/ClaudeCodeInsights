@@ -1,7 +1,7 @@
 import type { Messages } from './en';
 
 export const ja: Messages = {
-	'app.name': 'Claude Insights',
+	'app.name': 'Claude Code Insights',
 
 	'nav.overview': '概要',
 	'nav.overview.description': 'トークン、コスト、アクティビティを一目で',
@@ -115,6 +115,8 @@ export const ja: Messages = {
 	'common.noMatch': '検索に一致するものがありません。',
 	'common.cancel': 'キャンセル',
 	'common.none': '—',
+	'common.on': 'オン',
+	'common.off': 'オフ',
 	'common.waitingOnScanner': 'トランスクリプトスキャナーを待機中です。',
 
 	'overview.title': '概要',
@@ -148,6 +150,7 @@ export const ja: Messages = {
 	'range.90': '過去90日',
 	'filter.project': 'プロジェクト',
 	'filter.branch': 'ブランチ',
+	'filter.source': 'ソース',
 	'filter.model': 'モデル',
 	'filter.activity': 'アクティビティ',
 	'filter.tag': 'タグ',
@@ -168,6 +171,11 @@ export const ja: Messages = {
 	'sessions.column.output': '出力',
 	'sessions.column.cache': 'キャッシュ',
 	'sessions.column.model': 'モデル',
+	'sessions.column.files': 'ファイル',
+	'sessions.column.compacts': '圧縮',
+	'sessions.compactSplit': 'オーバーフロー {auto} · 要求 {manual}',
+	'sessions.overflowed': 'コンテキストウィンドウが {count} 回あふれました',
+	'sessions.compacted': '要求により {count} 回圧縮',
 	'sessions.subagents': 'サブエージェントを使用',
 	'sessions.page': '{total} ページ中 {page} ページ',
 	'sessions.perPage': '1 ページ {count} 件',
@@ -264,6 +272,7 @@ export const ja: Messages = {
 	'tools.column.calls': '呼び出し',
 	'tools.column.sessions': 'セッション',
 	'tools.column.share': '割合',
+	'tools.column.failed': '失敗',
 	'tools.empty': 'ツールの呼び出しはまだスキャンされていません。',
 	'chart.type.stacked': '積み上げ',
 	'chart.type.bars': '棒',
@@ -437,17 +446,6 @@ export const ja: Messages = {
 	'activity.detail.sessions': '{total} 件のうち新しい {shown} 件。',
 	'activity.noTools': 'ツール呼び出しなし',
 
-	'placeholder.activity.1': '曜日と時間帯のヒートマップ',
-	'placeholder.activity.2': 'セッション長の分布と連続記録',
-	'placeholder.agents.1': 'エージェント種別ごとの実行',
-	'placeholder.agents.2': '所要時間、ツール呼び出し、委譲の割合',
-	'placeholder.tools.1': 'ツールごとの呼び出しと、その背後のトークン',
-	'placeholder.tools.2': 'ツールごとの失敗率',
-	'placeholder.cost.1': 'モデルごとのコストと、編集可能な料金表',
-	'placeholder.cost.2': 'キャッシュなしの価格と比べた節約',
-	'placeholder.assistant.1': '自分の使用状況を普通の言葉で尋ねる',
-	'placeholder.assistant.2': 'ローカルデータベースのみに基づく回答',
-
 	// Cost columns, the status bar, the plan history and voice.
 	'common.resetView': '表示をリセット',
 	'common.whatIsThis': 'これは何ですか？',
@@ -488,6 +486,12 @@ export const ja: Messages = {
 	'info.status':
 		'この項目について何をすべきか、あるならば。「unregistered」は記録がディスクにあるのに ~/.claude.json に項目がない状態で、Claude Code でそのフォルダーを一度開けば戻ります。「missing dir」は項目はあるがフォルダーが消えた状態で、項目は削除できます。何も出ていなければ、することはありません。',
 	'info.share': 'このツールの呼び出し回数を、合計ではなく最も多いツールと比べたものです。',
+	'info.toolFailed':
+		'エラーを返した呼び出しと、応答が返ってきた呼び出しの比率です。古い記録には呼び出し ID がなく結果を対応づけられないため、成功として数えるのではなく、どちらの数からも除いています。',
+	'info.files':
+		'セッションのツール呼び出しが指定した異なるファイル数です。同じファイルを二通りのパス表記で指定しても 1 件と数えます。',
+	'info.compacts':
+		'会話が圧縮された回数です。オーバーフローはコンテキストウィンドウが埋まり Claude Code が自ら圧縮したこと、要求は /compact を指します。',
 	'status.billing.hint': 'この画面の費用の数字が何を指すか。',
 	'status.billing.subscription': 'サブスク — 数字は API 換算で、請求ではありません',
 	'status.billing.api': 'API',
@@ -617,5 +621,61 @@ export const ja: Messages = {
 	'live.kind.chat': 'Chat',
 	'live.kind.thinking': 'Thought',
 	'live.asTable': 'As table',
-	'live.asStream': 'As conversation'
+	'live.asStream': 'As conversation',
+
+	'nav.rtk': 'RTK',
+	'nav.rtk.description': 'CLI プロキシがコンテキストから外したもの',
+	'rtk.off': 'RTK はオフです',
+	'rtk.off.hint': '設定でオンに戻すと、RTK が節約した量を読めます。',
+	'rtk.failed': 'RTK の履歴を読めませんでした',
+	'rtk.empty': 'RTK はまだ何も記録していません',
+	'rtk.empty.hint':
+		'履歴はありますが、コマンドが 1 件もありません。RTK が絞り込むにつれて埋まります。',
+	'rtk.empty.noHistory': '{path} に履歴がありません。このマシンでは RTK を通ったものがありません。',
+	'rtk.card.saved': '節約したトークン',
+	'rtk.hint.saved': '素の出力にかかったはずの量の {share}',
+	'rtk.card.input': '素の出力',
+	'rtk.hint.input': '絞り込まなければコンテキストに入っていた量',
+	'rtk.card.output': '絞り込み後',
+	'rtk.hint.output': '実際にモデルへ届いた量',
+	'rtk.card.commands': 'コマンド',
+	'rtk.hint.commands': '{count} 個のフィルターを通過',
+	'rtk.card.time': 'かかった時間',
+	'rtk.hint.time': 'プロキシ経由のコマンドに要した合計',
+	'rtk.card.failures': '解析の失敗',
+	'rtk.hint.failures': 'RTK が読めず、そのまま実行したコマンド',
+	'rtk.daily': '日ごと',
+	'rtk.daily.description': '各日の素の出力を、残った分と落とした分に分けたもの。',
+	'rtk.series.kept': '残した',
+	'rtk.series.saved': '節約',
+	'rtk.filters': 'フィルター別',
+	'rtk.filters.description':
+		'どのフィルターが効いているか。「proxy」と「run」は絞り込まずに通した呼び出しです。',
+	'rtk.projects': 'プロジェクト別',
+	'rtk.projects.description': 'コマンドが動いた場所。節約の大きい順。',
+	'rtk.failures': '解析の失敗',
+	'rtk.failures.description': 'RTK が読めなかった直近のコマンド。',
+	'rtk.column.filter': 'フィルター',
+	'rtk.column.project': 'プロジェクト',
+	'rtk.column.calls': '呼び出し',
+	'rtk.column.input': '素',
+	'rtk.column.saved': '節約',
+	'rtk.column.share': '割合',
+	'rtk.column.when': '日時',
+	'rtk.column.command': 'コマンド',
+	'rtk.column.message': '理由',
+	'rtk.column.recovered': '実行された',
+	'rtk.recovered': 'はい',
+	'rtk.lost': 'いいえ',
+	'settings.rtk': 'RTK',
+	'settings.rtk.description':
+		'モデルが見る前にコマンド出力を短くするプロキシ。その履歴は置かれた場所で読むだけで、書き込みはしません。',
+	'settings.rtk.placeholder': 'rtk.exe のパス',
+	'settings.rtk.found': '見つかりました: {path} ({version})',
+	'settings.rtk.missing': '見つかりません。ページはレールに出ません。',
+	'settings.rtk.history': '履歴: {path}',
+	'settings.rtk.noHistory': 'まだ履歴が記録されていません。',
+	'settings.rtk.open': '開く',
+	'settings.rtk.offHint':
+		'オフの間、このアプリは RTK を一切見ません。RTK 自体は絞り込みを続けます — それは RTK 側の設定です。'
 };

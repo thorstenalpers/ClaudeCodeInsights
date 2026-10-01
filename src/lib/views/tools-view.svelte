@@ -31,6 +31,13 @@
 			class: 'hidden @md:table-cell'
 		},
 		{
+			id: 'failed',
+			label: 'tools.column.failed' as const,
+			numeric: true,
+			info: 'info.toolFailed' as const,
+			class: 'hidden @lg:table-cell'
+		},
+		{
 			id: 'cost',
 			label: 'tools.column.cost' as const,
 			numeric: true,
@@ -87,6 +94,9 @@
 			name: (row) => row.name,
 			calls: (row) => row.calls,
 			sessions: (row) => row.sessions,
+			// Sorted by rate rather than by count, or the busiest tool tops the
+			// column whatever its failure rate. Unanswered tools sort last.
+			failed: (row) => (row.answered > 0 ? row.failed / row.answered : -1),
 			cost: (row) => costOfSplit(row.byModel)
 		},
 		{ sort: 'calls' }
@@ -173,6 +183,19 @@
 							<Table.Cell class="text-right tabular-nums">{exact(row.calls)}</Table.Cell>
 							<Table.Cell class={[CLASS.sessions, 'text-right tabular-nums']}>
 								{exact(row.sessions)}
+							</Table.Cell>
+							<Table.Cell class={[CLASS.failed, 'text-right tabular-nums']}>
+								{#if row.answered === 0}
+									<span class="text-muted-foreground">{t('common.none')}</span>
+								{:else}
+									{@const rate = row.failed / row.answered}
+									<span class={rate >= 0.05 ? 'text-amber-600' : undefined}>
+										{exact(row.failed)}
+									</span>
+									<span class="ml-1 text-xs text-muted-foreground">
+										{(rate * 100).toFixed(1)}%
+									</span>
+								{/if}
 							</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">
 								{@const cost = costOfSplit(row.byModel)}

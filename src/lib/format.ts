@@ -40,6 +40,13 @@ export function formatDate(iso: string | null): string {
 	return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString(i18n.intlLocale);
 }
 
+/** Wall-clock length of a session, not time spent working. */
+export function formatDuration(minutes: number): string {
+	if (minutes < 1) return '<1m';
+	if (minutes < 60) return `${minutes}m`;
+	return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
 /** Day, month and time — the resolution the tables need. */
 export function formatWhen(iso: string | null): string {
 	if (!iso) return '—';
@@ -62,14 +69,27 @@ export function formatTime(iso: string | null): string {
 }
 
 /**
- * The last folder of a path, which is what a list of projects is read by.
+ * A bucket label short enough to sit on an axis.
  *
- * The structure above it is the same for every checkout on a machine and only
- * costs width; the whole path stays available as a title.
+ * `2025-06` and `2025-06-15` are wider than the column they belong to, and a
+ * row of them ends up on top of each other; two numbers still say which month
+ * or which day it is. Anything that is not a date is left alone — the same axis
+ * carries model names and tool names.
+ *
+ * Read as UTC, because these labels are calendar buckets rather than moments:
+ * a local reading of `2025-06-01` is May somewhere.
  */
-export function folderName(path: string): string {
-	const parts = displayPath(path).split(/[\\/]/).filter(Boolean);
-	return parts.at(-1) ?? path;
+export function shortLabel(label: string): string {
+	const parts = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(label);
+	if (!parts) return label;
+
+	const [, year, month, day] = parts;
+	const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day ?? '1')));
+	return date.toLocaleDateString(i18n.intlLocale, {
+		timeZone: 'UTC',
+		month: '2-digit',
+		...(day ? { day: '2-digit' } : { year: '2-digit' })
+	});
 }
 
 /**
@@ -100,4 +120,12 @@ export function formatSecond(iso: string | null): string {
  */
 export function displayPath(path: string): string {
 	return /^[a-zA-Z]:/.test(path) ? path.replace(/\//g, '\\') : path;
+}
+
+/**
+ * The product name behind a source id. A product name, not a translation —
+ * it is the same in every language, which is why it does not live in i18n.
+ */
+export function sourceName(source: string): string {
+	return { claude: 'Claude Code', codex: 'Codex' }[source] ?? source;
 }
